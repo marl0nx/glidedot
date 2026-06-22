@@ -5,9 +5,11 @@ import { TeamService } from './services/team.service';
 export function createAuthHooks(userService: UserService, teamService: TeamService) {
     return {
         authenticate: async (request: FastifyRequest, reply: FastifyReply) => {
-            const apiKey = request.headers['x-api-key'] as string;
+            const authHeader = request.headers['authorization'] as string;
+            const apiKey = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+            
             if (!apiKey) {
-                const err = new Error('API Key is required');
+                const err = new Error('Authorization Bearer Token is required');
                 (err as any).statusCode = 401;
                 throw err;
             }

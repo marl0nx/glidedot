@@ -24,6 +24,3 @@ logs/
 .env.*
 !.env.example
 !.env.template
-
-# Others
-public/test-site.html

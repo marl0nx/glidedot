@@ -11,7 +11,7 @@ export const useApi = () => {
     const headers: Record<string, string> = { ...options.headers as Record<string, string> }
     
     if (apiKey.value) {
-      headers['x-api-key'] = apiKey.value as string
+      headers['Authorization'] = `Bearer ${apiKey.value}`
     }
 
     activeRequests.value++
