@@ -1,4 +1,4 @@
-# 🎨 In-Context Editing (Live Editor)
+# In-Context Editing (Live Editor)
 
 glide. supports **In-Context Editing**! This allows you to visually edit translations directly on your own website, while saving them directly to the glide. database.
 
@@ -32,6 +32,6 @@ You can provide keys in two ways:
 4. Click the **In-Context Editor** button in your project dashboard (located in the navigation sidebar) to open your website within glide.
 5. Hover over any text element and click to edit the translation live!
 
-## ⚡ Pro-Tip: Auto-Creation of Keys
+## Pro-Tip: Auto-Creation of Keys
 You don't need to manually create keys in the dashboard before using them! 
 Just add a new `data-glide-key` or `{glide...}` placeholder to your website. When you click on it in the In-Context Editor, **glide. will automatically create the new key** in the database and immediately open the translation window for you!
