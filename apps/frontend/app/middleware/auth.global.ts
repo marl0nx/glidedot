@@ -13,18 +13,7 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
     }
   }
 
-  // If going to /login but already logged in, redirect home
-  if (to.path === '/login') {
-    if (isLoggedIn.value) {
-      return navigateTo('/')
-    }
-    return
-  }
-
-  // Skip if we are going to logout
-  if (to.path === '/logout') return
-
-  // Check setup status
+  // Check setup status FIRST
   try {
     const status = await fetchApi<{ setupRequired: boolean }>('/setup/status')
     if (status.setupRequired) {
@@ -36,8 +25,19 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
       return navigateTo('/login')
     }
   } catch (e) {
-    console.error('Failed to check setup status', e)
+    console.error('Failed to check setup status. Is the API reachable?', e)
   }
+
+  // If going to /login but already logged in, redirect home
+  if (to.path === '/login') {
+    if (isLoggedIn.value) {
+      return navigateTo('/')
+    }
+    return
+  }
+
+  // Skip if we are going to logout
+  if (to.path === '/logout') return
 
   // If not logged in, try fetching user first
   let currentUser = undefined
