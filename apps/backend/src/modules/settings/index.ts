@@ -9,10 +9,7 @@ const settingsModule: FastifyPluginAsync = async (app) => {
     const teamService = new TeamService(app.db);
     const { authenticate, requireAdmin } = createAuthHooks(userService, teamService);
 
-    app.register(async (protectedApp) => {
-        protectedApp.addHook('preHandler', authenticate);
-        protectedApp.register(settingsRoutes);
-    });
+    app.register(settingsRoutes);
 };
 
 export default settingsModule;

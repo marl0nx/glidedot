@@ -221,7 +221,12 @@ const handleReview = async (review: Review, action: 'approve' | 'reject') => {
               
               <template #author-cell="{ row }">
                 <div class="flex items-center gap-2">
-                  <u-avatar :src="row.original.authorAvatar" :alt="row.original.authorName" size="sm" />
+                  <u-avatar 
+                    :src="row.original.authorAvatar || undefined" 
+                    :icon="!row.original.authorAvatar ? 'i-lucide-user' : undefined"
+                    :class="!row.original.authorAvatar ? 'bg-neutral-800 text-neutral-400' : ''"
+                    size="sm" 
+                  />
                   <span class="text-sm text-neutral-300">{{ row.original.authorName }}</span>
                 </div>
               </template>
@@ -263,7 +268,12 @@ const handleReview = async (review: Review, action: 'approve' | 'reject') => {
                     <span class="font-mono text-sm text-primary-400 break-all">{{ review.keyName }}</span>
                   </div>
                   <div class="flex items-center gap-2">
-                    <u-avatar :src="review.authorAvatar" :alt="review.authorName" size="xs" />
+                    <u-avatar 
+                      :src="review.authorAvatar || undefined" 
+                      :icon="!review.authorAvatar ? 'i-lucide-user' : undefined"
+                      :class="!review.authorAvatar ? 'bg-neutral-800 text-neutral-400' : ''"
+                      size="xs" 
+                    />
                   </div>
                 </div>
 

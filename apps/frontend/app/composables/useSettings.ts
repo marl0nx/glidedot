@@ -7,12 +7,16 @@ const isLoading = ref(false)
 export function useSettings() {
   const { fetchApi } = useApi()
 
-  const loadSettings = async () => {
-    if (isLoading.value || Object.keys(globalSettings.value).length > 0) return
+  const loadSettings = async (isAdmin = false) => {
+    // If we only have public settings and we need admin, we must fetch again.
+    // If we already have settings and don't need admin, skip.
+    if (!isAdmin && Object.keys(globalSettings.value).length > 0) return
+    
     isLoading.value = true
     try {
-      const data = await fetchApi('/admin/settings') as Record<string, string>
-      globalSettings.value = data
+      const endpoint = isAdmin ? '/admin/settings' : '/admin/settings/public'
+      const data = await fetchApi(endpoint) as Record<string, any>
+      globalSettings.value = { ...globalSettings.value, ...data }
     } catch (e) {
       console.error('Failed to load settings', e)
     } finally {

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed, onUnmounted, reactive } from 'vue'
 import { useSettings } from '~/composables/useSettings'
 import { useToast, useAppConfig } from '#imports'
+import UnsavedChangesAlert from '~/components/UnsavedChangesAlert.vue'
 
 const { settings, loadSettings, saveSettings } = useSettings()
 const toast = useToast()
@@ -58,7 +59,7 @@ const applyHexInput = () => {
   }
 }
 
-const originalState = {
+const originalState = reactive({
   primary: appConfig.ui.colors.primary,
   themeMode: settings.value.themeMode || 'dark',
   customBg: settings.value.customBackgroundColor || '#111111',
@@ -69,6 +70,32 @@ const originalState = {
   logoUrl: settings.value.logoUrl || '',
   logoUrlMinimal: settings.value.logoUrlMinimal || '',
   logoSize: settings.value.logoSize || '24'
+})
+
+const hasUnsavedChanges = computed(() => {
+  return formData.value.primaryColor !== originalState.primary ||
+         formData.value.themeMode !== originalState.themeMode ||
+         formData.value.customBackgroundColor !== originalState.customBg ||
+         formData.value.logoType !== originalState.logoType ||
+         formData.value.logoText !== originalState.logoText ||
+         formData.value.logoTextMinimal !== originalState.logoTextMinimal ||
+         formData.value.logoShowDot !== (originalState.logoShowDot === 'true') ||
+         formData.value.logoUrl !== originalState.logoUrl ||
+         formData.value.logoUrlMinimal !== originalState.logoUrlMinimal ||
+         String(formData.value.logoSize) !== originalState.logoSize
+})
+
+const discard = () => {
+  formData.value.primaryColor = originalState.primary
+  formData.value.themeMode = originalState.themeMode
+  formData.value.customBackgroundColor = originalState.customBg
+  formData.value.logoType = originalState.logoType
+  formData.value.logoText = originalState.logoText
+  formData.value.logoTextMinimal = originalState.logoTextMinimal
+  formData.value.logoShowDot = originalState.logoShowDot === 'true'
+  formData.value.logoUrl = originalState.logoUrl
+  formData.value.logoUrlMinimal = originalState.logoUrlMinimal
+  formData.value.logoSize = Number(originalState.logoSize)
 }
 
 let isSaved = false
@@ -94,7 +121,7 @@ watch(() => formData.value.logoUrlMinimal, (val) => { settings.value.logoUrlMini
 watch(() => formData.value.logoSize, (val) => { settings.value.logoSize = String(val) })
 
 onMounted(async () => {
-  await loadSettings()
+  await loadSettings(true)
   formData.value.primaryColor = settings.value.primaryColor || 'rose'
   
   originalState.primary = appConfig.ui.colors.primary
@@ -343,5 +370,12 @@ const save = async () => {
         </div>
       </u-card>
     </div>
+
+    <unsaved-changes-alert 
+      :has-unsaved-changes="hasUnsavedChanges" 
+      :loading="isLoading" 
+      @save="save" 
+      @discard="discard" 
+    />
   </div>
 </template>

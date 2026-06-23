@@ -1,7 +1,6 @@
 services:
   backend:
-    build:
-      context: ./apps/backend
+    image: ghcr.io/marl0nx/glidedot-backend:latest
     container_name: glide-backend
     ports:
       - "3001:3001"
@@ -23,8 +22,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build:
-      context: ./apps/frontend
+    image: ghcr.io/marl0nx/glidedot-frontend:latest
     container_name: glide-frontend
     ports:
       - "3000:3000"

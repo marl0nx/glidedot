@@ -1,16 +1,25 @@
+import { FastifyInstance } from 'fastify';
+import { eq } from 'drizzle-orm';
+import { settings } from '../../settings/schema';
 import { env } from '../../../config/env';
 
 export class DeeplService {
-    private apiKey: string | undefined;
-    private apiUrl: string;
-
-    constructor() {
-        this.apiKey = env.DEEPL_API_KEY;
-        this.apiUrl = env.DEEPL_API_URL;
-    }
+    constructor(private db: FastifyInstance['db']) {}
 
     async translate(text: string[], targetLang: string, sourceLang?: string): Promise<string[]> {
-        if (!this.apiKey) {
+        const apiKeySetting = await this.db.select().from(settings).where(eq(settings.key, 'deeplApiKey')).limit(1);
+        let apiKey = env.DEEPL_API_KEY;
+        if (apiKeySetting.length > 0 && apiKeySetting[0].value) {
+            apiKey = apiKeySetting[0].value;
+        }
+
+        const apiUrlSetting = await this.db.select().from(settings).where(eq(settings.key, 'deeplApiUrl')).limit(1);
+        let apiUrl = env.DEEPL_API_URL;
+        if (apiUrlSetting.length > 0 && apiUrlSetting[0].value) {
+            apiUrl = apiUrlSetting[0].value;
+        }
+
+        if (!apiKey) {
             throw new Error('DeepL API Key is not configured');
         }
 
@@ -20,10 +29,10 @@ export class DeeplService {
             source_lang: sourceLang?.toUpperCase(),
         };
 
-        const response = await fetch(`${this.apiUrl}/translate`, {
+        const response = await fetch(`${apiUrl}/translate`, {
             method: 'POST',
             headers: {
-                'Authorization': `DeepL-Auth-Key ${this.apiKey}`,
+                'Authorization': `DeepL-Auth-Key ${apiKey}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(body),

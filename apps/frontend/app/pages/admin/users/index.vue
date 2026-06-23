@@ -110,8 +110,8 @@ const confirmResetApiKey = async () => {
         <template #avatarUrl-cell="{ row }">
           <u-avatar
             :src="row.original.avatarUrl || undefined"
-            :text="!row.original.avatarUrl ? getAvatarText(row.original.username) : undefined"
-            :style="!row.original.avatarUrl ? { backgroundColor: getAvatarColor(row.original.username), color: '#171717' } : {}"
+            :icon="!row.original.avatarUrl ? 'i-lucide-user' : undefined"
+            :class="!row.original.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''"
             size="sm"
           />
         </template>

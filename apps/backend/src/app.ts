@@ -37,11 +37,11 @@ export async function buildApp() {
 
     // Register Modules
     await app.register(authModule);
-    await app.register(setupModule);
-    await app.register(sessionsModule);
-    await app.register(usersModule);
-    await app.register(teamsModule);
-    await app.register(adminModule);
+    await app.register(setupModule, { prefix: '/v1/setup' });
+    await app.register(sessionsModule, { prefix: '/v1/sessions' });
+    await app.register(usersModule, { prefix: '/v1/users' });
+    await app.register(teamsModule, { prefix: '/v1/admin/teams' });
+    await app.register(adminModule, { prefix: '/v1/admin' });
     await app.register(localizationModule, { prefix: '/v1/localization' });
     await app.register(settingsModule, { prefix: '/v1/admin/settings' });
     await app.register(migrationModule, { prefix: '/v1/admin/migration' });

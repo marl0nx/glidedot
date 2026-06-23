@@ -21,6 +21,17 @@ export function createAuthHooks(userService: UserService, teamService: TeamServi
                 throw err;
             }
 
+            if (!user.isAdmin) {
+                const { settings } = await import('../settings/schema');
+                const { eq } = await import('drizzle-orm');
+                const mode = await request.server.db.select().from(settings).where(eq(settings.key, 'maintenanceMode')).limit(1);
+                if (mode.length > 0 && mode[0].value === 'true') {
+                    const err = new Error('Maintenance Mode is active');
+                    (err as any).statusCode = 503;
+                    throw err;
+                }
+            }
+
             request.user = user;
         },
 

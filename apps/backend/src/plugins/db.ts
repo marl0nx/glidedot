@@ -7,6 +7,7 @@ import { env } from '../config/env';
 
 export default fp(async (fastify) => {
     const sqlite = new Database(env.DB_URL);
+    sqlite.run("PRAGMA foreign_keys = ON;");
     const db = drizzle(sqlite, { schema });
     fastify.decorate('db', db);
 

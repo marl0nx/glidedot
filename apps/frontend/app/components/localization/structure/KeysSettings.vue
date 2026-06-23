@@ -7,6 +7,7 @@ import { useConventions } from '~/composables/localization/useConventions'
 import { useRoute } from 'vue-router'
 import { useProject } from '~/composables/useProject'
 import { useApi } from '~/composables/useApi'
+import NamespaceGraph from '~/components/admin/activity/graphs/NamespaceGraph.vue'
 
 const route = useRoute()
 const projectId = parseInt(route.params.id as string)
@@ -45,6 +46,7 @@ const isDeleteModalOpen = ref(false)
 const isAddKeyModalOpen = ref(false)
 const editingKeyId = ref<number | null>(null)
 const editingKeyName = ref("")
+const showDiagram = ref(false)
 
 const currentPagination = computed({
   get: () => pagination.value.pageIndex + 1,
@@ -112,8 +114,8 @@ const removeLabelFromSelection = async (labelId: number) => {
   }
 }
 
-const addNewKey = async (keyName: string) => {
-  await addKey(keyName)
+const addNewKey = async (keyName: string, labelIds: number[]) => {
+  await addKey(keyName, labelIds)
   isAddKeyModalOpen.value = false
 }
 
@@ -283,14 +285,32 @@ watch([glossary, templates, variables], () => {
       :templates="templates"
       :glossary="glossary"
       :variables="variables"
+      :labels="projectLabels"
       :require-template="currentProject?.requireTemplate"
       @create="addNewKey"
     />
 
     <div class="flex flex-col md:flex-row justify-between py-4 gap-4">
-      <u-input v-model="search" icon="i-lucide-search" size="lg" placeholder="Search keys..." class="w-full md:w-80"/>
+      <u-input v-if="!showDiagram" v-model="search" icon="i-lucide-search" size="lg" placeholder="Search keys..." class="w-full md:w-80"/>
+      <div v-else class="flex items-center text-neutral-300 font-medium">Visualizing Project Keys</div>
       <div class="flex items-center gap-2 w-full md:w-auto justify-end">
-        <u-dropdown-menu v-if="selectedRowsCount > 0" :items="bulkActions">
+        <u-button
+            v-if="showDiagram"
+            variant="subtle"
+            color="neutral"
+            label="Back to List"
+            icon="i-lucide-list"
+            @click="showDiagram = false"
+        />
+        <u-button
+            v-else
+            variant="subtle"
+            color="neutral"
+            label="Diagram View"
+            icon="i-lucide-folder-tree"
+            @click="showDiagram = true"
+        />
+        <u-dropdown-menu v-if="!showDiagram && selectedRowsCount > 0" :items="bulkActions">
           <u-button
               variant="subtle"
               color="neutral"
@@ -300,6 +320,7 @@ watch([glossary, templates, variables], () => {
           />
         </u-dropdown-menu>
         <u-button
+            v-if="!showDiagram"
             variant="subtle"
             color="neutral"
             label="Add Key"
@@ -309,7 +330,11 @@ watch([glossary, templates, variables], () => {
       </div>
     </div>
 
-    <div class="w-full space-y-4 pb-4">
+    <div v-if="showDiagram" class="w-full pb-4">
+      <namespace-graph :project-id="projectId" />
+    </div>
+
+    <div v-else class="w-full space-y-4 pb-4">
       <div class="hidden md:block">
         <u-table
             v-model:row-selection="rowSelection"

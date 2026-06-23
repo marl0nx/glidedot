@@ -2,5 +2,7 @@
 </script>
 
 <template>
-  <div><slot/></div>
+  <div class="min-h-screen bg-neutral-950 text-white font-sans transition-colors duration-300">
+    <slot/>
+  </div>
 </template>

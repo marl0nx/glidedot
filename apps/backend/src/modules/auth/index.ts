@@ -23,12 +23,15 @@ export default fp(async function authModule(fastify: FastifyInstance) {
         // Allow public access to login
         if (request.url.startsWith('/v1/sessions/login')) return;
 
+        // Allow public access to read public settings (needed for maintenance mode check and setup UI)
+        if (request.method === 'GET' && request.url.startsWith('/v1/admin/settings/public')) return;
+        
+        console.log(`[Auth Hook] URL: ${request.url}, originalUrl: ${request.originalUrl}`);
+
         // Call authenticate hook
         await hooks.authenticate(request, reply);
     });
-
-    // Register Routes
-                });
+});
 
 declare module 'fastify' {
     interface FastifyInstance {

@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import type { KeyTemplate, KeyTemplateSegment, KeyGlossaryTerm, KeyVariable } from '~/types'
+import type { KeyTemplate, KeyTemplateSegment, KeyGlossaryTerm, KeyVariable, TranslationLabel } from '~/types'
 
 const props = defineProps<{
   modelValue: boolean
   templates?: KeyTemplate[]
   glossary?: KeyGlossaryTerm[]
   variables?: KeyVariable[]
+  labels?: TranslationLabel[]
   requireTemplate?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'create', keyName: string): void
+  (e: 'create', keyName: string, labelIds: number[]): void
 }>()
 
 const isOpen = computed({
@@ -23,6 +24,7 @@ const isOpen = computed({
 const newKeyName = ref("")
 const selectedTemplateId = ref<number | 'freeform'>('freeform')
 const templateValues = ref<string[]>([])
+const selectedLabelIds = ref<number[]>([])
 
 // Initialize state when modal opens
 watch(isOpen, (val) => {
@@ -34,8 +36,17 @@ watch(isOpen, (val) => {
     }
     newKeyName.value = ""
     templateValues.value = []
+    selectedLabelIds.value = []
   }
 })
+
+const toggleLabel = (id: number) => {
+  if (selectedLabelIds.value.includes(id)) {
+    selectedLabelIds.value = selectedLabelIds.value.filter(lId => lId !== id)
+  } else {
+    selectedLabelIds.value.push(id)
+  }
+}
 
 const currentTemplate = computed(() => {
   if (selectedTemplateId.value === 'freeform') return null
@@ -161,7 +172,7 @@ const isValid = computed(() => {
 
 const handleCreate = () => {
   if (isValid.value) {
-    emit('create', generatedKey.value)
+    emit('create', generatedKey.value, [...selectedLabelIds.value])
     isOpen.value = false
   }
 }
@@ -249,6 +260,35 @@ const handleCreate = () => {
             <div class="font-mono text-primary-400 text-lg break-all p-3 bg-neutral-950 rounded-lg border border-primary-500/30">
               {{ generatedKey || '...' }}
             </div>
+          </div>
+        </div>
+
+        <!-- Labels Selection -->
+        <div v-if="labels && labels.length > 0" class="flex flex-col gap-2 pt-2 border-t border-neutral-800">
+          <label class="font-medium text-sm">Labels (Optional)</label>
+          <div class="flex flex-wrap gap-2">
+            <u-badge
+              v-for="label in labels"
+              :key="label.id"
+              variant="subtle"
+              color="neutral"
+              size="lg"
+              class="cursor-pointer transition-all"
+              :style="{ 
+                backgroundColor: selectedLabelIds.includes(label.id) ? `${label.color}30` : `${label.color}10`, 
+                color: label.color, 
+                borderColor: selectedLabelIds.includes(label.id) ? label.color : `${label.color}20`,
+                borderWidth: '1px'
+              }"
+              @click="toggleLabel(label.id)"
+            >
+              {{ label.name }}
+              <u-icon
+                :name="selectedLabelIds.includes(label.id) ? 'i-lucide-check' : 'i-lucide-plus'"
+                class="ml-1.5 w-3.5 h-3.5"
+                :class="selectedLabelIds.includes(label.id) ? 'opacity-100' : 'opacity-50'"
+              />
+            </u-badge>
           </div>
         </div>
 

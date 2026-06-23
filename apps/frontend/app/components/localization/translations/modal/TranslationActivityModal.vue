@@ -3,6 +3,7 @@ import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useTranslationFlashcard } from '../../../../composables/localization/modal/useTranslationFlashcard'
 import { useShortcuts } from '~/composables/useShortcuts'
 import { useAuth } from '~/composables/useAuth'
+import confetti from 'canvas-confetti'
 
 const { user: currentUser } = useAuth()
 
@@ -34,6 +35,7 @@ const isGenerating = ref(false)
 const suggestionText = ref('')
 const provider = ref<'deepl' | 'google'>('deepl')
 const enableShortcuts = ref(true)
+const translatedThisSession = ref(0)
 
 const fetchSuggestion = async () => {
   if (currentUser.value?.enableSuggestions === false || currentUser.value?.allowSuggestions === false) {
@@ -78,6 +80,7 @@ const unlockScroll = () => {
 
 watch(isOpen, (newVal) => {
   if (newVal) {
+    translatedThisSession.value = 0
     lockScroll()
     if (currentUser.value?.enableSuggestions === false || currentUser.value?.allowSuggestions === false) {
       toast.add({ title: 'Suggestions are disabled', description: 'AI translation suggestions are disabled or not allowed.', color: 'error' })
@@ -86,6 +89,36 @@ watch(isOpen, (newVal) => {
     unlockScroll()
   }
 }, { immediate: true })
+
+const fireConfetti = () => {
+  confetti({
+    particleCount: 100,
+    angle: 60,
+    spread: 70,
+    origin: { x: 0, y: 0.8 },
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+  });
+  confetti({
+    particleCount: 100,
+    angle: 120,
+    spread: 70,
+    origin: { x: 1, y: 0.8 },
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+  });
+}
+
+watch(progressPercentage, (newVal, oldVal) => {
+  if (newVal === 100 && oldVal !== undefined && oldVal < 100 && isOpen.value) {
+    if (translatedThisSession.value > 1) {
+      fireConfetti()
+    }
+    setTimeout(() => {
+      if (isOpen.value) {
+        doClose()
+      }
+    }, 1500)
+  }
+})
 
 watch([currentKey, provider], () => {
   if (currentKey.value) {
@@ -106,6 +139,7 @@ const autoTranslate = async () => {
 
 const flushSave = () => {
   if (tempText.value !== currentTranslationText.value) {
+    translatedThisSession.value++
     save(tempText.value, false)
   }
 }

@@ -166,7 +166,7 @@ onUnmounted(() => {
             <div class="overflow-x-auto pb-2 hide-scrollbar w-full">
               <div class="flex gap-1" style="width: fit-content; min-width: 100%;">
                 <template v-if="stats.personalStats?.activityHeatmap">
-                  <div class="grid grid-rows-7 gap-1 grid-flow-col auto-cols-max mx-auto">
+                  <div class="grid gap-1 mx-auto" style="grid-template-columns: repeat(24, minmax(0, 1fr));">
                     <div 
                       v-for="day in stats.personalStats.activityHeatmap" 
                       :key="day.date"

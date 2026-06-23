@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import UnsavedChangesAlert from '~/components/UnsavedChangesAlert.vue'
 
 definePageMeta({
   layout: 'default'
@@ -16,6 +17,12 @@ const formData = ref({
   oldPassword: '',
   password: '',
   repeatPassword: ''
+})
+
+const originalData = ref({
+  username: '',
+  email: '',
+  avatarUrl: ''
 })
 
 const isLoading = ref(false)
@@ -36,7 +43,31 @@ onMounted(async () => {
       formData.value.email = meData.email
     }
   }
+
+  originalData.value = {
+    username: formData.value.username,
+    email: formData.value.email,
+    avatarUrl: formData.value.avatarUrl
+  }
 })
+
+const hasUnsavedChanges = computed(() => {
+  return formData.value.username !== originalData.value.username ||
+         formData.value.email !== originalData.value.email ||
+         formData.value.avatarUrl !== originalData.value.avatarUrl ||
+         !!formData.value.oldPassword ||
+         !!formData.value.password ||
+         !!formData.value.repeatPassword
+})
+
+const discard = () => {
+  formData.value.username = originalData.value.username
+  formData.value.email = originalData.value.email
+  formData.value.avatarUrl = originalData.value.avatarUrl
+  formData.value.oldPassword = ''
+  formData.value.password = ''
+  formData.value.repeatPassword = ''
+}
 
 const saveChanges = async () => {
   isLoading.value = true
@@ -86,6 +117,13 @@ const saveChanges = async () => {
     formData.value.oldPassword = ''
     formData.value.password = ''
     formData.value.repeatPassword = ''
+
+    originalData.value = {
+      username: formData.value.username,
+      email: formData.value.email,
+      avatarUrl: formData.value.avatarUrl
+    }
+
     toast.add({ title: 'Account updated successfully', color: 'success' })
   } catch {
     toast.add({ title: 'Failed to update account', color: 'error' })
@@ -131,8 +169,8 @@ const resetApiKey = () => {
           <div class="flex items-center gap-4 py-1">
             <u-avatar
               :src="formData.avatarUrl || undefined"
-              :text="!formData.avatarUrl ? getAvatarText(formData.username) : undefined"
-              :style="!formData.avatarUrl ? { backgroundColor: getAvatarColor(formData.username), color: '#171717' } : {}"
+              :icon="!formData.avatarUrl ? 'i-lucide-user' : undefined"
+              :class="!formData.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''"
               size="2xl"
             />
             <div>
@@ -220,6 +258,13 @@ const resetApiKey = () => {
       v-model="isResetModalOpen"
       :username="user?.username"
       @confirm="confirmResetApiKey"
+    />
+
+    <unsaved-changes-alert 
+      :has-unsaved-changes="hasUnsavedChanges" 
+      :loading="isLoading" 
+      @save="saveChanges" 
+      @discard="discard" 
     />
   </div>
 </template>

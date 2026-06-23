@@ -269,10 +269,10 @@ export function useTranslation() {
         }
     }
 
-    const addKey = async (keyName: string) => {
+    const addKey = async (keyName: string, labelIds?: number[]) => {
         if (!projectId.value) return
         try {
-            await fetchApi(`/localization/keys/${projectId.value}`, { method: 'POST', body: { key: keyName } })
+            await fetchApi(`/localization/keys/${projectId.value}`, { method: 'POST', body: { key: keyName, labelIds } })
             toast.add({ title: 'Key added successfully', color: 'success' })
             await init()
         } catch {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
+import ContributorGraph from '~/components/admin/activity/graphs/ContributorGraph.vue'
 
 definePageMeta({
   layout: 'default'
@@ -31,7 +32,8 @@ const pageSize = ref(15)
 const selectedTab = ref(0)
 const tabs = [
   { label: 'Activity Feed', slot: 'feed', icon: 'i-lucide-list' },
-  { label: 'Leaderboard', slot: 'leaderboard', icon: 'i-lucide-trophy' }
+  { label: 'Leaderboard', slot: 'leaderboard', icon: 'i-lucide-trophy' },
+  { label: 'Contributor Network', slot: 'graphs', icon: 'i-lucide-network' }
 ]
 
 const leaderboardStats = ref<any[]>([])
@@ -204,8 +206,8 @@ const leaderboardColumns = [
           <div class="flex items-center gap-2">
             <u-avatar
               :src="row.original.avatarUrl || undefined"
-              :text="!row.original.avatarUrl ? getAvatarText(row.original.username) : undefined"
-              :style="!row.original.avatarUrl ? { backgroundColor: getAvatarColor(row.original.username), color: '#171717' } : {}"
+              :icon="!row.original.avatarUrl ? 'i-lucide-user' : undefined"
+              :class="!row.original.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''"
               size="xs"
               :ui="{ rounded: 'rounded-full' }"
             />
@@ -271,8 +273,8 @@ const leaderboardColumns = [
           <div class="flex items-center gap-2">
             <u-avatar
               :src="row.original.avatarUrl || undefined"
-              :text="!row.original.avatarUrl ? getAvatarText(row.original.username) : undefined"
-              :style="!row.original.avatarUrl ? { backgroundColor: getAvatarColor(row.original.username), color: '#171717' } : {}"
+              :icon="!row.original.avatarUrl ? 'i-lucide-user' : undefined"
+              :class="!row.original.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''"
               size="sm"
               :ui="{ rounded: 'rounded-full' }"
             />
@@ -305,6 +307,24 @@ const leaderboardColumns = [
       </u-table>
     </u-card>
     </template>
+
+    <template #graphs>
+      <div class="mt-4 flex flex-col gap-6">
+        <contributor-graph />
+      </div>
+    </template>
+
     </u-tabs>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

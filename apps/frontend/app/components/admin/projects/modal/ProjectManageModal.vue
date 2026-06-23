@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { Project } from '~/types'
+import UnsavedChangesAlert from '~/components/UnsavedChangesAlert.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -17,6 +18,18 @@ const emit = defineEmits<{
 const isOpen = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val)
+})
+
+const originalProject = ref('')
+watch(() => props.modelValue, (newVal) => {
+  if (newVal) {
+    originalProject.value = JSON.stringify(props.project)
+  }
+})
+
+const hasUnsavedChanges = computed(() => {
+  if (props.mode === 'create') return false
+  return JSON.stringify(props.project) !== originalProject.value
 })
 </script>
 
@@ -57,6 +70,11 @@ const isOpen = computed({
         <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
         <u-button :label="mode === 'create' ? 'Create Project' : 'Save Changes'" color="neutral" :disabled="!project.name?.trim()" @click="emit('save')" />
       </div>
+
+      <unsaved-changes-alert 
+        :has-unsaved-changes="hasUnsavedChanges" 
+        :hide-buttons="true"
+      />
     </template>
   </u-modal>
 </template>

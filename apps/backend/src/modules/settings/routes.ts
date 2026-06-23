@@ -12,7 +12,7 @@ export const settingsRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
   // Anyone can read public settings (like theming) or we can make it public.
   // Actually, we'll just allow authenticated users to read settings for now,
   // or we can make GET public if it's strictly for UI appearance.
-  app.get('/', async (request, reply) => {
+  app.get('/', { preHandler: [requireAdmin] }, async (request, reply) => {
     const allSettings = await app.db.select().from(settings);
     const settingsObj: Record<string, any> = {};
     for (const row of allSettings) {
@@ -23,19 +23,33 @@ export const settingsRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
     return settingsObj;
   });
 
+  app.get('/public', async (request, reply) => {
+    const { inArray } = await import('drizzle-orm');
+    const publicKeys = ['maintenanceMode', 'logoType', 'logoUrl', 'logoUrlMinimal', 'logoText', 'logoSize', 'logoShowDot', 'primaryColor', 'themeMode', 'customBackgroundColor'];
+    const rows = await app.db.select().from(settings).where(inArray(settings.key, publicKeys));
+    const result: Record<string, any> = {};
+    for (const r of rows) {
+      result[r.key] = r.value;
+    }
+    result.maintenanceMode = result.maintenanceMode === 'true';
+    return result;
+  });
+
   app.post('/', {
     preHandler: [requireAdmin]
   }, async (request, reply) => {
+    const { sql } = await import('drizzle-orm');
     const body = request.body as Record<string, string>;
-    const entries = Object.entries(body);
+    console.log("RECEIVED SETTINGS BODY:", typeof body, body);
+    const entries = Object.entries(body || {});
+    
+    // Execute all upserts using raw SQL to bypass ORM builder issues that cause hanging
     for (const [key, value] of entries) {
-      await app.db.insert(settings)
-        .values({ key, value })
-        .onConflictDoUpdate({
-          target: settings.key,
-          set: { value }
-        });
+      if (key && value !== undefined && value !== null) {
+        await app.db.run(sql`INSERT INTO settings (key, value) VALUES (${key}, ${value}) ON CONFLICT(key) DO UPDATE SET value=excluded.value`);
+      }
     }
+    
     return { success: true };
   });
 };

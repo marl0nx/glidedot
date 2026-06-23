@@ -47,7 +47,7 @@ const focusPassword = () => {
 
       <div class="flex flex-col items-center">
         <h1 class="mb-2 text-xl font-bold">Welcome back</h1>
-        <p>Login with your Accesskey<span v-if="isOidcEnabled"> or OIDC</span></p>
+        <p>Login with your Credentials<span v-if="isOidcEnabled"> or OIDC</span></p>
       </div>
 
       <div v-if="isOidcEnabled" class="flex flex-col mt-6 relative">

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { Team, User, Project } from '~/types'
+import UnsavedChangesAlert from '~/components/UnsavedChangesAlert.vue'
 
 interface TeamMember {
   userId: number
@@ -47,6 +48,31 @@ watch(() => props.team, (newTeam) => {
     }
   }
 }, { immediate: true })
+
+const originalName = computed(() => props.team?.name || '')
+const originalMappedGroups = computed(() => {
+  try {
+    return props.team?.oidcMappedGroups ? JSON.parse(props.team.oidcMappedGroups) : []
+  } catch {
+    return []
+  }
+})
+
+const hasUnsavedChanges = computed(() => {
+  if (localName.value !== originalName.value) return true
+  
+  if (mappedGroups.value.length !== originalMappedGroups.value.length) return true
+  // simple array equality since order doesn't strictly matter if we just check items, but order might be preserved
+  for (let i = 0; i < mappedGroups.value.length; i++) {
+    if (mappedGroups.value[i] !== originalMappedGroups.value[i]) return true
+  }
+  return false
+})
+
+const discard = () => {
+  localName.value = originalName.value
+  mappedGroups.value = [...originalMappedGroups.value]
+}
 
 const handleSave = () => {
   emit('save', { name: localName.value, mappedGroups: mappedGroups.value })
@@ -133,8 +159,8 @@ const getAvatarColor = (name: string) => {
               <div class="flex items-center gap-3">
                 <u-avatar
                   :src="users?.find(u => u.id === member.userId)?.avatarUrl || undefined"
-                  :text="!users?.find(u => u.id === member.userId)?.avatarUrl ? getAvatarText(member.username) : undefined"
-                  :style="!users?.find(u => u.id === member.userId)?.avatarUrl ? { backgroundColor: getAvatarColor(member.username), color: '#171717' } : {}"
+                  :icon="!(users?.find(u => u.id === member.userId)?.avatarUrl) ? 'i-lucide-user' : undefined"
+                  :class="!(users?.find(u => u.id === member.userId)?.avatarUrl) ? 'bg-neutral-800 text-neutral-400' : ''"
                   size="sm"
                   :ui="{ rounded: 'rounded-full' }"
                 />
@@ -196,6 +222,14 @@ const getAvatarColor = (name: string) => {
         <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
         <u-button color="neutral" label="Save Changes" :loading="loading" :disabled="!localName?.trim()" @click="handleSave" />
       </div>
+
+      <unsaved-changes-alert 
+        :has-unsaved-changes="hasUnsavedChanges" 
+        :loading="loading" 
+        :hide-buttons="true"
+        @save="handleSave" 
+        @discard="discard" 
+      />
     </template>
   </u-modal>
 </template>

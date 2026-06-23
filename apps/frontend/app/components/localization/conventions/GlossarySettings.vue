@@ -20,6 +20,9 @@ const pagination = ref({ pageIndex: 0, pageSize: 10 })
 const isModalOpen = ref(false)
 const editingId = ref<number | null>(null)
 
+const deleteModalOpen = ref(false)
+const deletingId = ref<number | null>(null)
+
 const newBadWord = ref('')
 const newGoodWord = ref('')
 
@@ -62,6 +65,19 @@ const handleSave = () => {
       emit('add', newBadWord.value.trim(), newGoodWord.value.trim())
     }
     isModalOpen.value = false
+  }
+}
+
+const confirmDelete = (id: number) => {
+  deletingId.value = id
+  deleteModalOpen.value = true
+}
+
+const performDelete = () => {
+  if (deletingId.value) {
+    emit('delete', deletingId.value)
+    deleteModalOpen.value = false
+    deletingId.value = null
   }
 }
 </script>
@@ -131,7 +147,7 @@ const handleSave = () => {
             color="error" 
             variant="ghost" 
             size="sm"
-            @click="emit('delete', row.original.id)" 
+            @click="confirmDelete(row.original.id)" 
           />
         </div>
       </template>
@@ -161,6 +177,20 @@ const handleSave = () => {
         <div class="flex justify-end gap-2 p-2">
           <u-button color="neutral" variant="ghost" label="Cancel" size="lg" @click="isModalOpen = false" />
           <u-button :label="editingId ? 'Save Changes' : 'Add Term'" color="neutral" size="lg" :disabled="!newBadWord.trim() || !newGoodWord.trim()" @click="handleSave" />
+        </div>
+      </template>
+    </u-modal>
+
+    <u-modal v-model:open="deleteModalOpen" title="Delete Glossary Term">
+      <template #body>
+        <div class="p-6">
+          <p class="text-neutral-300">Are you sure you want to delete this glossary term? It will no longer trigger linter warnings.</p>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 p-2">
+          <u-button color="neutral" variant="ghost" label="Cancel" @click="deleteModalOpen = false" />
+          <u-button color="error" label="Delete" @click="performDelete" />
         </div>
       </template>
     </u-modal>

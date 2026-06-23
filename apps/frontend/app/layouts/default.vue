@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, NavigationMenuItem, BreadcrumbItem } from '@nuxt/ui'
 import type { Project } from '~/types'
-import { useThemeColor } from '~/composables/useThemeColor'
-import { useThemeBackground } from '~/composables/useThemeBackground'
 
 const route = useRoute();
 const { fetchApi, isApiLoading } = useApi()
@@ -10,17 +8,11 @@ const { user, isAdmin } = useAuth()
 const { settings, loadSettings } = useSettings()
 const appConfig = useAppConfig()
 
-useThemeColor(computed(() => appConfig.ui.colors.primary))
-useThemeBackground(computed(() => settings.value.themeMode || 'dark'), computed(() => settings.value.customBackgroundColor || '#111111'))
+
 
 await loadSettings()
 
-// Apply Theming Settings
-onMounted(() => {
-  if (settings.value.primaryColor) {
-    appConfig.ui.colors.primary = settings.value.primaryColor
-  }
-})
+
 
 const { data: projectsData } = await useAsyncData('projects', () => fetchApi('/localization/projects'))
 const projects = computed<Project[]>(() => (projectsData.value as Project[]) || [])
@@ -254,21 +246,21 @@ watch(() => route.path, () => {
         <u-dropdown-menu :items="profileItems" :content="{ side: 'top' }" class="cursor-pointer">
           <div v-if="isSidebarOpen" class="flex flex-col w-full p-2 rounded-lg hover:bg-neutral-800">
             <u-user
-                :name="user?.username || 'User'"
+                :name="user?.username"
                 :description="user?.isAdmin ? 'Administrator' : 'Member'"
                 :avatar="{
-                            src: user?.avatarUrl || undefined,
-                            text: !user?.avatarUrl ? getAvatarText(user?.username) : undefined,
-                            style: !user?.avatarUrl ? { backgroundColor: getAvatarColor(user?.username), color: '#171717' } : {},
-                            loading: 'lazy'
-                        }"
+                    src: user?.avatarUrl || undefined,
+                    icon: !user?.avatarUrl ? 'i-lucide-user' : undefined,
+                    loading: 'lazy',
+                    class: !user?.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''
+                }"
             />
           </div>
           <div v-else class="flex flex-col items-center w-full h-auto">
             <u-avatar
                 :src="user?.avatarUrl || undefined"
-                :text="!user?.avatarUrl ? getAvatarText(user?.username) : undefined"
-                :style="!user?.avatarUrl ? { backgroundColor: getAvatarColor(user?.username), color: '#171717' } : {}"
+                :icon="!user?.avatarUrl ? 'i-lucide-user' : undefined"
+                :class="!user?.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''"
                 loading="lazy"
                 size="md"
             />
