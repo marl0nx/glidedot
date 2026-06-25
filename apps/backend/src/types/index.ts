@@ -1,2 +1,2 @@
-export * from './src/localization';
-export * from './src/project';
+export * from './localization';
+export * from './project';

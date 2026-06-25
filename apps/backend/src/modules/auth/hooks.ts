@@ -72,12 +72,16 @@ declare module 'fastify' {
             username: string;
             email: string;
             isAdmin: boolean;
+            isReviewer?: boolean;
+            requiresReview?: boolean;
+            isOidc?: boolean;
             avatarUrl: string | null;
             translationQuota: number;
             allowSuggestions: boolean;
             enableSuggestions: boolean;
             hasDeepL?: boolean;
             apiKey: string;
+            alertConfig?: any;
         };
     }
 }

@@ -30,12 +30,12 @@ const themes = [
 ]
 
 const colors = [
-  { name: 'Rose', value: 'rose', bgClass: 'bg-rose-500' },
-  { name: 'Blue', value: 'blue', bgClass: 'bg-blue-500' },
-  { name: 'Green', value: 'emerald', bgClass: 'bg-emerald-500' },
-  { name: 'Purple', value: 'purple', bgClass: 'bg-purple-500' },
-  { name: 'Orange', value: 'orange', bgClass: 'bg-orange-500' },
-  { name: 'Zinc', value: 'zinc', bgClass: 'bg-zinc-500' }
+  { name: 'Rose', value: 'rose', bgClass: 'bg-rose-500', textClass: 'text-rose-500' },
+  { name: 'Blue', value: 'blue', bgClass: 'bg-blue-500', textClass: 'text-blue-500' },
+  { name: 'Green', value: 'emerald', bgClass: 'bg-emerald-500', textClass: 'text-emerald-500' },
+  { name: 'Purple', value: 'purple', bgClass: 'bg-purple-500', textClass: 'text-purple-500' },
+  { name: 'Orange', value: 'orange', bgClass: 'bg-orange-500', textClass: 'text-orange-500' },
+  { name: 'Zinc', value: 'zinc', bgClass: 'bg-zinc-500', textClass: 'text-zinc-500' }
 ]
 
 const isCustomColor = computed(() => formData.value.primaryColor.startsWith('#'))
@@ -186,21 +186,23 @@ const save = async () => {
     originalState.logoUrl = formData.value.logoUrl
     originalState.logoUrlMinimal = formData.value.logoUrlMinimal
     originalState.logoSize = String(formData.value.logoSize)
-    toast.add({ title: 'Settings saved', color: 'success' })
+    toast.add({ title: 'Success', description: 'Settings saved', color: 'success' })
   } else {
-    toast.add({ title: 'Failed to save settings', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to save settings', color: 'error' })
   }
 }
 </script>
 
 <template>
   <div class="flex flex-col gap-6 -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-      <div class="flex flex-col gap-1">
-        <h1 class="text-xl font-bold">Theming Settings</h1>
-        <p class="text-sm text-neutral-400">Customize the appearance and branding of your workspace.</p>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0 mb-2">
+      <div>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-paint-brush" class="w-5 h-5 text-primary-500" />
+            Theming Settings
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">Customize the appearance and branding of your workspace.</p>
       </div>
-      <u-button icon="i-lucide-save" label="Save Changes" color="neutral" variant="subtle" :loading="isLoading" @click="save" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -224,8 +226,9 @@ const save = async () => {
                 :class="formData.primaryColor === color.value ? 'border-primary-500 bg-primary-500/10 shadow-md' : 'border-neutral-800 hover:border-neutral-700 bg-neutral-900/50 hover:bg-neutral-800'"
                 @click="formData.primaryColor = color.value"
               >
-                <div class="w-12 h-12 rounded-full shadow-inner flex items-center justify-center transition-transform group-hover:scale-110" :class="color.bgClass">
-                  <u-icon v-if="formData.primaryColor === color.value" name="i-lucide-check" class="text-white w-6 h-6" />
+                <div class="w-12 h-12 rounded-full shadow-inner ring-1 ring-neutral-800 flex items-center justify-center transition-transform group-hover:scale-110 bg-neutral-900" :class="color.textClass">
+                  <u-icon v-if="formData.primaryColor === color.value" name="i-lucide-check" class="w-6 h-6" />
+                  <u-icon v-else name="i-lucide-palette" class="w-6 h-6" />
                 </div>
                 <span class="text-sm font-medium" :class="formData.primaryColor === color.value ? 'text-primary-500' : 'text-neutral-400 group-hover:text-neutral-200'">{{ color.name }}</span>
               </button>
@@ -236,11 +239,11 @@ const save = async () => {
                   :class="isCustomColor ? 'border-primary-500 bg-primary-500/10 shadow-md' : 'border-neutral-800 hover:border-neutral-700 bg-neutral-900/50 hover:bg-neutral-800'"
                 >
                   <div 
-                    class="w-12 h-12 rounded-full shadow-inner flex items-center justify-center transition-transform group-hover:scale-110" 
-                    :class="!isCustomColor && 'bg-gradient-to-br from-red-500 via-green-500 to-blue-500'"
-                    :style="isCustomColor ? `background-color: ${formData.primaryColor}` : ''"
+                    class="w-12 h-12 rounded-full shadow-inner ring-1 ring-neutral-800 flex items-center justify-center transition-transform group-hover:scale-110 bg-neutral-900" 
+                    :style="{ color: isCustomColor ? formData.primaryColor : '#71717a' }"
                   >
-                    <u-icon v-if="isCustomColor" name="i-lucide-check" class="text-white w-6 h-6" />
+                    <u-icon v-if="isCustomColor" name="i-lucide-check" class="w-6 h-6" />
+                    <u-icon v-else name="i-lucide-palette" class="w-6 h-6" />
                   </div>
                   <span class="text-sm font-medium" :class="isCustomColor ? 'text-primary-500' : 'text-neutral-400 group-hover:text-neutral-200'">Custom</span>
                 </button>

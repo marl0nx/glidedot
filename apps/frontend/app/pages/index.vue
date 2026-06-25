@@ -41,7 +41,13 @@ interface DashboardStats {
     languagesAdded: number
     labelsCreated: number
     activityHeatmap?: { date: string; count: number }[]
+    averageTranslationSpeedMs?: number
   }
+}
+
+const formatSpeed = (ms?: number) => {
+  if (!ms) return '---'
+  return (ms / 1000).toFixed(1) + 's'
 }
 
 const stats = ref<DashboardStats | null>(null)
@@ -53,7 +59,7 @@ const loadStats = async (silent = false) => {
     const data = await fetchApi('/localization/projects/dashboard')
     stats.value = data as DashboardStats
   } catch {
-    if (!silent) toast.add({ title: 'Failed to load dashboard statistics', color: 'error' })
+    if (!silent) toast.add({ title: 'Error', description: 'Failed to load dashboard statistics', color: 'error' })
   } finally {
     isLoading.value = false
   }
@@ -106,50 +112,51 @@ onUnmounted(() => {
 
     <template v-else-if="stats">
       <!-- Personal Contributions Metrics -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2 mt-2">
-        <!-- Translations -->
-        <u-card>
-          <div class="flex flex-col">
-            <span class="text-sm font-medium text-neutral-400 mb-2 flex items-center gap-2">
-              <u-icon name="i-lucide-a-large-small" class="w-4 h-4" />
-              Translations
-            </span>
-            <span class="text-3xl font-bold text-white">{{ stats.personalStats?.translationsUpdated || 0 }}</span>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-2 mt-2">
+        <!-- Average Speed -->
+        <div class="flex flex-col bg-neutral-900 border border-neutral-800 p-4 rounded-xl items-start gap-1 relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-5 text-neutral-400 pointer-events-none">
+             <u-icon name="i-lucide-timer" class="w-24 h-24" />
           </div>
-        </u-card>
+          <span class="text-[10px] uppercase tracking-wider font-bold text-neutral-500 z-10 flex items-center gap-1.5">Avg Speed</span>
+          <span class="text-2xl font-bold text-neutral-200 z-10">{{ formatSpeed(stats.personalStats?.averageTranslationSpeedMs) }}</span>
+        </div>
+
+        <!-- Translations -->
+        <div class="flex flex-col bg-neutral-900 border border-neutral-800 p-4 rounded-xl items-start gap-1 relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-5 text-neutral-400 pointer-events-none">
+             <u-icon name="i-lucide-a-large-small" class="w-24 h-24" />
+          </div>
+          <span class="text-[10px] uppercase tracking-wider font-bold text-neutral-500 z-10 flex items-center gap-1.5">Translations</span>
+          <span class="text-2xl font-bold text-neutral-200 z-10">{{ stats.personalStats?.translationsUpdated || 0 }}</span>
+        </div>
         
         <!-- Keys -->
-        <u-card>
-          <div class="flex flex-col">
-            <span class="text-sm font-medium text-neutral-400 mb-2 flex items-center gap-2">
-              <u-icon name="i-lucide-logs" class="w-4 h-4" />
-              Keys Created
-            </span>
-            <span class="text-3xl font-bold text-white">{{ stats.personalStats?.keysCreated || 0 }}</span>
+        <div class="flex flex-col bg-neutral-900 border border-neutral-800 p-4 rounded-xl items-start gap-1 relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-5 text-neutral-400 pointer-events-none">
+             <u-icon name="i-lucide-logs" class="w-24 h-24" />
           </div>
-        </u-card>
+          <span class="text-[10px] uppercase tracking-wider font-bold text-neutral-500 z-10 flex items-center gap-1.5">Keys Created</span>
+          <span class="text-2xl font-bold text-neutral-200 z-10">{{ stats.personalStats?.keysCreated || 0 }}</span>
+        </div>
         
         <!-- Languages -->
-        <u-card>
-          <div class="flex flex-col">
-            <span class="text-sm font-medium text-neutral-400 mb-2 flex items-center gap-2">
-              <u-icon name="i-lucide-flag" class="w-4 h-4" />
-              Languages Added
-            </span>
-            <span class="text-3xl font-bold text-white">{{ stats.personalStats?.languagesAdded || 0 }}</span>
+        <div class="flex flex-col bg-neutral-900 border border-neutral-800 p-4 rounded-xl items-start gap-1 relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-5 text-neutral-400 pointer-events-none">
+             <u-icon name="i-lucide-flag" class="w-24 h-24" />
           </div>
-        </u-card>
+          <span class="text-[10px] uppercase tracking-wider font-bold text-neutral-500 z-10 flex items-center gap-1.5">Languages Added</span>
+          <span class="text-2xl font-bold text-neutral-200 z-10">{{ stats.personalStats?.languagesAdded || 0 }}</span>
+        </div>
         
         <!-- Labels -->
-        <u-card>
-          <div class="flex flex-col">
-            <span class="text-sm font-medium text-neutral-400 mb-2 flex items-center gap-2">
-              <u-icon name="i-lucide-tag" class="w-4 h-4" />
-              Labels Created
-            </span>
-            <span class="text-3xl font-bold text-white">{{ stats.personalStats?.labelsCreated || 0 }}</span>
+        <div class="flex flex-col bg-neutral-900 border border-neutral-800 p-4 rounded-xl items-start gap-1 relative overflow-hidden">
+          <div class="absolute -right-4 -bottom-4 opacity-5 text-neutral-400 pointer-events-none">
+             <u-icon name="i-lucide-tag" class="w-24 h-24" />
           </div>
-        </u-card>
+          <span class="text-[10px] uppercase tracking-wider font-bold text-neutral-500 z-10 flex items-center gap-1.5">Labels Created</span>
+          <span class="text-2xl font-bold text-neutral-200 z-10">{{ stats.personalStats?.labelsCreated || 0 }}</span>
+        </div>
       </div>
 
       <!-- Main Content Grid -->
@@ -177,7 +184,7 @@ onUnmounted(() => {
                         'bg-neutral-800': day.count === 0,
                         'bg-primary-500/30': day.count > 0 && day.count < 10,
                         'bg-primary-500/50': day.count >= 10 && day.count < 25,
-                        'bg-primary-500/80': day.count >= 25 && day.count < 50,
+                        'bg-primary-500/70': day.count >= 25 && day.count < 50,
                         'bg-primary-500': day.count >= 50
                       }"
                     ></div>
@@ -191,7 +198,7 @@ onUnmounted(() => {
               <div class="w-3 h-3 rounded-[2px] bg-neutral-800"></div>
               <div class="w-3 h-3 rounded-[2px] bg-primary-500/30"></div>
               <div class="w-3 h-3 rounded-[2px] bg-primary-500/50"></div>
-              <div class="w-3 h-3 rounded-[2px] bg-primary-500/80"></div>
+              <div class="w-3 h-3 rounded-[2px] bg-primary-500/70"></div>
               <div class="w-3 h-3 rounded-[2px] bg-primary-500"></div>
               <span>More</span>
             </div>

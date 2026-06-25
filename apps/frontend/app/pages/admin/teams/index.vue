@@ -185,10 +185,13 @@ const updateSelectedTeamRef = () => {
 
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex flex-row justify-between items-center">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
       <div>
-        <h1 class="text-xl font-bold">Manage Teams</h1>
-        <p class="text-sm text-neutral-400">Create and organize collaboration teams.</p>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-users" class="w-5 h-5 text-primary-500" />
+            Manage Teams
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">Create and organize collaboration teams.</p>
       </div>
       <u-button icon="i-lucide-users" label="Create Team" color="neutral" variant="subtle" @click="openCreateModal" />
     </div>

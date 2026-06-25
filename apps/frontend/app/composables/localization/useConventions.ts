@@ -25,7 +25,7 @@ export const useConventions = () => {
       variables.value = vars as KeyVariable[]
     } catch (e) {
       console.error(e)
-      toast.add({ title: 'Failed to load conventions', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to load conventions', color: 'error' })
     } finally {
       isLoading.value = false
     }
@@ -39,10 +39,10 @@ export const useConventions = () => {
         body: { badWord, goodWord }
       })
       glossary.value.push(result[0])
-      toast.add({ title: 'Glossary term added', color: 'success' })
+      toast.add({ title: 'Success', description: 'Glossary term added', color: 'success' })
       return true
     } catch (e) {
-      toast.add({ title: 'Failed to add glossary term', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to add glossary term', color: 'error' })
       return false
     }
   }
@@ -57,10 +57,10 @@ export const useConventions = () => {
       if (idx !== -1) {
         glossary.value[idx] = result[0]
       }
-      toast.add({ title: 'Glossary term updated', color: 'success' })
+      toast.add({ title: 'Success', description: 'Glossary term updated', color: 'success' })
       return true
     } catch (e) {
-      toast.add({ title: 'Failed to update glossary term', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to update glossary term', color: 'error' })
       return false
     }
   }
@@ -71,9 +71,9 @@ export const useConventions = () => {
         method: 'DELETE'
       })
       glossary.value = glossary.value.filter(g => g.id !== glossaryId)
-      toast.add({ title: 'Glossary term deleted', color: 'success' })
+      toast.add({ title: 'Success', description: 'Glossary term deleted', color: 'success' })
     } catch (e) {
-      toast.add({ title: 'Failed to delete glossary term', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to delete glossary term', color: 'error' })
     }
   }
 
@@ -85,10 +85,10 @@ export const useConventions = () => {
         body: { name, segments: JSON.stringify(segments) }
       })
       templates.value.push(result[0])
-      toast.add({ title: 'Template added', color: 'success' })
+      toast.add({ title: 'Success', description: 'Template added', color: 'success' })
       return true
     } catch (e) {
-      toast.add({ title: 'Failed to add template', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to add template', color: 'error' })
       return false
     }
   }
@@ -103,10 +103,10 @@ export const useConventions = () => {
       if (idx !== -1) {
         templates.value[idx] = result[0]
       }
-      toast.add({ title: 'Template updated', color: 'success' })
+      toast.add({ title: 'Success', description: 'Template updated', color: 'success' })
       return true
     } catch (e) {
-      toast.add({ title: 'Failed to update template', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to update template', color: 'error' })
       return false
     }
   }
@@ -117,9 +117,9 @@ export const useConventions = () => {
         method: 'DELETE'
       })
       templates.value = templates.value.filter(t => t.id !== templateId)
-      toast.add({ title: 'Template deleted', color: 'success' })
+      toast.add({ title: 'Success', description: 'Template deleted', color: 'success' })
     } catch (e) {
-      toast.add({ title: 'Failed to delete template', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to delete template', color: 'error' })
     }
   }
 
@@ -130,10 +130,10 @@ export const useConventions = () => {
         body: { name, options }
       })
       variables.value.push(result[0])
-      toast.add({ title: 'Variable created', color: 'success' })
+      toast.add({ title: 'Success', description: 'Variable created', color: 'success' })
       return true
     } catch (e) {
-      toast.add({ title: 'Failed to create variable', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to create variable', color: 'error' })
       return false
     }
   }
@@ -146,10 +146,10 @@ export const useConventions = () => {
       })
       const idx = variables.value.findIndex(v => v.id === variableId)
       if (idx !== -1) variables.value[idx] = result[0]
-      toast.add({ title: 'Variable updated', color: 'success' })
+      toast.add({ title: 'Success', description: 'Variable updated', color: 'success' })
       return true
     } catch (e) {
-      toast.add({ title: 'Failed to update variable', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to update variable', color: 'error' })
       return false
     }
   }
@@ -160,9 +160,9 @@ export const useConventions = () => {
         method: 'DELETE'
       })
       variables.value = variables.value.filter(v => v.id !== variableId)
-      toast.add({ title: 'Variable deleted', color: 'success' })
+      toast.add({ title: 'Success', description: 'Variable deleted', color: 'success' })
     } catch (e) {
-      toast.add({ title: 'Failed to delete variable', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to delete variable', color: 'error' })
     }
   }
 
@@ -170,7 +170,7 @@ export const useConventions = () => {
     try {
       return await fetchApi(`/localization/projects/${projectId}/conventions/export`)
     } catch (e) {
-      toast.add({ title: 'Failed to export conventions', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to export conventions', color: 'error' })
       return null
     }
   }
@@ -181,11 +181,11 @@ export const useConventions = () => {
         method: 'POST',
         body: data
       })
-      toast.add({ title: 'Conventions imported successfully', color: 'success' })
+      toast.add({ title: 'Success', description: 'Conventions imported successfully', color: 'success' })
       await loadConventions(projectId)
       return true
     } catch (e) {
-      toast.add({ title: 'Failed to import conventions', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to import conventions', color: 'error' })
       return false
     }
   }

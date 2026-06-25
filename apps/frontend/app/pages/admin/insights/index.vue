@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
-import ContributorGraph from '~/components/admin/activity/graphs/ContributorGraph.vue'
+import AutomationGraph from '~/components/admin/insights/graphs/AutomationGraph.vue'
 
 definePageMeta({
   layout: 'default'
@@ -31,9 +31,9 @@ const pageSize = ref(15)
 
 const selectedTab = ref(0)
 const tabs = [
-  { label: 'Activity Feed', slot: 'feed', icon: 'i-lucide-list' },
+  { label: 'Activity Feed', slot: 'feed', icon: 'i-lucide-activity' },
   { label: 'Leaderboard', slot: 'leaderboard', icon: 'i-lucide-trophy' },
-  { label: 'Contributor Network', slot: 'graphs', icon: 'i-lucide-network' }
+  { label: 'Automation Efficiency', slot: 'graphs', icon: 'i-lucide-bot' }
 ]
 
 const leaderboardStats = ref<any[]>([])
@@ -58,7 +58,7 @@ const fetchLeaderboard = async () => {
     const data = await fetchApi(`/admin/activity-logs/leaderboard?timeframe=${leaderboardTimeframe.value}`) as { data: any[] }
     leaderboardStats.value = data.data
   } catch {
-    toast.add({ title: 'Failed to load leaderboard', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to load leaderboard', color: 'error' })
   } finally {
     isLoadingLeaderboard.value = false
   }
@@ -91,7 +91,7 @@ const fetchLogs = async () => {
     logs.value = data.data
     totalLogs.value = data.total
   } catch {
-    toast.add({ title: 'Failed to load activity logs', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to load activity logs', color: 'error' })
   } finally {
     isLoading.value = false
   }
@@ -106,7 +106,7 @@ watch(searchQuery, () => {
   }, 300)
 })
 
-watch(currentPage, () => {
+watch([currentPage, pageSize], () => {
   fetchLogs()
 })
 
@@ -166,28 +166,50 @@ const formatLocalTime = (dateString: string) => {
 
 const leaderboardColumns = [
   { accessorKey: 'user', header: 'Member' },
+  { accessorKey: 'lastActivity', header: 'Last Activity' },
   { accessorKey: 'totalActivity', header: 'Total Activity' },
   { accessorKey: 'translationsUpdated', header: 'Translations' },
+  { accessorKey: 'averageTranslationSpeedMs', header: 'Avg Speed' },
   { accessorKey: 'keysCreated', header: 'Keys Created' },
   { accessorKey: 'labelsCreated', header: 'Labels Created' },
   { accessorKey: 'languagesAdded', header: 'Languages Added' },
   { accessorKey: 'topLanguages', header: 'Top Languages' }
 ]
+
+const formatSpeed = (ms?: number) => {
+  if (!ms) return '---'
+  return (ms / 1000).toFixed(1) + 's'
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex flex-row justify-between items-center">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
       <div>
-        <h1 class="text-xl font-bold">Insights</h1>
-        <p class="text-sm text-neutral-400">View a detailed log of all changes or see member statistics.</p>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-bar-chart-2" class="w-5 h-5 text-primary-500" />
+            Insights
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">View a detailed log of all changes or see member statistics.</p>
       </div>
-      <u-button icon="i-lucide-refresh-cw" label="Refresh" color="neutral" variant="subtle" :loading="isLoading || isLoadingLeaderboard" @click="fetchLogs(); fetchLeaderboard();" />
+      <div class="w-full md:w-auto shrink-0">
+        <u-button icon="i-lucide-refresh-cw" label="Refresh" color="neutral" variant="subtle" :loading="isLoading || isLoadingLeaderboard" @click="fetchLogs(); fetchLeaderboard();" />
+      </div>
     </div>
 
     <u-tabs :items="tabs" class="w-full">
       <template #feed>
-        <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }" class="mt-4">
+        <div class="flex flex-col gap-4 mt-4">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+            <div>
+              <h3 class="text-white font-medium flex items-center gap-2">
+                  <u-icon name="i-lucide-activity" class="w-5 h-5 text-primary-500" />
+                  Activity Feed
+              </h3>
+              <p class="text-sm text-neutral-400 mt-1">A real-time log of all localization changes and system events.</p>
+            </div>
+          </div>
+          <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
       <template #header>
         <div class="flex justify-between items-center">
           <u-input v-model="searchQuery" icon="i-lucide-search" placeholder="Search logs..." class="max-w-sm" />
@@ -242,18 +264,43 @@ const leaderboardColumns = [
         </template>
       </u-table>
 
-      <div v-if="totalLogs > pageSize" class="flex justify-end border-t border-default p-4">
-        <u-pagination
+      <div v-if="totalLogs > 0" class="flex items-center justify-between border-t border-default p-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-neutral-500">Rows per page</span>
+          <u-select
+            :model-value="pageSize"
+            :items="[10, 20, 50, 100]"
+            class="w-20"
+            @update:model-value="(val) => { pageSize = Number(val); currentPage = 1; }"
+          />
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-neutral-500">
+            {{ totalLogs > 0 ? ((currentPage - 1) * pageSize + 1) : 0 }}-{{ Math.min(currentPage * pageSize, totalLogs) }} of {{ totalLogs }}
+          </span>
+          <u-pagination
             v-model:page="currentPage"
             :total="totalLogs"
             :items-per-page="pageSize"
         />
+        </div>
       </div>
-    </u-card>
-    </template>
+        </u-card>
+        </div>
+      </template>
 
-    <template #leaderboard>
-    <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }" class="mt-4">
+      <template #leaderboard>
+        <div class="flex flex-col gap-4 mt-4">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+            <div>
+              <h3 class="text-white font-medium flex items-center gap-2">
+                  <u-icon name="i-lucide-trophy" class="w-5 h-5 text-primary-500" />
+                  Contributor Leaderboard
+              </h3>
+              <p class="text-sm text-neutral-400 mt-1">Rankings and detailed statistics of user contributions over time.</p>
+            </div>
+          </div>
+          <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
       <template #header>
         <div class="flex justify-between items-center">
           <u-input v-model="leaderboardSearch" icon="i-lucide-search" placeholder="Search members..." class="max-w-sm" />
@@ -281,11 +328,21 @@ const leaderboardColumns = [
             <span class="font-medium">{{ row.original.username || 'Unknown' }}</span>
           </div>
         </template>
+        <template #lastActivity-cell="{ row }">
+          <div class="flex flex-col" v-if="row.original.lastActivity">
+            <span class="text-sm text-neutral-200">{{ formatLocalTime(row.original.lastActivity).date }}</span>
+            <span class="text-xs text-neutral-500">{{ formatLocalTime(row.original.lastActivity).time }}</span>
+          </div>
+          <span v-else class="text-sm text-neutral-500 italic">Never</span>
+        </template>
         <template #totalActivity-cell="{ row }">
           <span class="font-semibold text-primary-400">{{ row.original.totalActivity }}</span>
         </template>
         <template #translationsUpdated-cell="{ row }">
           <span>{{ row.original.translationsUpdated }}</span>
+        </template>
+        <template #averageTranslationSpeedMs-cell="{ row }">
+          <span class="font-medium text-neutral-300">{{ formatSpeed(row.original.averageTranslationSpeedMs) }}</span>
         </template>
         <template #keysCreated-cell="{ row }">
           <span>{{ row.original.keysCreated }}</span>
@@ -306,11 +363,12 @@ const leaderboardColumns = [
         </template>
       </u-table>
     </u-card>
-    </template>
+        </div>
+      </template>
 
     <template #graphs>
       <div class="mt-4 flex flex-col gap-6">
-        <contributor-graph />
+        <automation-graph />
       </div>
     </template>
 

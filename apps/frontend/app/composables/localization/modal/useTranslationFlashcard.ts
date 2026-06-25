@@ -114,9 +114,9 @@ export function useTranslationFlashcard() {
         }
     }
 
-    const save = (text: string, isGenerated: boolean) => {
+    const save = (text: string, isGenerated: boolean, timeSpentMs: number = 0) => {
         if (!currentKey.value || !targetLanguage.value) return
-        saveTranslation(currentKey.value.id, targetLanguage.value.id, targetLanguage.value.code, text, isGenerated)
+        saveTranslation(currentKey.value.id, targetLanguage.value.id, targetLanguage.value.code, text, isGenerated, timeSpentMs)
     }
 
     const autoTranslateKey = async (provider: 'deepl' | 'google' = 'google') => {
@@ -124,9 +124,9 @@ export function useTranslationFlashcard() {
         await autoTranslate(currentKey.value.id, [targetLanguage.value.id], provider)
     }
 
-    const getSuggestion = async (provider: 'deepl' | 'google' = 'google') => {
+    const getSuggestion = async (provider: 'deepl' | 'google' = 'google', silentQuotaAlert = false) => {
         if (!currentKey.value || !targetLanguage.value) return null
-        return await suggestTranslation(currentKey.value.id, targetLanguage.value.id, provider)
+        return await suggestTranslation(currentKey.value.id, targetLanguage.value.id, provider, silentQuotaAlert)
     }
 
     return {

@@ -107,7 +107,7 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
         {
           label: 'Insights',
           icon: 'i-lucide-activity',
-          href: '/admin/activity'
+          href: '/admin/insights'
         },
         {
           label: 'Migration',

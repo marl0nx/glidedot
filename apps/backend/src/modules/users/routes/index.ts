@@ -63,6 +63,67 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         return userService.updateUser(request.user!.id, body);
     });
 
+    fastify.post('/me/test-alert', async (request, reply) => {
+        const { alertConfig, testEvent } = request.body as any;
+        const { NotificationService } = await import('../../../services/notification.service');
+        
+        let payload: any = {
+            title: 'Test Notification',
+            message: 'This is a test notification from glide. If you are seeing this, your webhook is configured correctly!',
+            event: testEvent || 'test.alert'
+        };
+
+        switch (testEvent) {
+            case 'translation.approved':
+                payload = {
+                    title: 'Translation Approved 🎉',
+                    message: `Your translation for key \`homepage.hero.title\` was approved by reviewer.`,
+                    key: 'homepage.hero.title',
+                    language: 'German (de)',
+                    reviewer: 'reviewer'
+                };
+                break;
+            case 'translation.rejected':
+                payload = {
+                    title: 'Translation Rejected ❌',
+                    message: `Your translation for key \`homepage.hero.title\` was rejected by reviewer.`,
+                    key: 'homepage.hero.title',
+                    language: 'German (de)',
+                    reviewer: 'reviewer',
+                    reason: 'Typo in the second word.'
+                };
+                break;
+            case 'quota.low':
+                payload = {
+                    title: 'Low Translation Quota ⚠️',
+                    message: `Your automated translation quota is running low (12 remaining).`,
+                    remaining: '12',
+                    total: '500'
+                };
+                break;
+            case 'pending.reviews':
+                payload = {
+                    title: 'Pending Reviews ⏳',
+                    message: `There are 5 new translations waiting for your review.`,
+                    pendingCount: '5',
+                    project: 'Main Project'
+                };
+                break;
+            case 'backup.failed':
+                payload = {
+                    title: 'Backup Failed 🚨',
+                    message: `The automated S3 database backup failed to complete.`,
+                    error: 'Connection timeout',
+                    bucket: 'glide-backups-bucket'
+                };
+                break;
+        }
+        
+        await NotificationService.send(alertConfig, `test.${testEvent || 'alert'}`, payload);
+
+        return { success: true };
+    });
+
     fastify.post('/:id/api-key', { preHandler: [requireAdmin] }, async (request) => {
         const { id } = request.params as { id: string };
         return userService.updateApiKey(parseInt(id));

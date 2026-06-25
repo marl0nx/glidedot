@@ -13,16 +13,18 @@
 
 <br />
 
-## 💡 Overview
+> glide. is a self-hosted localization platform designed to streamline translation management across your projects using modern tools, automated workflows, and AI.
 
-glide. is a self-hosted localization and translation management platform. It provides an interface to manage translation keys, labels, conventions, and multiple languages across your projects. It helps streamline the management of multi-language applications through its APIs and automated workflows. The project was built with the assistance of modern AI agents, carefully guided to ensure a solid and secure foundation.
+## 1. Overview
 
-### Architecture
+glide. provides an interface to manage translation keys, labels, conventions, and multiple languages across your projects. It helps streamline the management of multi-language applications through its APIs and automated workflows. The project was built with the assistance of modern AI agents, carefully guided to ensure a solid and secure foundation.
+
+### 1.1 Architecture
 glide. uses SQLite and Fastify to ensure reliable performance. With features like naming conventions, a translation review system, and automated S3 backups, the platform is designed to run securely and dependably in your environment.
 
-## 💎 Core Features
+## 2. Core Features
 
-- **In-Context Editor:** Edit translations directly inside your target application using the Glide overlay.
+- **In-Context Editor:** Edit translations directly inside your target application using the glide. overlay.
 - **Naming Conventions & Linting:** Enforce key structures using templates, variables, and a glossary linter.
 - **Translation Review System:** Route new translations through a drafting and approval workflow.
 - **Activity Logs & Heatmap:** Track actions on the platform, visualized in a GitHub-style heatmap.
@@ -30,9 +32,7 @@ glide. uses SQLite and Fastify to ensure reliable performance. With features lik
 - **OIDC & Backups:** OpenID Connect (OIDC) support for single sign-on (SSO) and automated S3 backups.
 - **Access Control:** Manage teams, user roles (Admins, Reviewers), and set translation quotas.
 
----
-
-## ⚙️ Tech Stack
+## 3. Tech Stack
 
 glide. is structured as a monorepo (powered by Bun Workspaces) and uses the following technologies:
 
@@ -42,22 +42,23 @@ glide. is structured as a monorepo (powered by Bun Workspaces) and uses the foll
 - **Database / ORM:** [SQLite](https://sqlite.org/) + [Drizzle ORM](https://orm.drizzle.team/)
 - **Deployment:** Multi-stage Docker + Docker Compose
 
----
+## 4. Documentation
 
-## 📚 Documentation
+Check out the guides to learn how to deploy, configure, and use glide.:
 
-Check out the guides to learn how to deploy, configure, and use glide:
-
-- [**Installation & Deployment**](docs/INSTALL.md) — Learn how to run glide locally or deploy it using Docker.
+- [**Installation & Deployment**](docs/INSTALL.md) — Learn how to run glide. locally or deploy it using Docker.
 - [**In-Context Editing**](docs/IN-CONTEXT-EDIT.md) — Set up visual editing inside your target applications.
 - [**Key Conventions & Templates**](docs/CONVENTIONS.md) — Enforce naming rules using templates, variables, and linting.
 - [**The Review System**](docs/REVIEWS.md) — Understand how the drafting and approval lifecycle works.
+- [**AI Translation & DeepL**](docs/AI-TRANSLATION.md) — Configure machine translation, inline suggestions, and manage translation quotas.
+- [**Insights & Analytics**](docs/INSIGHTS.md) — View team productivity, automation impact, and time saved tracking.
+- [**Event Notifications**](docs/NOTIFICATIONS.md) — Configure custom webhooks (Discord, Slack, ntfy) for system alerts.
+- [**REST API**](docs/API.md) — Easily integrate translations into your apps.
+- [**Namespaces & Best Practices**](docs/BEST-PRACTICE.md) — Learn how to structure keys with namespaces and labels for large projects.
 - [**Migration & Backups**](docs/MIGRATION.md) — Import/export translations and configure automated S3 backups.
 - [**Theming & UI Customization**](docs/THEMING.md) — Learn about UI customizations and dark mode settings.
 
----
-
-## 📂 Repository Structure
+## 5. Repository Structure
 
 ```text
 glidedot/

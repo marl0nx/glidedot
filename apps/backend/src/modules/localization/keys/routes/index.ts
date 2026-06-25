@@ -13,7 +13,7 @@ export default async function keyRoutes(fastify: FastifyInstance) {
     fastify.post('/:projectId', { preHandler: [checkProjectAccess] }, async (request, reply) => {
         const { projectId } = request.params as { projectId: string };
         const body = request.body as { key: string; labelIds?: number[] };
-        const result = await service.createKey(parseInt(projectId), body.key, body.labelIds);
+        const result = await service.createKey(parseInt(projectId), body.key, body.labelIds, request.user?.id);
         
         if (request.user) {
             await service.logActivity(request.user.id, parseInt(projectId), 'KEY_CREATED', JSON.stringify({ key: body.key }));
@@ -24,7 +24,7 @@ export default async function keyRoutes(fastify: FastifyInstance) {
 
     fastify.post('/:projectId/:keyId/translations', { preHandler: [checkProjectAccess, checkLanguagePermission] }, async (request) => {
         const { projectId, keyId } = request.params as { projectId: string; keyId: string };
-        const body = request.body as { languageId: number; value: string };
+        const body = request.body as { languageId: number; value: string; timeSpentMs?: number; isAutomated?: boolean };
         
         const { translationKeys, languages, translations } = await import('../../schema');
         const { eq, and } = await import('drizzle-orm');
@@ -46,7 +46,9 @@ export default async function keyRoutes(fastify: FastifyInstance) {
                 keyName,
                 languageCode,
                 oldValue,
-                newValue: body.value
+                newValue: body.value,
+                timeSpentMs: body.timeSpentMs || 0,
+                isAutomated: body.isAutomated || false
             }));
         }
         return result;
@@ -63,11 +65,24 @@ export default async function keyRoutes(fastify: FastifyInstance) {
 
     fastify.patch('/:projectId/:keyId', { preHandler: [checkProjectAccess] }, async (request) => {
         const { projectId, keyId } = request.params as { projectId: string, keyId: string };
-        const body = request.body as { key: string };
-        const result = await service.updateKey(parseInt(projectId), parseInt(keyId), body.key);
+        const body = request.body as { key: string, forceReview?: boolean };
+        const result = await service.updateKey(parseInt(projectId), parseInt(keyId), body.key, request.user?.id, body.forceReview);
         
         if (request.user) {
             await service.logActivity(request.user.id, parseInt(projectId), 'KEY_UPDATED', JSON.stringify({ keyId, newKey: body.key }));
+        }
+        
+        return result;
+    });
+
+    fastify.patch('/:projectId/bulk', { preHandler: [checkProjectAccess] }, async (request) => {
+        const { projectId } = request.params as { projectId: string };
+        const body = request.body as { updates: { id: number, key: string }[], forceReview?: boolean };
+        
+        const result = await service.bulkUpdateKeys(parseInt(projectId), body.updates, request.user?.id, body.forceReview);
+        
+        if (request.user && body.updates.length > 0) {
+            await service.logActivity(request.user.id, parseInt(projectId), 'KEYS_BULK_UPDATED', JSON.stringify({ count: body.updates.length }));
         }
         
         return result;
@@ -94,6 +109,21 @@ export default async function keyRoutes(fastify: FastifyInstance) {
             .returning();
             
         await service.logActivity(request.user.id, parseInt(projectId), 'TRANSLATION_APPROVED', JSON.stringify({ keyId, languageId }));
+
+        if (existing.authorId && existing.authorId !== request.user.id) {
+            const { users } = await import('../../../users/schema');
+            const { NotificationService } = await import('../../../../services/notification.service');
+            const [author] = await fastify.db.select().from(users).where(eq(users.id, existing.authorId));
+            if (author?.alertConfig) {
+                const { translationKeys } = await import('../../schema');
+                const [keyRecord] = await fastify.db.select().from(translationKeys).where(eq(translationKeys.id, parseInt(keyId)));
+                await NotificationService.send(author.alertConfig, 'translation.approved', {
+                    title: 'Translation Approved 🎉',
+                    message: `Your translation for key \`${keyRecord?.key}\` was approved by ${request.user.username}.`
+                });
+            }
+        }
+
         return updated[0];
     });
 
@@ -118,6 +148,79 @@ export default async function keyRoutes(fastify: FastifyInstance) {
             .returning();
 
         await service.logActivity(request.user.id, parseInt(projectId), 'TRANSLATION_REJECTED', JSON.stringify({ keyId, languageId }));
+
+        if (existing.authorId && existing.authorId !== request.user.id) {
+            const { users } = await import('../../../users/schema');
+            const { NotificationService } = await import('../../../../services/notification.service');
+            const [author] = await fastify.db.select().from(users).where(eq(users.id, existing.authorId));
+            if (author?.alertConfig) {
+                const { translationKeys } = await import('../../schema');
+                const [keyRecord] = await fastify.db.select().from(translationKeys).where(eq(translationKeys.id, parseInt(keyId)));
+                await NotificationService.send(author.alertConfig, 'translation.rejected', {
+                    title: 'Translation Rejected ❌',
+                    message: `Your translation for key \`${keyRecord?.key}\` was rejected by ${request.user.username}. Please review it.`
+                });
+            }
+        }
+
+        return updated[0];
+    });
+
+    fastify.post('/:projectId/:keyId/approve', { preHandler: [checkProjectAccess] }, async (request, reply) => {
+        const { projectId, keyId } = request.params as { projectId: string, keyId: string };
+        const { translationKeys } = await import('../../schema');
+        const { eq, and } = await import('drizzle-orm');
+        
+        // Ensure user is reviewer or admin
+        if (!request.user?.isAdmin && !request.user?.isReviewer) {
+            return reply.status(403).send({ error: 'Only admins or reviewers can approve key edits' });
+        }
+
+        const [existing] = await fastify.db.select().from(translationKeys).where(and(eq(translationKeys.id, parseInt(keyId)), eq(translationKeys.projectId, parseInt(projectId))));
+        if (!existing || existing.reviewStatus !== 'PENDING_REVIEW') {
+            return reply.status(400).send({ error: 'Key is not pending review' });
+        }
+
+        const newName = existing.draftKey || existing.key;
+        if (newName !== existing.key) {
+            const [conflict] = await fastify.db.select().from(translationKeys).where(and(eq(translationKeys.key, newName), eq(translationKeys.projectId, parseInt(projectId))));
+            if (conflict) {
+                return reply.status(400).send({ error: `A key with the name '${newName}' already exists. Please reject this review or delete the conflicting key first.` });
+            }
+        }
+
+        const updated = await fastify.db.update(translationKeys)
+            .set({ key: newName, draftKey: null, reviewStatus: 'APPROVED' })
+            .where(eq(translationKeys.id, existing.id))
+            .returning();
+            
+        await service.logActivity(request.user.id, parseInt(projectId), 'KEY_APPROVED', JSON.stringify({ keyId }));
+
+        return updated[0];
+    });
+
+    fastify.post('/:projectId/:keyId/reject', { preHandler: [checkProjectAccess] }, async (request, reply) => {
+        const { projectId, keyId } = request.params as { projectId: string, keyId: string };
+        const { translationKeys } = await import('../../schema');
+        const { eq, and } = await import('drizzle-orm');
+        
+        // Ensure user is reviewer or admin
+        if (!request.user?.isAdmin && !request.user?.isReviewer) {
+            return reply.status(403).send({ error: 'Only admins or reviewers can reject key edits' });
+        }
+
+        const [existing] = await fastify.db.select().from(translationKeys).where(and(eq(translationKeys.id, parseInt(keyId)), eq(translationKeys.projectId, parseInt(projectId))));
+        if (!existing || existing.reviewStatus !== 'PENDING_REVIEW') {
+            return reply.status(400).send({ error: 'Key is not pending review' });
+        }
+
+        const updated = await fastify.db.update(translationKeys)
+            .set({ draftKey: null, reviewStatus: 'REJECTED' })
+            .where(eq(translationKeys.id, existing.id))
+            .returning();
+
+        await service.logActivity(request.user.id, parseInt(projectId), 'KEY_REJECTED', JSON.stringify({ keyId }));
+
         return updated[0];
     });
 

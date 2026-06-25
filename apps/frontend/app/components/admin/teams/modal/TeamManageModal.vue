@@ -121,7 +121,7 @@ const getAvatarColor = (name: string) => {
 </script>
 
 <template>
-  <u-modal v-model:open="isOpen" :title="`Manage Team (ID: ${team?.id})`" :ui="{ content: 'sm:max-w-2xl' }">
+  <u-modal v-model:open="isOpen" :dismissible="!hasUnsavedChanges" :title="`Manage Team (ID: ${team?.id})`" :ui="{ content: 'sm:max-w-2xl' }">
     <template v-if="team" #body>
       <div class="p-4 space-y-8">
         <!-- Team Name -->
@@ -220,13 +220,11 @@ const getAvatarColor = (name: string) => {
     <template #footer>
       <div class="flex justify-end gap-2">
         <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
-        <u-button color="neutral" label="Save Changes" :loading="loading" :disabled="!localName?.trim()" @click="handleSave" />
       </div>
 
       <unsaved-changes-alert 
         :has-unsaved-changes="hasUnsavedChanges" 
         :loading="loading" 
-        :hide-buttons="true"
         @save="handleSave" 
         @discard="discard" 
       />

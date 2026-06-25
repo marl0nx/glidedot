@@ -312,12 +312,26 @@ const toggleSelection = (label: TranslationLabel) => {
         </div>
       </div>
 
-      <div class="flex justify-end border-t border-default pt-4 px-4">
-        <u-pagination
+      <div class="flex items-center justify-between border-t border-default pt-4 px-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-neutral-500">Rows per page</span>
+          <u-select
+            :model-value="pagination.pageSize"
+            :items="[10, 20, 50, 100]"
+            class="w-20"
+            @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
+          />
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-neutral-500">
+            {{ realLabels.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, realLabels.length) }} of {{ realLabels.length }}
+          </span>
+          <u-pagination
             v-model:page="currentPagination"
             :total="realLabels.length"
             :items-per-page="pagination.pageSize"
         />
+        </div>
       </div>
     </div>
   </div>

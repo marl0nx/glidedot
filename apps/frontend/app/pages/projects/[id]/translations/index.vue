@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useTranslation } from '~/composables/localization/useTranslation'
+import { useRoute, useRouter } from 'vue-router'
 
 import TranslationActivityModal from '~/components/localization/translations/modal/TranslationActivityModal.vue'
 import TranslationListModal from '~/components/localization/translations/modal/TranslationListModal.vue'
@@ -10,14 +11,22 @@ import type { Language } from '~/types'
 const {
   init,
   languages,
+  keys,
   sourceLanguage,
   visibleScopes,
   selectedScope,
   getLanguageProgress,
+  targetLanguage,
+  isModalOpen,
+  activeKeyId
 } = useTranslation()
+
+const route = useRoute()
+const router = useRouter()
 
 const isListModalOpen = ref(false)
 const listModalLanguage = ref<Language | null>(null)
+const listModalSearch = ref('')
 
 const openListModal = (lang: Language) => {
   listModalLanguage.value = lang
@@ -33,8 +42,29 @@ const sortedLanguages = computed(() => {
   })
 })
 
-onMounted(() => {
-  init()
+onMounted(async () => {
+  await init()
+
+  if (route.query.editKey && route.query.langId) {
+    const editKeyStr = route.query.editKey as string
+    const langIdNum = parseInt(route.query.langId as string)
+    
+    const targetLang = languages.value?.find((l: any) => l.id === langIdNum)
+    const targetKey = keys.value?.find((k: any) => k.key === editKeyStr)
+    
+    if (targetLang && targetKey) {
+      const parts = editKeyStr.split('.')
+      if (parts.length > 0) {
+        selectedScope.value = parts[0]
+      }
+      
+      listModalLanguage.value = targetLang
+      listModalSearch.value = editKeyStr
+      isListModalOpen.value = true
+      
+      router.replace({ query: {} })
+    }
+  }
 })
 
 definePageMeta({
@@ -44,9 +74,14 @@ definePageMeta({
 
 <template>
   <div class="flex flex-col gap-4 md:gap-6 -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 overflow-x-hidden md:overflow-x-visible">
-    <div class="flex flex-col gap-1 mb-2">
-      <h1 class="text-xl font-semibold">Translations</h1>
-      <p class="text-sm text-neutral-400">Select a scope and choose a language to start translating.</p>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0 mb-2">
+      <div>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-languages" class="w-5 h-5 text-primary-500" />
+            Translations
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">Select a scope and choose a language to start translating.</p>
+      </div>
     </div>
 
     <!-- Main Content -->
@@ -79,6 +114,6 @@ definePageMeta({
       <translation-activity-modal/>
     </teleport>
 
-    <translation-list-modal v-model="isListModalOpen" :lang="listModalLanguage" />
+    <translation-list-modal v-model="isListModalOpen" :lang="listModalLanguage" :default-search="listModalSearch" />
   </div>
 </template>

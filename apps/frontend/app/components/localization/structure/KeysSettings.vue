@@ -4,12 +4,14 @@ import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { TranslationKey, TranslationLabel, Project } from '~/types'
 import { useTranslation } from '~/composables/localization/useTranslation'
 import { useConventions } from '~/composables/localization/useConventions'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useProject } from '~/composables/useProject'
 import { useApi } from '~/composables/useApi'
-import NamespaceGraph from '~/components/admin/activity/graphs/NamespaceGraph.vue'
+import NamespaceGraph from '~/components/admin/insights/graphs/NamespaceGraph.vue'
+import { watch } from 'vue'
 
 const route = useRoute()
+const router = useRouter()
 const projectId = parseInt(route.params.id as string)
 const { fetchApi } = useApi()
 
@@ -23,6 +25,7 @@ const {
 const { data: projectsData } = await useAsyncData(`projects-${projectId}`, () => fetchApi('/localization/projects'))
 const projects = computed<Project[]>(() => (projectsData.value as Project[]) || [])
 const { currentProject } = useProject(projects)
+const toast = useToast()
 
 const {
   init,
@@ -35,10 +38,11 @@ const {
   bulkAddLabelToKeys,
   bulkRemoveLabelFromKeys,
   addLabelToKey,
-  removeLabelFromKey
+  removeLabelFromKey,
+  bulkUpdateKeys
 } = useTranslation()
 
-const search = ref("")
+const search = ref((route.query.searchKey as string) || "")
 const pagination = ref({pageIndex: 0, pageSize: 15})
 const rowSelection = ref<Record<string, boolean>>({})
 const isEditLabelsModalOpen = ref(false)
@@ -47,6 +51,12 @@ const isAddKeyModalOpen = ref(false)
 const editingKeyId = ref<number | null>(null)
 const editingKeyName = ref("")
 const showDiagram = ref(false)
+
+watch(isEditLabelsModalOpen, (isOpen) => {
+  if (!isOpen) {
+    rowSelection.value = {}
+  }
+})
 
 const currentPagination = computed({
   get: () => pagination.value.pageIndex + 1,
@@ -57,6 +67,18 @@ const currentPagination = computed({
     }
   }
 })
+
+const handleGraphGoToStructure = (keyName: string) => {
+  search.value = keyName
+  showDiagram.value = false
+}
+
+const handleGraphGoToTranslations = (keyName: string, langId: number) => {
+  router.push({
+    path: `/projects/${projectId}/translations`,
+    query: { editKey: keyName, langId: langId.toString() }
+  })
+}
 
 const columns: TableColumn<TranslationKey>[] = [
   {id: 'select'},
@@ -133,6 +155,92 @@ const saveKeyName = async (keyId: number) => {
   }
   editingKeyId.value = null
 }
+
+
+const getGlossaryFixes = (keyName: string) => {
+  if (!glossary.value || glossary.value.length === 0) return []
+  const fixes: { badWord: string, goodWord: string }[] = []
+  
+  glossary.value.forEach(term => {
+    const badWords = term.badWord.split(',').map(w => w.trim()).filter(Boolean)
+    for (const word of badWords) {
+      const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(`(^|[\\.\\-_\\s])${escapedWord}([\\.\\-_\\s]|$)`, 'i')
+      if (regex.test(keyName)) {
+        fixes.push({ badWord: word, goodWord: term.goodWord })
+      }
+    }
+  })
+  return fixes
+}
+
+const applyGlossaryFixesToName = (keyName: string, fixes: { badWord: string, goodWord: string }[]) => {
+  let newName = keyName
+  for (const fix of fixes) {
+    const escapedWord = fix.badWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(`(^|[\\.\\-_\\s])(${escapedWord})([\\.\\-_\\s]|$)`, 'gi')
+    newName = newName.replace(regex, (match, p1, p2, p3) => p1 + fix.goodWord + p3)
+  }
+  return newName
+}
+
+const autoFixKey = async (keyObj: TranslationKey) => {
+  const fixes = getGlossaryFixes(keyObj.key)
+  if (fixes.length > 0) {
+    const newName = applyGlossaryFixesToName(keyObj.key, fixes)
+    if (newName !== keyObj.key) {
+      if (realKeys.value.some(k => k.key === newName)) {
+        toast.add({ title: 'Conflict', description: `Cannot auto-fix: a key with the name '${newName}' already exists.`, color: 'error' })
+        return
+      }
+      try {
+        await updateKey(keyObj.id, newName, true)
+        toast.add({ title: 'Success', description: 'Key auto-fix sent for review', color: 'success' })
+      } catch(e) {
+        toast.add({ title: 'Error', description: 'Failed to auto-fix key', color: 'error' })
+      }
+    }
+  }
+}
+
+const isAutoFixingAll = ref(false)
+
+const keysWithGlossaryWarnings = computed(() => {
+  return realKeys.value.filter(k => {
+    if (k.reviewStatus === 'PENDING_REVIEW') return false;
+    const fixes = getGlossaryFixes(k.key);
+    if (fixes.length === 0) return false;
+    
+    // Ensure auto-fix wouldn't cause a conflict
+    const newName = applyGlossaryFixesToName(k.key, fixes);
+    const wouldConflict = realKeys.value.some(rk => rk.id !== k.id && rk.key === newName);
+    return !wouldConflict;
+  })
+})
+
+const autoFixAllKeys = async () => {
+  const keysToFix = keysWithGlossaryWarnings.value
+  if (!keysToFix.length) return
+  
+  isAutoFixingAll.value = true
+  
+  const updates: { id: number, key: string }[] = []
+  
+  for (const k of keysToFix) {
+    const fixes = getGlossaryFixes(k.key)
+    const newName = applyGlossaryFixesToName(k.key, fixes)
+    if (newName !== k.key) {
+      updates.push({ id: k.id, key: newName })
+    }
+  }
+  
+  if (updates.length > 0) {
+    await bulkUpdateKeys(updates, true)
+  }
+  
+  isAutoFixingAll.value = false
+}
+
 
 const bulkActions = computed<DropdownMenuItem[][]>(() => [
   [
@@ -320,6 +428,15 @@ watch([glossary, templates, variables], () => {
           />
         </u-dropdown-menu>
         <u-button
+            v-if="!showDiagram && keysWithGlossaryWarnings.length > 0"
+            variant="soft"
+            color="warning"
+            :loading="isAutoFixingAll"
+            :label="`Fix ${keysWithGlossaryWarnings.length} Glossary Error${keysWithGlossaryWarnings.length > 1 ? 's' : ''}`"
+            icon="i-lucide-wand-2"
+            @click="autoFixAllKeys"
+        />
+        <u-button
             v-if="!showDiagram"
             variant="subtle"
             color="neutral"
@@ -331,7 +448,11 @@ watch([glossary, templates, variables], () => {
     </div>
 
     <div v-if="showDiagram" class="w-full pb-4">
-      <namespace-graph :project-id="projectId" />
+      <namespace-graph 
+        :project-id="projectId" 
+        @go-to-structure="handleGraphGoToStructure"
+        @go-to-translations="handleGraphGoToTranslations"
+      />
     </div>
 
     <div v-else class="w-full space-y-4 pb-4">
@@ -389,14 +510,38 @@ watch([glossary, templates, variables], () => {
           </template>
 
           <template #conventions-cell="{ row }">
-            <div class="flex items-center">
-              <template v-if="validateKey(row.original.key).length === 0">
+            <div class="flex items-center gap-2">
+              <template v-if="row.original.reviewStatus === 'PENDING_REVIEW'">
+                <u-badge color="warning" variant="subtle" size="sm" class="opacity-70"><u-icon name="i-lucide-clock" class="mr-1 w-3 h-3" /> Pending Review</u-badge>
+              </template>
+              <template v-else-if="validateKey(row.original.key).length === 0">
                 <u-badge color="success" variant="subtle" size="sm" class="opacity-70"><u-icon name="i-lucide-check-circle" class="mr-1 w-3 h-3" /> Valid</u-badge>
               </template>
               <template v-else>
-                <u-tooltip :text="validateKey(row.original.key).join(' • ')">
-                  <u-badge color="warning" variant="subtle" size="sm" class="cursor-help"><u-icon name="i-lucide-alert-triangle" class="mr-1 w-3 h-3" /> Invalid</u-badge>
-                </u-tooltip>
+                <div class="flex items-center gap-1">
+                  <u-tooltip :text="validateKey(row.original.key).join(' • ')">
+                    <u-badge color="warning" variant="subtle" size="sm" class="cursor-help"><u-icon name="i-lucide-alert-triangle" class="mr-1 w-3 h-3" /> Invalid</u-badge>
+                  </u-tooltip>
+                  <template v-if="getGlossaryFixes(row.original.key).length > 0">
+                    <u-tooltip v-if="realKeys.some(rk => rk.id !== row.original.id && rk.key === applyGlossaryFixesToName(row.original.key, getGlossaryFixes(row.original.key)))" text="Auto-fix unavailable: The destination key name already exists.">
+                      <u-button
+                        icon="i-lucide-wand-2"
+                        size="2xs"
+                        color="neutral"
+                        variant="ghost"
+                        class="opacity-50 cursor-not-allowed"
+                      />
+                    </u-tooltip>
+                    <u-button
+                      v-else
+                      icon="i-lucide-wand-2"
+                      size="2xs"
+                      color="warning"
+                      variant="ghost"
+                      @click.stop="autoFixKey(row.original)"
+                    />
+                  </template>
+                </div>
               </template>
             </div>
           </template>
@@ -476,9 +621,19 @@ watch([glossary, templates, variables], () => {
                       <u-badge color="success" variant="subtle" size="xs" class="opacity-70"><u-icon name="i-lucide-check-circle" class="w-3 h-3" /></u-badge>
                     </template>
                     <template v-else>
-                      <u-tooltip :text="validateKey(keyObj.key).join(' • ')">
-                        <u-badge color="warning" variant="subtle" size="xs"><u-icon name="i-lucide-alert-triangle" class="w-3 h-3" /></u-badge>
-                      </u-tooltip>
+                      <div class="flex items-center gap-1">
+                        <u-tooltip :text="validateKey(keyObj.key).join(' • ')">
+                          <u-badge color="warning" variant="subtle" size="xs"><u-icon name="i-lucide-alert-triangle" class="w-3 h-3" /></u-badge>
+                        </u-tooltip>
+                        <u-button
+                          v-if="getGlossaryFixes(keyObj.key).length > 0"
+                          icon="i-lucide-wand-2"
+                          size="2xs"
+                          color="warning"
+                          variant="ghost"
+                          @click.stop="autoFixKey(keyObj)"
+                        />
+                      </div>
                     </template>
                   </div>
                 </div>
@@ -524,12 +679,26 @@ watch([glossary, templates, variables], () => {
         </div>
       </div>
 
-      <div class="flex justify-end border-t border-default pt-4 px-4">
-        <u-pagination
+      <div class="flex items-center justify-between border-t border-default pt-4 px-4">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-neutral-500">Rows per page</span>
+          <u-select
+            :model-value="pagination.pageSize"
+            :items="[10, 20, 50, 100]"
+            class="w-20"
+            @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
+          />
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-neutral-500">
+            {{ realKeys.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, realKeys.length) }} of {{ realKeys.length }}
+          </span>
+          <u-pagination
             v-model:page="currentPagination"
             :total="realKeys.length"
             :items-per-page="pagination.pageSize"
         />
+        </div>
       </div>
     </div>
   </div>

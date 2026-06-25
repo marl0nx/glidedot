@@ -34,7 +34,7 @@ const loadData = async () => {
     projects.value = projs as Project[]
     languages.value = langs as { id: number; code: string; name: string }[]
   } catch {
-    toast.add({ title: 'Failed to load projects', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to load projects', color: 'error' })
   } finally {
     isLoading.value = false
   }
@@ -73,7 +73,7 @@ const saveProject = async () => {
           sourceLanguageId: selectedProject.value.sourceLanguageId
         }
       })
-      toast.add({ title: 'Project created successfully', color: 'success' })
+      toast.add({ title: 'Success', description: 'Project created successfully', color: 'success' })
     } else if (selectedProject.value.id) {
       await fetchApi(`/localization/projects/${selectedProject.value.id}`, {
         method: 'PATCH',
@@ -85,13 +85,13 @@ const saveProject = async () => {
           requireTemplate: selectedProject.value.requireTemplate
         }
       })
-      toast.add({ title: 'Project updated successfully', color: 'success' })
+      toast.add({ title: 'Success', description: 'Project updated successfully', color: 'success' })
     }
     isModalOpen.value = false
     await loadData()
     await refreshNuxtData('projects')
   } catch {
-    toast.add({ title: 'Failed to save project', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to save project', color: 'error' })
   }
 }
 
@@ -99,22 +99,25 @@ const confirmDelete = async () => {
   if (!selectedProject.value.id) return
   try {
     await fetchApi(`/localization/projects/${selectedProject.value.id}`, { method: 'DELETE' })
-    toast.add({ title: 'Project deleted successfully', color: 'success' })
+    toast.add({ title: 'Success', description: 'Project deleted successfully', color: 'success' })
     isDeleteModalOpen.value = false
     await loadData()
     await refreshNuxtData('projects')
   } catch {
-    toast.add({ title: 'Failed to delete project', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to delete project', color: 'error' })
   }
 }
 </script>
 
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex flex-row justify-between items-center">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
       <div>
-        <h1 class="text-xl font-bold">Manage Projects</h1>
-        <p class="text-sm text-neutral-400">Create, edit, and manage your localization projects.</p>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-folder-git-2" class="w-5 h-5 text-primary-500" />
+            Manage Projects
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">Create, edit, and manage your localization projects.</p>
       </div>
       <u-button icon="i-lucide-folder-plus" label="Create Project" color="neutral" variant="subtle" @click="openCreateModal" />
     </div>

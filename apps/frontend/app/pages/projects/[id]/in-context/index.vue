@@ -114,7 +114,7 @@ const handleMessage = async (event: MessageEvent) => {
       isModalOpen.value = true
     } else if (!targetLanguage.value) {
       const toast = useToast()
-      toast.add({ title: 'No Language', description: 'Please select a preview language first.', color: 'error' })
+      toast.add({ title: 'Error', description: `No Language - Please select a preview language first.`, color: 'error' })
     }
   }
 }

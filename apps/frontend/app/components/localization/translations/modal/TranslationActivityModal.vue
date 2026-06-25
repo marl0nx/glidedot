@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import { useTranslationFlashcard } from '../../../../composables/localization/modal/useTranslationFlashcard'
+import { useTranslationTimer } from '../../../../composables/localization/useTranslationTimer'
 import { useShortcuts } from '~/composables/useShortcuts'
 import { useAuth } from '~/composables/useAuth'
 import confetti from 'canvas-confetti'
@@ -36,6 +37,7 @@ const suggestionText = ref('')
 const provider = ref<'deepl' | 'google'>('deepl')
 const enableShortcuts = ref(true)
 const translatedThisSession = ref(0)
+const quotaAlertShown = ref(false)
 
 const fetchSuggestion = async () => {
   if (currentUser.value?.enableSuggestions === false || currentUser.value?.allowSuggestions === false) {
@@ -50,8 +52,13 @@ const fetchSuggestion = async () => {
   
   isGenerating.value = true
   try {
-    const text = await getSuggestion(currentUser.value?.hasDeepL ? 'deepl' : 'google')
+    const text = await getSuggestion(currentUser.value?.hasDeepL ? 'deepl' : 'google', quotaAlertShown.value)
     if (text) {
+      if ((text as any).error === 'quota_exceeded') {
+        quotaAlertShown.value = true
+        suggestionText.value = ''
+        return
+      }
       suggestionText.value = text.suggestion
       if (currentUser.value) {
          currentUser.value.translationQuota = text.quotaRemaining
@@ -81,9 +88,10 @@ const unlockScroll = () => {
 watch(isOpen, (newVal) => {
   if (newVal) {
     translatedThisSession.value = 0
+    quotaAlertShown.value = false
     lockScroll()
     if (currentUser.value?.enableSuggestions === false || currentUser.value?.allowSuggestions === false) {
-      toast.add({ title: 'Suggestions are disabled', description: 'AI translation suggestions are disabled or not allowed.', color: 'error' })
+      toast.add({ title: 'Error', description: `Suggestions are disabled - AI translation suggestions are disabled or not allowed.`, color: 'error' })
     }
   } else {
     unlockScroll()
@@ -120,28 +128,39 @@ watch(progressPercentage, (newVal, oldVal) => {
   }
 })
 
+const { timeSpentMs, startTracking, stopTracking, registerActivity, resetTimer } = useTranslationTimer()
+
 watch([currentKey, provider], () => {
   if (currentKey.value) {
     tempText.value = currentTranslationText.value
     suggestionText.value = ''
     fetchSuggestion()
+    resetTimer()
+    startTracking()
     nextTick(() => {
       textareaRef.value?.focus()
     })
+  } else {
+    stopTracking()
   }
 }, {immediate: true})
 
 const autoTranslate = async () => {
   if (suggestionText.value) {
     tempText.value = suggestionText.value
+    registerActivity()
   }
 }
 
 const flushSave = () => {
   if (tempText.value !== currentTranslationText.value) {
     translatedThisSession.value++
-    save(tempText.value, false)
+    stopTracking()
+    save(tempText.value, tempText.value === suggestionText.value, timeSpentMs.value)
+    resetTimer()
   }
+  // Even if we didn't save, reset the timer for the next key
+  resetTimer()
 }
 
 const doNext = () => {
@@ -205,6 +224,12 @@ const handleKeydown = (e: KeyboardEvent) => {
       autoTranslate()
       return
     }
+  }
+
+  if (matchShortcut(e, 'copySource')) {
+    e.preventDefault()
+    tempText.value = sourceText.value
+    return
   }
 
   if (matchShortcut(e, 'saveNext')) {
@@ -333,6 +358,7 @@ onUnmounted(() => {
                   v-model="tempText"
                   class="w-full min-h-[100px] md:min-h-[140px] px-4 md:px-6 text-sm font-medium text-neutral-100 bg-transparent resize-none focus:outline-none leading-relaxed"
                   placeholder="Enter translation here..."
+                  @input="registerActivity"
               />
             </div>
 
@@ -360,20 +386,22 @@ onUnmounted(() => {
           <div v-if="currentUser?.enableSuggestions !== false && currentUser?.allowSuggestions !== false && sourceText && !tempText.trim()"
               class="flex flex-col md:flex-row items-start md:items-center w-full rounded-xl p-3 bg-accented/20 border border-accented/50 shadow-sm gap-3 shrink-0">
             <div class="flex flex-col flex-1 gap-1">
-              <div class="flex items-center gap-2">
-                <u-icon name="i-lucide-sparkles" size="xs" class="text-amber-500"/>
-                <h3 class="text-[10px] font-bold text-amber-500/80 uppercase tracking-wider">SUGGESTION ({{ currentUser?.hasDeepL ? 'DeepL' : 'Google' }})</h3>
-              </div>
-              <p class="text-sm font-medium leading-relaxed text-neutral-300 line-clamp-3">
-                {{ isGenerating ? 'Generating...' : (suggestionText || 'No suggestion available') }}
-              </p>
-              
-              <div v-if="currentUser?.translationQuota !== undefined && !currentUser.isAdmin && currentUser.translationQuota <= 50" class="flex items-center justify-between bg-amber-500/10 rounded mt-1 p-1.5 text-[10px]">
-                <div class="flex items-center gap-1.5 text-amber-500 font-medium">
-                  <u-icon name="i-lucide-alert-triangle" size="xs" />
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-1 md:gap-4">
+                <div class="flex items-center gap-2">
+                  <u-icon name="i-lucide-sparkles" size="xs" class="text-amber-500"/>
+                  <h3 class="text-[10px] font-bold text-amber-500/80 uppercase tracking-wider">SUGGESTION ({{ currentUser?.hasDeepL ? 'DeepL' : 'Google' }})</h3>
+                </div>
+                
+                <div v-if="currentUser?.translationQuota !== undefined && !currentUser.isAdmin" 
+                     class="flex items-center gap-1.5 text-[10px] font-medium transition-colors"
+                     :class="currentUser.translationQuota <= 50 ? 'text-amber-500/80' : 'text-neutral-500'">
+                  <u-icon name="i-lucide-activity" size="xs" />
                   <span>{{ currentUser.translationQuota }} left</span>
                 </div>
               </div>
+              <p class="text-sm font-medium leading-relaxed text-neutral-300 line-clamp-3 mt-1">
+                {{ isGenerating ? 'Generating...' : (suggestionText || 'No suggestion available') }}
+              </p>
             </div>
             
             <u-button

@@ -1,6 +1,9 @@
 export interface TranslationKey {
     id: number
     key: string
+    draftKey?: string
+    reviewStatus?: 'APPROVED' | 'PENDING_REVIEW' | 'REJECTED'
+    isPendingDelete?: boolean
     labels?: TranslationLabel[]
 }
 

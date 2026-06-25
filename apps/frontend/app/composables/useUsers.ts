@@ -30,7 +30,7 @@ export const useUsers = () => {
       const data = await fetchApi('/users')
       users.value = data as AppUser[]
     } catch {
-      toast.add({ title: 'Failed to load users', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to load users', color: 'error' })
     } finally {
       isLoading.value = false
     }
@@ -39,11 +39,11 @@ export const useUsers = () => {
   const createUser = async (user: Partial<AppUser>) => {
     try {
       await fetchApi('/users', { method: 'POST', body: user })
-      toast.add({ title: 'User created successfully', color: 'success' })
+      toast.add({ title: 'Success', description: 'User created successfully', color: 'success' })
       await fetchUsers()
       return true
     } catch {
-      toast.add({ title: 'Failed to create user', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to create user', color: 'error' })
       return false
     }
   }
@@ -51,11 +51,11 @@ export const useUsers = () => {
   const updateUser = async (id: number, user: Partial<AppUser>) => {
     try {
       await fetchApi(`/users/${id}`, { method: 'PATCH', body: user })
-      toast.add({ title: 'User updated successfully', color: 'success' })
+      toast.add({ title: 'Success', description: 'User updated successfully', color: 'success' })
       await fetchUsers()
       return true
     } catch {
-      toast.add({ title: 'Failed to update user', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to update user', color: 'error' })
       return false
     }
   }
@@ -63,11 +63,11 @@ export const useUsers = () => {
   const deleteUser = async (id: number) => {
     try {
       await fetchApi(`/users/${id}`, { method: 'DELETE' })
-      toast.add({ title: 'User deleted successfully', color: 'success' })
+      toast.add({ title: 'Success', description: 'User deleted successfully', color: 'success' })
       await fetchUsers()
       return true
     } catch {
-      toast.add({ title: 'Failed to delete user', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to delete user', color: 'error' })
       return false
     }
   }
@@ -75,11 +75,11 @@ export const useUsers = () => {
   const resetApiKey = async (id: number) => {
     try {
       await fetchApi(`/users/${id}/api-key`, { method: 'POST' })
-      toast.add({ title: 'User API Key reset successfully', color: 'success' })
+      toast.add({ title: 'Success', description: 'User API Key reset successfully', color: 'success' })
       await fetchUsers()
       return true
     } catch {
-      toast.add({ title: 'Failed to reset API Key', color: 'error' })
+      toast.add({ title: 'Error', description: 'Failed to reset API Key', color: 'error' })
       return false
     }
   }

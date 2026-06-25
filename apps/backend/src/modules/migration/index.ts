@@ -78,54 +78,67 @@ const migrationModule: FastifyPluginAsync = async (fastify, opts) => {
             const backupDataStr = backupEntry.getData().toString('utf8');
             const backupData = JSON.parse(backupDataStr);
 
+            const restoreProjects = data.fields?.restoreProjects ? data.fields.restoreProjects.value === 'true' : true;
+            const restoreConventions = data.fields?.restoreConventions ? data.fields.restoreConventions.value === 'true' : true;
+
             // Import data
             await fastify.db.transaction(async (tx) => {
-                // Delete everything safely (child tables first)
-                await tx.delete(keysToLabels);
-                await tx.delete(translations);
-                await tx.delete(translationKeys);
-                await tx.delete(labels);
-                await tx.delete(projectLanguages);
-                await tx.delete(activityLogs);
-                await tx.delete(keyTemplates);
-                await tx.delete(keyGlossary);
-                await tx.delete(keyVariables);
-                await tx.delete(projects);
-                await tx.delete(languages);
+                if (restoreProjects) {
+                    // Delete project data safely (child tables first)
+                    await tx.delete(keysToLabels);
+                    await tx.delete(translations);
+                    await tx.delete(translationKeys);
+                    await tx.delete(labels);
+                    await tx.delete(projectLanguages);
+                    await tx.delete(activityLogs);
+                    await tx.delete(projects);
+                    await tx.delete(languages);
+                }
+
+                if (restoreConventions) {
+                    await tx.delete(keyTemplates);
+                    await tx.delete(keyGlossary);
+                    await tx.delete(keyVariables);
+                }
 
                 // Re-insert
-                if (backupData.languages && backupData.languages.length > 0) {
-                    await insertInChunks(tx, languages, backupData.languages);
+                if (restoreProjects) {
+                    if (backupData.languages && backupData.languages.length > 0) {
+                        await insertInChunks(tx, languages, backupData.languages);
+                    }
+                    if (backupData.projects && backupData.projects.length > 0) {
+                        await insertInChunks(tx, projects, backupData.projects);
+                    }
+                    if (backupData.projectLanguages && backupData.projectLanguages.length > 0) {
+                        await insertInChunks(tx, projectLanguages, backupData.projectLanguages);
+                    }
+                    if (backupData.labels && backupData.labels.length > 0) {
+                        await insertInChunks(tx, labels, backupData.labels);
+                    }
+                    if (backupData.translationKeys && backupData.translationKeys.length > 0) {
+                        await insertInChunks(tx, translationKeys, backupData.translationKeys);
+                    }
+                    if (backupData.translations && backupData.translations.length > 0) {
+                        await insertInChunks(tx, translations, backupData.translations);
+                    }
+                    if (backupData.keysToLabels && backupData.keysToLabels.length > 0) {
+                        await insertInChunks(tx, keysToLabels, backupData.keysToLabels);
+                    }
+                    if (backupData.activityLogs && backupData.activityLogs.length > 0) {
+                        await insertInChunks(tx, activityLogs, backupData.activityLogs);
+                    }
                 }
-                if (backupData.projects && backupData.projects.length > 0) {
-                    await insertInChunks(tx, projects, backupData.projects);
-                }
-                if (backupData.projectLanguages && backupData.projectLanguages.length > 0) {
-                    await insertInChunks(tx, projectLanguages, backupData.projectLanguages);
-                }
-                if (backupData.labels && backupData.labels.length > 0) {
-                    await insertInChunks(tx, labels, backupData.labels);
-                }
-                if (backupData.translationKeys && backupData.translationKeys.length > 0) {
-                    await insertInChunks(tx, translationKeys, backupData.translationKeys);
-                }
-                if (backupData.translations && backupData.translations.length > 0) {
-                    await insertInChunks(tx, translations, backupData.translations);
-                }
-                if (backupData.keysToLabels && backupData.keysToLabels.length > 0) {
-                    await insertInChunks(tx, keysToLabels, backupData.keysToLabels);
-                }
-                if (backupData.activityLogs && backupData.activityLogs.length > 0) {
-                    await insertInChunks(tx, activityLogs, backupData.activityLogs);
-                }
-                if (backupData.keyTemplates && backupData.keyTemplates.length > 0) {
-                    await insertInChunks(tx, keyTemplates, backupData.keyTemplates);
-                }
-                if (backupData.keyGlossary && backupData.keyGlossary.length > 0) {
-                    await insertInChunks(tx, keyGlossary, backupData.keyGlossary);
-                }
-                if (backupData.keyVariables && backupData.keyVariables.length > 0) {
-                    await insertInChunks(tx, keyVariables, backupData.keyVariables);
+
+                if (restoreConventions) {
+                    if (backupData.keyTemplates && backupData.keyTemplates.length > 0) {
+                        await insertInChunks(tx, keyTemplates, backupData.keyTemplates);
+                    }
+                    if (backupData.keyGlossary && backupData.keyGlossary.length > 0) {
+                        await insertInChunks(tx, keyGlossary, backupData.keyGlossary);
+                    }
+                    if (backupData.keyVariables && backupData.keyVariables.length > 0) {
+                        await insertInChunks(tx, keyVariables, backupData.keyVariables);
+                    }
                 }
             });
 

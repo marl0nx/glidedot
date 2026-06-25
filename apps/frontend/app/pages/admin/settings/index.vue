@@ -96,21 +96,25 @@ const save = async () => {
   isLoading.value = false
   if (success) {
     originalData.value = { ...formData.value }
-    toast.add({ title: 'Settings saved', color: 'success' })
+    const { fetchUser } = useAuth()
+    await fetchUser()
+    toast.add({ title: 'Success', description: 'Settings saved', color: 'success' })
   } else {
-    toast.add({ title: 'Failed to save settings', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to save settings', color: 'error' })
   }
 }
 </script>
 
 <template>
   <div class="flex flex-col gap-6 -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-      <div class="flex flex-col gap-1">
-        <h1 class="text-xl font-bold">General Settings</h1>
-        <p class="text-sm text-neutral-400">Configure global instance parameters and data retention.</p>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0 mb-2">
+      <div>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-settings-2" class="w-5 h-5 text-primary-500" />
+            General Settings
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">Configure global instance parameters and data retention.</p>
       </div>
-      <u-button icon="i-lucide-save" label="Save Changes" color="neutral" variant="subtle" :loading="isLoading" @click="save" />
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

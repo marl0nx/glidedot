@@ -25,6 +25,9 @@ const allowInfinite = ref(false)
 const search = ref('')
 const pagination = ref({ pageIndex: 0, pageSize: 10 })
 
+const isDeleteModalOpen = ref(false)
+const templateToDelete = ref<number | null>(null)
+
 const currentPagination = computed({
   get: () => pagination.value.pageIndex + 1,
   set: (val) => {
@@ -142,6 +145,19 @@ const saveTemplate = () => {
   isModalOpen.value = false
 }
 
+const confirmDelete = (id: number) => {
+  templateToDelete.value = id
+  isDeleteModalOpen.value = true
+}
+
+const performDelete = () => {
+  if (templateToDelete.value !== null) {
+    emit('delete', templateToDelete.value)
+    isDeleteModalOpen.value = false
+    templateToDelete.value = null
+  }
+}
+
 const generatePreview = (segments: KeyTemplateSegment[]) => {
   return segments.map((seg, idx) => {
     let str = ''
@@ -234,18 +250,32 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
             color="error" 
             variant="ghost" 
             size="sm"
-            @click="emit('delete', row.original.id)" 
+            @click="confirmDelete(row.original.id)" 
           />
         </div>
       </template>
     </u-table>
 
-    <div class="flex justify-end border-t border-default pt-4">
-      <u-pagination
+    <div class="flex items-center justify-between border-t border-default pt-4">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-neutral-500">Rows per page</span>
+        <u-select
+          :model-value="pagination.pageSize"
+          :items="[10, 20, 50, 100]"
+          class="w-20"
+          @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
+        />
+      </div>
+      <div class="flex items-center gap-4">
+          <span class="text-sm text-neutral-500">
+            {{ templates.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, templates.length) }} of {{ templates.length }}
+          </span>
+          <u-pagination
         v-model:page="currentPagination"
         :total="templates.length"
         :items-per-page="pagination.pageSize"
       />
+        </div>
     </div>
 
     <u-modal v-model:open="isModalOpen" :title="editingId ? 'Edit Template' : 'Create Template'" :ui="{ content: 'sm:max-w-4xl sm:w-full' }">
@@ -333,6 +363,20 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
         <div class="flex justify-end gap-2">
           <u-button color="neutral" variant="ghost" label="Cancel" @click="isModalOpen = false" />
           <u-button label="Save Template" color="neutral" :disabled="!templateName.trim() || segments.length === 0" @click="saveTemplate" />
+        </div>
+      </template>
+    </u-modal>
+
+    <u-modal v-model:open="isDeleteModalOpen" title="Delete Template">
+      <template #body>
+        <div class="p-6">
+          <p class="text-neutral-300">Are you sure you want to delete this template? Any translation keys using this template may become invalid.</p>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 p-2">
+          <u-button color="neutral" variant="ghost" label="Cancel" @click="isDeleteModalOpen = false" />
+          <u-button color="error" label="Delete" @click="performDelete" />
         </div>
       </template>
     </u-modal>

@@ -20,6 +20,9 @@ const pagination = ref({ pageIndex: 0, pageSize: 10 })
 const isModalOpen = ref(false)
 const editingId = ref<number | null>(null)
 
+const isDeleteModalOpen = ref(false)
+const variableToDelete = ref<number | null>(null)
+
 const newName = ref('')
 const newOptions = ref('')
 
@@ -61,6 +64,19 @@ const handleSave = () => {
       emit('add', newName.value.trim(), newOptions.value.trim())
     }
     isModalOpen.value = false
+  }
+}
+
+const confirmDelete = (id: number) => {
+  variableToDelete.value = id
+  isDeleteModalOpen.value = true
+}
+
+const performDelete = () => {
+  if (variableToDelete.value !== null) {
+    emit('delete', variableToDelete.value)
+    isDeleteModalOpen.value = false
+    variableToDelete.value = null
   }
 }
 </script>
@@ -125,18 +141,32 @@ const handleSave = () => {
             color="error" 
             variant="ghost" 
             size="sm"
-            @click="emit('delete', row.original.id)" 
+            @click="confirmDelete(row.original.id)" 
           />
         </div>
       </template>
     </u-table>
 
-    <div class="flex justify-end border-t border-default pt-4">
-      <u-pagination
+    <div class="flex items-center justify-between border-t border-default pt-4">
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-neutral-500">Rows per page</span>
+        <u-select
+          :model-value="pagination.pageSize"
+          :items="[10, 20, 50, 100]"
+          class="w-20"
+          @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
+        />
+      </div>
+      <div class="flex items-center gap-4">
+          <span class="text-sm text-neutral-500">
+            {{ variables.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, variables.length) }} of {{ variables.length }}
+          </span>
+          <u-pagination
         v-model:page="currentPagination"
         :total="variables.length"
         :items-per-page="pagination.pageSize"
       />
+        </div>
     </div>
 
     <u-modal v-model:open="isModalOpen" :title="editingId ? 'Edit Variable' : 'Add Variable'" :ui="{ content: 'sm:max-w-xl' }">
@@ -155,6 +185,20 @@ const handleSave = () => {
         <div class="flex justify-end gap-2 p-2">
           <u-button color="neutral" variant="ghost" label="Cancel" size="lg" @click="isModalOpen = false" />
           <u-button :label="editingId ? 'Save Changes' : 'Create'" color="neutral" size="lg" :disabled="!newName.trim() || !newOptions.trim()" @click="handleSave" />
+        </div>
+      </template>
+    </u-modal>
+
+    <u-modal v-model:open="isDeleteModalOpen" title="Delete Variable">
+      <template #body>
+        <div class="p-6">
+          <p class="text-neutral-300">Are you sure you want to delete this variable? Templates relying on this variable might break.</p>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 p-2">
+          <u-button color="neutral" variant="ghost" label="Cancel" @click="isDeleteModalOpen = false" />
+          <u-button color="error" label="Delete" @click="performDelete" />
         </div>
       </template>
     </u-modal>

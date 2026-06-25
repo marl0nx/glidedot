@@ -1,0 +1,21 @@
+--- /Users/marl0nx/Documents/Projects/glide/Code/glidedot/apps/frontend/app/components/admin/insights/graphs/NamespaceGraph.vue
++++ /Users/marl0nx/Documents/Projects/glide/Code/glidedot/apps/frontend/app/components/admin/insights/graphs/NamespaceGraph.vue
+@@ -176,14 +176,17 @@
+       selectedLeafKey.value = params.data.originalKey
+       const x = params.event.event.clientX
+       const y = params.event.event.clientY
++      console.log('Graph leaf clicked', { x, y, key: selectedLeafKey.value })
+       
+       contextMenuVirtualElement.value = {
+         getBoundingClientRect: () => ({
+           width: 0, height: 0,
+-          top: y, left: x, right: x, bottom: y
++          top: y, left: x, right: x, bottom: y,
++          x, y
+         })
+       }
+       isContextMenuOpen.value = true
++      console.log('isContextMenuOpen set to', isContextMenuOpen.value)
+       return
+     }
+     focusedNodeId.value = params.data.id

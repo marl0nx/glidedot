@@ -57,9 +57,12 @@ export function useTranslation() {
                 color: l.color
             }))
 
-            keys.value = (keysData as { id: number; key: string; labels: number[] }[]).map(k => ({
+            keys.value = (keysData as { id: number; key: string; draftKey?: string; reviewStatus?: 'APPROVED' | 'PENDING_REVIEW' | 'REJECTED'; isPendingDelete?: boolean; labels: number[] }[]).map(k => ({
                 id: k.id,
                 key: k.key,
+                draftKey: k.draftKey,
+                reviewStatus: k.reviewStatus,
+                isPendingDelete: k.isPendingDelete,
                 labels: k.labels || []
             }))
 
@@ -196,22 +199,22 @@ export function useTranslation() {
         isModalOpen.value = true
     }
 
-    const saveTranslation = async (keyId: number, langId: number, langCode: string, text: string, isGenerated: boolean) => {
+    const saveTranslation = async (keyId: number, langId: number, langCode: string, text: string, isGenerated: boolean, timeSpentMs: number = 0) => {
         if (!projectId.value) return
 
         try {
             await fetchApi(`/localization/keys/${projectId.value}/${keyId}/translations`, {
                 method: 'POST',
-                body: { languageId: langId, value: text }
+                body: { languageId: langId, value: text, timeSpentMs, isAutomated: isGenerated }
             })
 
             if (!translations.value[keyId]) {
                 translations.value[keyId] = {}
             }
             translations.value[keyId][langCode] = {text, isGenerated}
-            toast.add({ title: 'Translation saved successfully.', color: 'success' })
+            toast.add({ title: 'Success', description: 'Translation saved successfully.', color: 'success' })
         } catch (e) {
-            toast.add({ title: 'Failed to save translation.', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to save translation.', color: 'error' })
             console.error("Failed to save translation", e)
         }
     }
@@ -225,25 +228,25 @@ export function useTranslation() {
                 body: { targetLanguageIds, provider }
             })
             await init()
-            toast.add({ title: 'Auto-translate successful.', color: 'success' })
+            toast.add({ title: 'Success', description: 'Auto-translate successful.', color: 'success' })
         } catch (e: unknown) {
             const err = e as { data?: { message?: string } }
             if (err?.data?.message === 'DeepL API Key is invalid or unauthorized.') {
-                toast.add({ title: 'Invalid DeepL API Key', description: 'Please check your DeepL configuration.', color: 'error' })
+                toast.add({ title: 'Error', description: `Invalid DeepL API Key - Please check your DeepL configuration.`, color: 'error' })
             } else if (err?.data?.message === 'Translation quota exceeded') {
-                toast.add({ title: 'Translation quota exceeded', color: 'error' })
+                toast.add({ title: 'Error', description: 'Translation quota exceeded', color: 'error' })
             } else if (err?.data?.message === 'Translation suggestions are disabled for this user') {
-                toast.add({ title: 'Translations are disabled', color: 'error' })
+                toast.add({ title: 'Error', description: 'Translations are disabled', color: 'error' })
                 const { user } = useAuth()
                 if (user.value) user.value.allowSuggestions = false
             } else {
-                toast.add({ title: 'Auto-translate failed.', color: 'error' })
+                toast.add({ title: 'Error', description: 'Auto-translate failed.', color: 'error' })
                 console.error("Failed to auto translate", e)
             }
         }
     }
 
-    const suggestTranslation = async (keyId: number, targetLanguageId: number, provider: 'deepl' | 'google' = 'google') => {
+    const suggestTranslation = async (keyId: number, targetLanguageId: number, provider: 'deepl' | 'google' = 'google', silentQuotaAlert = false) => {
         if (!projectId.value) return null
 
         try {
@@ -255,13 +258,16 @@ export function useTranslation() {
         } catch (e: unknown) {
             const err = e as { data?: { message?: string } }
             if (err?.data?.message === 'Translation quota exceeded') {
-                toast.add({ title: 'Translation quota exceeded', color: 'error' })
+                if (!silentQuotaAlert) {
+                    toast.add({ title: 'Error', description: 'Translation quota exceeded', color: 'error' })
+                }
+                return { error: 'quota_exceeded' } as any
             } else if (err?.data?.message === 'Translation suggestions are disabled for this user') {
-                toast.add({ title: 'Suggestions are disabled', color: 'error' })
+                toast.add({ title: 'Error', description: 'Suggestions are disabled', color: 'error' })
                 const { user } = useAuth()
                 if (user.value) user.value.allowSuggestions = false
             } else if (err?.data?.message === 'DeepL API Key is invalid or unauthorized.') {
-                toast.add({ title: 'Invalid DeepL API Key', description: 'Please check your DeepL configuration.', color: 'error' })
+                toast.add({ title: 'Error', description: `Invalid DeepL API Key - Please check your DeepL configuration.`, color: 'error' })
             } else {
                 console.error("Failed to fetch suggestion", e)
             }
@@ -273,21 +279,32 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/keys/${projectId.value}`, { method: 'POST', body: { key: keyName, labelIds } })
-            toast.add({ title: 'Key added successfully', color: 'success' })
+            toast.add({ title: 'Success', description: 'Key added successfully', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to add key', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to add key', color: 'error' })
         }
     }
 
-    const updateKey = async (keyId: number, keyName: string) => {
+    const updateKey = async (keyId: number, keyName: string, forceReview: boolean = false) => {
         if (!projectId.value) return
         try {
-            await fetchApi(`/localization/keys/${projectId.value}/${keyId}`, { method: 'PATCH', body: { key: keyName } })
-            toast.add({ title: 'Key updated successfully', color: 'success' })
+            await fetchApi(`/localization/keys/${projectId.value}/${keyId}`, { method: 'PATCH', body: { key: keyName, forceReview } })
+            toast.add({ title: 'Success', description: forceReview ? 'Key update sent for review' : 'Key updated successfully', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to update key', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to update key', color: 'error' })
+        }
+    }
+
+    const bulkUpdateKeys = async (updates: { id: number, key: string }[], forceReview: boolean = false) => {
+        if (!projectId.value || !updates.length) return
+        try {
+            await fetchApi(`/localization/keys/${projectId.value}/bulk`, { method: 'PATCH', body: { updates, forceReview } })
+            toast.add({ title: 'Success', description: forceReview ? `Sent ${updates.length} key updates for review` : `Successfully updated ${updates.length} keys`, color: 'success' })
+            await init()
+        } catch {
+            toast.add({ title: 'Error', description: 'Failed to bulk update keys', color: 'error' })
         }
     }
 
@@ -295,10 +312,10 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/keys/${projectId.value}/${keyId}`, { method: 'DELETE' })
-            toast.add({ title: 'Key deleted', color: 'success' })
+            toast.add({ title: 'Success', description: 'Key deleted', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to delete key', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to delete key', color: 'error' })
         }
     }
 
@@ -306,10 +323,10 @@ export function useTranslation() {
         if (!projectId.value || !keyIds.length) return
         try {
             await fetchApi(`/localization/keys/${projectId.value}/bulk-delete`, { method: 'POST', body: { keyIds } })
-            toast.add({ title: `${keyIds.length} key(s) deleted`, color: 'success' })
+            toast.add({ title: 'Success', description: `${keyIds.length} key(s) deleted`, color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to delete keys', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to delete keys', color: 'error' })
         }
     }
 
@@ -317,10 +334,10 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/keys/${projectId.value}/${keyId}/labels`, { method: 'POST', body: { labelId } })
-            toast.add({ title: 'Label added to key', color: 'success' })
+            toast.add({ title: 'Success', description: 'Label added to key', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to add label to key', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to add label to key', color: 'error' })
         }
     }
 
@@ -328,10 +345,10 @@ export function useTranslation() {
         if (!projectId.value || !keyIds.length) return
         try {
             await fetchApi(`/localization/keys/${projectId.value}/bulk-labels-add`, { method: 'POST', body: { keyIds, labelId } })
-            toast.add({ title: `Label added to ${keyIds.length} key(s)`, color: 'success' })
+            toast.add({ title: 'Success', description: `Label added to ${keyIds.length} key(s)`, color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to add label to keys', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to add label to keys', color: 'error' })
         }
     }
 
@@ -339,10 +356,10 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/keys/${projectId.value}/${keyId}/labels/${labelId}`, { method: 'DELETE' })
-            toast.add({ title: 'Label removed from key', color: 'success' })
+            toast.add({ title: 'Success', description: 'Label removed from key', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to remove label from key', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to remove label from key', color: 'error' })
         }
     }
 
@@ -350,10 +367,10 @@ export function useTranslation() {
         if (!projectId.value || !keyIds.length) return
         try {
             await fetchApi(`/localization/keys/${projectId.value}/bulk-labels-remove`, { method: 'POST', body: { keyIds, labelId } })
-            toast.add({ title: `Label removed from ${keyIds.length} key(s)`, color: 'success' })
+            toast.add({ title: 'Success', description: `Label removed from ${keyIds.length} key(s)`, color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to remove label from keys', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to remove label from keys', color: 'error' })
         }
     }
 
@@ -361,10 +378,10 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/labels/${projectId.value}`, { method: 'POST', body: { name, color } })
-            toast.add({ title: 'Label created successfully', color: 'success' })
+            toast.add({ title: 'Success', description: 'Label created successfully', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to create label', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to create label', color: 'error' })
         }
     }
 
@@ -372,10 +389,10 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/labels/${projectId.value}/${labelId}`, { method: 'PATCH', body: { name, color } })
-            toast.add({ title: 'Label updated', color: 'success' })
+            toast.add({ title: 'Success', description: 'Label updated', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to update label', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to update label', color: 'error' })
         }
     }
 
@@ -383,10 +400,10 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/labels/${projectId.value}/${labelId}`, { method: 'DELETE' })
-            toast.add({ title: 'Label deleted', color: 'success' })
+            toast.add({ title: 'Success', description: 'Label deleted', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to delete label', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to delete label', color: 'error' })
         }
     }
 
@@ -394,10 +411,10 @@ export function useTranslation() {
         if (!projectId.value || !labelIds.length) return
         try {
             await fetchApi(`/localization/labels/${projectId.value}/bulk-delete`, { method: 'POST', body: { ids: labelIds } })
-            toast.add({ title: `${labelIds.length} label(s) deleted`, color: 'success' })
+            toast.add({ title: 'Success', description: `${labelIds.length} label(s) deleted`, color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to delete labels', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to delete labels', color: 'error' })
         }
     }
 
@@ -415,10 +432,10 @@ export function useTranslation() {
             if (lang) {
                 await fetchApi(`/localization/projects/${projectId.value}/languages`, { method: 'POST', body: { languageId: lang.id } })
             }
-            toast.add({ title: 'Language added successfully', color: 'success' })
+            toast.add({ title: 'Success', description: 'Language added successfully', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to add language', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to add language', color: 'error' })
         }
     }
 
@@ -426,10 +443,10 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/projects/${projectId.value}/languages/${languageId}`, { method: 'DELETE' })
-            toast.add({ title: 'Language removed successfully', color: 'success' })
+            toast.add({ title: 'Success', description: 'Language removed successfully', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to remove language', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to remove language', color: 'error' })
         }
     }
 
@@ -437,10 +454,10 @@ export function useTranslation() {
         if (!projectId.value || !languageIds.length) return
         try {
             await fetchApi(`/localization/projects/${projectId.value}/languages/bulk-delete`, { method: 'POST', body: { languageIds } })
-            toast.add({ title: `${languageIds.length} language(s) removed successfully`, color: 'success' })
+            toast.add({ title: 'Success', description: `${languageIds.length} language(s) removed successfully`, color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to remove languages', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to remove languages', color: 'error' })
         }
     }
 
@@ -448,10 +465,10 @@ export function useTranslation() {
         if (!projectId.value) return
         try {
             await fetchApi(`/localization/projects/${projectId.value}/source-language`, { method: 'PUT', body: { languageId } })
-            toast.add({ title: 'Reference language updated', color: 'success' })
+            toast.add({ title: 'Success', description: 'Reference language updated', color: 'success' })
             await init()
         } catch {
-            toast.add({ title: 'Failed to update reference language', color: 'error' })
+            toast.add({ title: 'Error', description: 'Failed to update reference language', color: 'error' })
         }
     }
 
@@ -478,6 +495,7 @@ export function useTranslation() {
         suggestTranslation,
         addKey,
         updateKey,
+        bulkUpdateKeys,
         deleteKey,
         bulkDeleteKeys,
         addLabelToKey,
