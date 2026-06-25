@@ -199,11 +199,8 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex justify-between items-center mb-2">
-      <div class="flex flex-col">
-        <h2 class="text-lg font-semibold">Key Templates</h2>
-        <p class="text-sm text-neutral-400">Define visual schemas to enforce naming conventions for your translation keys.</p>
-      </div>
+    <div class="flex justify-between items-center py-2">
+      <u-input v-model="search" icon="i-lucide-search" placeholder="Search templates..." class="w-80" />
       <u-button 
         label="Create Template" 
         icon="i-lucide-plus" 
@@ -211,10 +208,6 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
         variant="subtle"
         @click="openCreate" 
       />
-    </div>
-
-    <div class="flex justify-between py-2">
-      <u-input v-model="search" icon="i-lucide-search" placeholder="Search templates..." class="w-80" />
     </div>
 
     <u-table

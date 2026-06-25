@@ -83,11 +83,8 @@ const performDelete = () => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex justify-between items-center mb-2">
-      <div class="flex flex-col">
-        <h2 class="text-lg font-semibold">Global Variables (Shared Enums)</h2>
-        <p class="text-sm text-neutral-400">Define shared dropdown lists to use across multiple Key Templates.</p>
-      </div>
+    <div class="flex justify-between items-center py-2">
+      <u-input v-model="search" icon="i-lucide-search" placeholder="Search variables..." class="w-80" />
       <u-button 
         label="Add Variable" 
         icon="i-lucide-plus" 
@@ -95,10 +92,6 @@ const performDelete = () => {
         variant="subtle"
         @click="openAddModal" 
       />
-    </div>
-
-    <div class="flex justify-between py-2">
-      <u-input v-model="search" icon="i-lucide-search" placeholder="Search variables..." class="w-80" />
     </div>
 
     <u-table
