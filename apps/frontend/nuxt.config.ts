@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3001/v1',
-            oidcEnabled: !!process.env.NUXT_OIDC_CLIENT_ID
+            oidcEnabled: process.env.NUXT_PUBLIC_OIDC_ENABLED === 'true' || !!process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID || !!process.env.NUXT_OIDC_CLIENT_ID
         }
     },
     devtools: {enabled: true},
