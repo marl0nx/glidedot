@@ -14,6 +14,7 @@ export type ShortcutMap = {
   prev: ShortcutConfig
   close: ShortcutConfig
   approve: ShortcutConfig
+  copySource: ShortcutConfig
 }
 
 const defaultShortcuts: ShortcutMap = {
@@ -21,7 +22,8 @@ const defaultShortcuts: ShortcutMap = {
   next: { key: 'ArrowRight', metaKey: true, ctrlKey: false, shiftKey: false, altKey: false },
   prev: { key: 'ArrowLeft', metaKey: true, ctrlKey: false, shiftKey: false, altKey: false },
   close: { key: 'Escape', metaKey: false, ctrlKey: false, shiftKey: false, altKey: false },
-  approve: { key: 'Tab', metaKey: false, ctrlKey: false, shiftKey: false, altKey: false }
+  approve: { key: 'Tab', metaKey: false, ctrlKey: false, shiftKey: false, altKey: false },
+  copySource: { key: 'c', metaKey: true, ctrlKey: false, shiftKey: true, altKey: false }
 }
 
 const shortcuts = ref<ShortcutMap>(JSON.parse(JSON.stringify(defaultShortcuts)))

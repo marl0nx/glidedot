@@ -20,4 +20,11 @@ export const users = sqliteTable('users', {
     quotaNextResetAt: integer('quota_next_reset_at', { mode: 'timestamp' }),
     avatarUrl: text('avatar_url'),
     oidcGroups: text('oidc_groups'),
+    alertConfig: text('alert_config', { mode: 'json' }).$type<{
+        provider: 'none' | 'discord' | 'slack' | 'ntfy' | 'custom' | 'telegram' | 'gotify';
+        url: string;
+        events: string[];
+        pingUserId?: string;
+        avatarUrl?: string;
+    }>(),
 });

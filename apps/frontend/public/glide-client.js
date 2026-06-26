@@ -7,7 +7,7 @@
     let translations = {};
     let isHovering = false;
 
-    // Listen for messages from Glide dashboard
+    // Listen for messages from glide. dashboard
     window.addEventListener('message', (event) => {
         const data = event.data;
         if (!data || data.source !== 'glide-dashboard') return;
@@ -51,13 +51,14 @@
     function updateDOM() {
         isUpdatingDOM = true;
         observer.disconnect();
+
         // 1. Update elements with data-glide-key attribute
         document.querySelectorAll('[data-glide-key]').forEach(el => {
             const key = el.getAttribute('data-glide-key');
             
             // Store the original text on first pass so we can revert to it if translation is missing
             if (el.dataset.glideOriginalText === undefined) {
-                el.dataset.glideOriginalText = el.innerText;
+                el.dataset.glideOriginalText = key;
             }
             
             if (translations[key]) {
@@ -68,30 +69,36 @@
             makeEditable(el, key);
         });
 
-        // 2. Scan text nodes for {glide.key} patterns (simple implementation)
-        // Note: For a robust implementation, MutationObserver should be used to catch dynamic content
+        // 2. Scan text nodes for raw keys with dots (e.g., homepage.hero.title)
         const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
         let node;
         const nodesToWrap = [];
+        const KEY_PATTERN = /^[a-zA-Z0-9_-]+(?:\.[a-zA-Z0-9_-]+)+$/;
 
         while(node = walk.nextNode()) {
-            if (node.nodeValue.match(/\{glide\.(.*?)\}/)) {
-                nodesToWrap.push(node);
+            const val = node.nodeValue.trim();
+            // Match keys with dots and ensure they contain letters to avoid matching pure floats or IP addresses
+            if (KEY_PATTERN.test(val) && /[a-zA-Z]/.test(val)) {
+                nodesToWrap.push({ node, key: val });
             }
         }
 
-        nodesToWrap.forEach(node => {
-            const matches = [...node.nodeValue.matchAll(/\{glide\.(.*?)\}/g)];
-            if (matches.length > 0) {
-                const parent = node.parentNode;
-                const span = document.createElement('span');
-                const key = matches[0][1];
-                span.setAttribute('data-glide-key', key);
-                span.dataset.glideOriginalText = matches[0][0];
-                span.innerText = translations[key] || matches[0][0];
-                parent.replaceChild(span, node);
-                makeEditable(span, key);
+        nodesToWrap.forEach(({ node, key }) => {
+            const parent = node.parentNode;
+            if (!parent) return;
+
+            // Prevent double wrapping
+            if (parent.tagName === 'SPAN' && parent.getAttribute('data-glide-key') === key) {
+                return;
             }
+
+            const span = document.createElement('span');
+            span.setAttribute('data-glide-key', key);
+            span.dataset.glideOriginalText = key;
+            span.innerText = translations[key] || key;
+
+            parent.replaceChild(span, node);
+            makeEditable(span, key);
         });
 
         startObserving();
@@ -125,7 +132,7 @@
             e.preventDefault();
             e.stopPropagation();
             
-            // Tell Glide dashboard to open the edit modal for this key
+            // Tell glide. dashboard to open the edit modal for this key
             window.parent.postMessage({
                 source: 'glide-client',
                 type: 'GLIDE_EDIT_REQUEST',

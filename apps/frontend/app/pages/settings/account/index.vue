@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import UnsavedChangesAlert from '~/components/UnsavedChangesAlert.vue'
+import GitConnections from '~/components/settings/GitConnections.vue'
 
 definePageMeta({
   layout: 'default'
@@ -72,18 +73,19 @@ const discard = () => {
 const saveChanges = async () => {
   isLoading.value = true
   try {
-    const payload: Record<string, string> = {}
+    const payload: Record<string, any> = {}
     if (formData.value.username !== user.value?.username) payload.username = formData.value.username
     if (formData.value.avatarUrl !== user.value?.avatarUrl) payload.avatarUrl = formData.value.avatarUrl
     if (formData.value.email) payload.email = formData.value.email
+
     if (formData.value.password) {
       if (formData.value.password !== formData.value.repeatPassword) {
-        toast.add({ title: 'Passwords do not match', color: 'error' })
+        toast.add({ title: 'Error', description: 'Passwords do not match', color: 'error' })
         isLoading.value = false
         return
       }
       if (!formData.value.oldPassword) {
-        toast.add({ title: 'Current password is required to set a new password', color: 'error' })
+        toast.add({ title: 'Error', description: 'Current password is required to set a new password', color: 'error' })
         isLoading.value = false
         return
       }
@@ -99,6 +101,7 @@ const saveChanges = async () => {
 
     if (Object.keys(payload).length === 0) {
       toast.add({ title: 'No changes made', color: 'neutral' })
+      isLoading.value = false
       return
     }
 
@@ -108,7 +111,7 @@ const saveChanges = async () => {
     })
     
     if (payload.password) {
-      toast.add({ title: 'Password changed successfully. Please log in again.', color: 'success' })
+      toast.add({ title: 'Success', description: 'Password changed successfully. Please log in again.', color: 'success' })
       logout()
       return
     }
@@ -124,9 +127,9 @@ const saveChanges = async () => {
       avatarUrl: formData.value.avatarUrl
     }
 
-    toast.add({ title: 'Account updated successfully', color: 'success' })
+    toast.add({ title: 'Success', description: 'Account updated successfully', color: 'success' })
   } catch {
-    toast.add({ title: 'Failed to update account', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to update account', color: 'error' })
   } finally {
     isLoading.value = false
   }
@@ -135,17 +138,17 @@ const saveChanges = async () => {
 const copyApiKey = () => {
   if (user.value?.apiKey) {
     navigator.clipboard.writeText(user.value.apiKey)
-    toast.add({ title: 'API Key copied to clipboard', color: 'success' })
+    toast.add({ title: 'Success', description: 'API Key copied to clipboard', color: 'success' })
   }
 }
 
 const confirmResetApiKey = async () => {
   try {
     await fetchApi('/users/me/api-key', { method: 'POST' })
-    toast.add({ title: 'API Key reset successfully. Please log in again.', color: 'success' })
+    toast.add({ title: 'Success', description: 'API Key reset successfully. Please log in again.', color: 'success' })
     logout()
   } catch {
-    toast.add({ title: 'Failed to reset API Key', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to reset API Key', color: 'error' })
   } finally {
     isResetModalOpen.value = false
   }
@@ -158,9 +161,14 @@ const resetApiKey = () => {
 
 <template>
   <div class="max-w-2xl mx-auto py-8">
-    <div class="mb-8">
-      <h1 class="text-2xl font-bold">Account Settings</h1>
-      <p class="text-neutral-400">Manage your profile and security settings.</p>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0 mb-8">
+      <div>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-shield-check" class="w-5 h-5 text-primary-500" />
+            Account Settings
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">Manage your profile and security settings.</p>
+      </div>
     </div>
 
     <div class="space-y-6">
@@ -244,14 +252,7 @@ const resetApiKey = () => {
         </div>
       </u-card>
 
-      <div class="flex justify-end pt-4">
-        <u-button 
-          color="neutral" 
-          label="Save Changes" 
-          :loading="isLoading" 
-          @click="saveChanges" 
-        />
-      </div>
+      <git-connections />
     </div>
 
     <user-reset-api-key-modal

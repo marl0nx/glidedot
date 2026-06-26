@@ -6,7 +6,12 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { TreeChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart, { THEME_KEY } from 'vue-echarts'
-import type { TranslationKey, Project } from '~/types'
+import type { TranslationKey, Project, Language } from '~/types'
+
+const emit = defineEmits<{
+  (e: 'go-to-structure', keyName: string): void
+  (e: 'go-to-translations', keyName: string, langId: number): void
+}>()
 
 provide(THEME_KEY, 'glide-dark')
 
@@ -23,7 +28,12 @@ const props = defineProps<{ projectId: number }>()
 const { fetchApi } = useApi()
 
 const keys = ref<TranslationKey[]>([])
+const languages = ref<Language[]>([])
 const isLoading = ref(true)
+
+const isContextMenuOpen = ref(false)
+const menuPosition = ref({ x: 0, y: 0 })
+const selectedLeafKey = ref<string | null>(null)
 
 const searchQuery = ref('')
 const debouncedSearchQuery = ref('')
@@ -77,10 +87,16 @@ const fetchKeys = async () => {
   if (!props.projectId) return
   isLoading.value = true
   try {
-    keys.value = await fetchApi(`/localization/keys/${props.projectId}`) as TranslationKey[]
+    const [keysData, langsData] = await Promise.all([
+      fetchApi(`/localization/keys/${props.projectId}`),
+      fetchApi(`/localization/projects/${props.projectId}/languages`)
+    ])
+    keys.value = keysData as TranslationKey[]
+    languages.value = langsData as Language[]
     focusedNodeId.value = 'root'
   } catch (e) {
     keys.value = []
+    languages.value = []
   } finally {
     isLoading.value = false
   }
@@ -175,10 +191,42 @@ const goUp = () => {
 
 const handleNodeClick = (params: any) => {
   if (params.data && params.data.id) {
-    if (!params.data.children || params.data.children.length === 0) return
+    if (!params.data.children || params.data.children.length === 0) {
+      // Leaf node clicked
+      selectedLeafKey.value = params.data.originalKey
+      menuPosition.value = { 
+        x: params.event.event.clientX, 
+        y: params.event.event.clientY 
+      }
+      isContextMenuOpen.value = true
+      return
+    }
     focusedNodeId.value = params.data.id
   }
 }
+
+const contextMenuItems = computed(() => {
+  if (!selectedLeafKey.value) return []
+  
+  const langs = languages.value.map((l: any) => ({
+    label: `${l.flag || '🏳️'} ${l.name}`,
+    icon: 'i-lucide-languages',
+    onSelect: () => {
+      emit('go-to-translations', selectedLeafKey.value!, l.id)
+    }
+  }))
+
+  return [
+    [{
+      label: 'Go to Key Structure',
+      icon: 'i-lucide-folder-tree',
+      onSelect: () => {
+        emit('go-to-structure', selectedLeafKey.value!)
+      }
+    }],
+    [{ label: 'Edit Translations', disabled: true }, ...langs]
+  ]
+})
 
 const chartOptions = computed(() => {
   if (!displayTreeData.value) return {}
@@ -250,6 +298,19 @@ const chartOptions = computed(() => {
 
 <template>
   <div :class="isFullscreen ? 'fixed inset-0 z-[9999] bg-neutral-950 p-4 md:p-8 flex flex-col gap-4 overflow-hidden' : 'flex flex-col gap-4'">
+    
+    <div 
+      :style="{ position: 'fixed', left: menuPosition.x + 'px', top: menuPosition.y + 'px' }" 
+      class="z-50 pointer-events-none"
+    >
+      <u-dropdown-menu 
+        v-model:open="isContextMenuOpen" 
+        :items="contextMenuItems"
+      >
+        <div class="w-px h-px"></div>
+      </u-dropdown-menu>
+    </div>
+
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-neutral-900 border border-neutral-800 p-4 rounded-xl shrink-0">
       <div class="flex items-center gap-4 w-full md:w-auto">
         <h3 class="font-medium text-white px-2">Key Hierarchy</h3>

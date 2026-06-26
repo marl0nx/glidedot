@@ -10,6 +10,8 @@ services:
       - PORT=3001
       - NODE_ENV=production
       - DB_URL=data/db.sqlite
+      # Encryption Key for Secrets (Tokens, API Keys).
+      - DB_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       # S3 Backups (Optional)
       - S3_ENDPOINT=
       - S3_REGION=us-east-1

@@ -9,7 +9,7 @@ export class KeyService {
     private googleService: GoogleService;
 
     constructor(private db: FastifyInstance['db']) {
-        this.deeplService = new DeeplService();
+        this.deeplService = new DeeplService(this.db);
         this.googleService = new GoogleService();
     }
 
@@ -52,8 +52,26 @@ export class KeyService {
         }));
     }
 
-    async createKey(projectId: number, key: string, labelIds?: number[]) {
-        const [newKey] = await this.db.insert(translationKeys).values({ projectId, key }).returning();
+    async createKey(projectId: number, key: string, labelIds?: number[], userId?: number) {
+        const { users } = await import('../../../users/schema');
+        const { projects } = await import('../../schema');
+
+        let needsReview = false;
+        let userRecord = null;
+        
+        if (userId) {
+            const [user] = await this.db.select().from(users).where(eq(users.id, userId));
+            userRecord = user;
+            const [project] = await this.db.select().from(projects).where(eq(projects.id, projectId));
+            needsReview = !user?.isAdmin && !user?.isReviewer && (project?.reviewEnabled || user?.requiresReview);
+        }
+
+        const [newKey] = await this.db.insert(translationKeys).values({ 
+            projectId, 
+            key,
+            reviewStatus: needsReview ? 'PENDING_REVIEW' : 'APPROVED',
+            authorId: needsReview ? userId : undefined
+        }).returning();
 
         if (labelIds?.length) {
             await this.db.insert(keysToLabels).values(
@@ -61,14 +79,142 @@ export class KeyService {
             );
         }
 
+        if (needsReview) {
+            try {
+                const { or } = await import('drizzle-orm');
+                const { NotificationService } = await import('../../../../services/notification.service');
+                const reviewers = await this.db.select().from(users).where(or(eq(users.isAdmin, true), eq(users.isReviewer, true)));
+                
+                for (const reviewer of reviewers) {
+                    if (reviewer.alertConfig) {
+                        await NotificationService.send(reviewer.alertConfig, 'pending.reviews', {
+                            title: 'New Key Created Pending Review 🔑',
+                            message: `A new key \`${key}\` was created by ${userRecord?.username || 'Unknown'} and is waiting for approval.`
+                        }, {
+                            throttleKey: `pending.reviews-${reviewer.id}`,
+                            throttleHours: 2
+                        });
+                    }
+                }
+            } catch(e) {
+                console.error("Failed to send key creation review notifications", e);
+            }
+        }
+
         return newKey;
     }
 
-    async updateKey(projectId: number, keyId: number, newKeyName: string) {
+    async updateKey(projectId: number, keyId: number, newKeyName: string, userId?: number, forceReview: boolean = false) {
+        const { users } = await import('../../../users/schema');
+        const { projects } = await import('../../schema');
+        
+        let needsReview = forceReview;
+        let userRecord = null;
+        
+        if (userId) {
+            const [user] = await this.db.select().from(users).where(eq(users.id, userId));
+            userRecord = user;
+            if (!needsReview) {
+                const [project] = await this.db.select().from(projects).where(eq(projects.id, projectId));
+                needsReview = !user?.isAdmin && !user?.isReviewer && (project?.reviewEnabled || user?.requiresReview);
+            }
+        }
+
+        if (needsReview) {
+            const result = await this.db.update(translationKeys)
+                .set({ draftKey: newKeyName, reviewStatus: 'PENDING_REVIEW', authorId: userId })
+                .where(and(eq(translationKeys.id, keyId), eq(translationKeys.projectId, projectId)))
+                .returning();
+
+            try {
+                const { or } = await import('drizzle-orm');
+                const { NotificationService } = await import('../../../../services/notification.service');
+                const reviewers = await this.db.select().from(users).where(or(eq(users.isAdmin, true), eq(users.isReviewer, true)));
+                
+                for (const reviewer of reviewers) {
+                    if (reviewer.alertConfig) {
+                        await NotificationService.send(reviewer.alertConfig, 'pending.reviews', {
+                            title: 'New Key Edit Pending Review 🔑',
+                            message: `A key name edit was submitted by ${userRecord?.username || 'Unknown'} and is waiting for approval.`
+                        }, {
+                            throttleKey: `pending.reviews-${reviewer.id}`,
+                            throttleHours: 2
+                        });
+                    }
+                }
+            } catch(e) {
+                console.error("Failed to send key review notifications", e);
+            }
+            return result;
+        }
+
         return this.db.update(translationKeys)
             .set({ key: newKeyName })
             .where(and(eq(translationKeys.id, keyId), eq(translationKeys.projectId, projectId)))
             .returning();
+    }
+
+    async bulkUpdateKeys(projectId: number, updates: { id: number, key: string }[], userId?: number, forceReview: boolean = false) {
+        if (!updates.length) return [];
+        
+        const { users } = await import('../../../users/schema');
+        const { projects } = await import('../../schema');
+        
+        let needsReview = forceReview;
+        let userRecord = null;
+        
+        if (userId) {
+            const [user] = await this.db.select().from(users).where(eq(users.id, userId));
+            userRecord = user;
+            if (!needsReview) {
+                const [project] = await this.db.select().from(projects).where(eq(projects.id, projectId));
+                needsReview = !user?.isAdmin && !user?.isReviewer && (project?.reviewEnabled || user?.requiresReview);
+            }
+        }
+
+        const results = [];
+        let reviewsTriggered = 0;
+
+        for (const update of updates) {
+            if (needsReview) {
+                const result = await this.db.update(translationKeys)
+                    .set({ draftKey: update.key, reviewStatus: 'PENDING_REVIEW', authorId: userId })
+                    .where(and(eq(translationKeys.id, update.id), eq(translationKeys.projectId, projectId)))
+                    .returning();
+                results.push(...result);
+                reviewsTriggered++;
+            } else {
+                const result = await this.db.update(translationKeys)
+                    .set({ key: update.key })
+                    .where(and(eq(translationKeys.id, update.id), eq(translationKeys.projectId, projectId)))
+                    .returning();
+                results.push(...result);
+            }
+        }
+
+        if (needsReview && reviewsTriggered > 0) {
+            try {
+                const { or } = await import('drizzle-orm');
+                const { NotificationService } = await import('../../../../services/notification.service');
+                const reviewers = await this.db.select().from(users).where(or(eq(users.isAdmin, true), eq(users.isReviewer, true)));
+                
+                for (const reviewer of reviewers) {
+                    if (reviewer.alertConfig) {
+                        await NotificationService.send(reviewer.alertConfig, 'pending.reviews', {
+                            title: 'Bulk Key Edits Pending Review 🔑',
+                            message: `${reviewsTriggered} key name edit(s) were submitted by ${userRecord?.username || 'Unknown'} and are waiting for approval.`
+                        }, {
+                            throttleKey: `pending.reviews-${reviewer.id}`,
+                            throttleHours: 2
+                        });
+                    }
+                }
+            } catch(e) {
+                console.error("Failed to send bulk key review notifications", e);
+            }
+        }
+
+        return results;
     }
 
     async deleteKey(projectId: number, keyId: number) {
@@ -125,16 +271,39 @@ export class KeyService {
         const [existing] = await this.db.select().from(translations).where(and(eq(translations.keyId, keyId), eq(translations.languageId, languageId)));
         
         if (needsReview) {
+            let result;
             if (existing) {
-                return this.db.update(translations)
+                result = await this.db.update(translations)
                     .set({ draftValue: value, reviewStatus: 'PENDING_REVIEW', authorId: userId })
                     .where(eq(translations.id, existing.id))
                     .returning();
             } else {
-                return this.db.insert(translations)
+                result = await this.db.insert(translations)
                     .values({ keyId, languageId, value: '', draftValue: value, reviewStatus: 'PENDING_REVIEW', authorId: userId })
                     .returning();
             }
+
+            try {
+                const { or } = await import('drizzle-orm');
+                const { NotificationService } = await import('../../../../services/notification.service');
+                const reviewers = await this.db.select().from(users).where(or(eq(users.isAdmin, true), eq(users.isReviewer, true)));
+                
+                for (const reviewer of reviewers) {
+                    if (reviewer.alertConfig) {
+                        await NotificationService.send(reviewer.alertConfig, 'pending.reviews', {
+                            title: 'New Translation Pending Review 🧐',
+                            message: `A new translation draft was submitted by ${user?.username} and is waiting for approval.`
+                        }, {
+                            throttleKey: `pending.reviews-${reviewer.id}`,
+                            throttleHours: 2
+                        });
+                    }
+                }
+            } catch (notifyError) {
+                console.error('Failed to send pending review notifications', notifyError);
+            }
+
+            return result;
         } else {
             return this.db.insert(translations)
                 .values({ keyId, languageId, value, draftValue: null, reviewStatus: 'APPROVED', authorId: userId })
@@ -177,14 +346,26 @@ export class KeyService {
 
         if (currentQuota < count) throw new Error('Translation quota exceeded');
         
+        const newQuota = currentQuota - count;
         await this.db.update(users)
             .set({ 
-                translationQuota: currentQuota - count,
+                translationQuota: newQuota,
                 quotaNextResetAt: updateNextResetAt
             })
             .where(eq(users.id, userId));
             
-        return currentQuota - count;
+        if (newQuota <= 50 && user.alertConfig) {
+            const { NotificationService } = await import('../../../../services/notification.service');
+            await NotificationService.send(user.alertConfig, 'quota.low', {
+                title: 'Translation Quota Low ⚠️',
+                message: `You only have ${newQuota} translation suggestions remaining.`
+            }, {
+                throttleKey: `quota.low-${user.id}`,
+                throttleHours: 24
+            });
+        }
+
+        return newQuota;
     }
 
     async autoTranslate(projectId: number, keyId: number, targetLanguageIds: number[], provider: 'deepl' | 'google' = 'google', userId?: number) {

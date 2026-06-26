@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, reactive } from 'vue'
+import { computed, ref, reactive, watch, nextTick } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import type { TableColumn } from '@nuxt/ui'
 import { useTranslation } from '~/composables/localization/useTranslation'
+import { useTranslationTimer } from '~/composables/localization/useTranslationTimer'
 import type { Language } from '~/types'
 
 interface TranslationRow {
@@ -16,6 +17,7 @@ interface TranslationRow {
 const props = defineProps<{
   modelValue: boolean
   lang: Language | null
+  defaultSearch?: string
 }>()
 
 const emit = defineEmits<{
@@ -36,6 +38,14 @@ const {
 } = useTranslation()
 
 const search = ref('')
+
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen && props.defaultSearch) {
+    search.value = props.defaultSearch
+  } else if (!isOpen) {
+    search.value = ''
+  }
+})
 const pagination = ref({ pageIndex: 0, pageSize: 15 })
 
 const currentPagination = computed({
@@ -70,29 +80,37 @@ const columns: TableColumn<TranslationRow>[] = [
   { accessorKey: 'targetText', header: 'Translation' }
 ]
 
-const updateTranslation = (keyId: number, newText: string) => {
+const updateTranslation = (keyId: number, newText: string, timeSpentMs: number) => {
   if (!props.lang) return
-  saveTranslation(keyId, props.lang.id, props.lang.code, newText, false)
+  saveTranslation(keyId, props.lang.id, props.lang.code, newText, false, timeSpentMs)
 }
 
 const localTranslations = reactive<Record<number, string>>({})
 const focusedKeyId = ref<number | null>(null)
 
+const timer = useTranslationTimer()
+
 const handleUpdate = (keyId: number, val: string) => {
   localTranslations[keyId] = val
+  timer.registerActivity()
 }
 
 const handleBlur = (keyId: number, originalText: string) => {
   focusedKeyId.value = null
+  timer.stopTracking()
+  const timeSpentMs = timer.timeSpentMs.value
+  timer.resetTimer()
+  
   const val = localTranslations[keyId]
   // Only save if the value was modified and is different from the original text
   if (val !== undefined && val !== originalText) {
-    updateTranslation(keyId, val)
+    updateTranslation(keyId, val, timeSpentMs)
   }
 }
 
 const handleFocus = (keyId: number, event: FocusEvent) => {
   focusedKeyId.value = keyId
+  timer.startTracking()
   const target = event.target as HTMLTextAreaElement
   if (target) {
     nextTick(() => {
@@ -158,12 +176,26 @@ const handleFocus = (keyId: number, event: FocusEvent) => {
             </template>
           </u-table>
 
-          <div class="flex justify-end border-t border-default pt-4">
-            <u-pagination
+          <div class="flex items-center justify-between border-t border-default pt-4">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-neutral-500">Rows per page</span>
+              <u-select
+                :model-value="pagination.pageSize"
+                :items="[10, 20, 50, 100]"
+                class="w-20"
+                @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
+              />
+            </div>
+            <div class="flex items-center gap-4">
+          <span class="text-sm text-neutral-500">
+            {{ tableData.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, tableData.length) }} of {{ tableData.length }}
+          </span>
+          <u-pagination
                 v-model:page="currentPagination"
                 :total="tableData.length"
                 :items-per-page="pagination.pageSize"
             />
+        </div>
           </div>
         </div>
       </div>

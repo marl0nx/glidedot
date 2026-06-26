@@ -5,7 +5,8 @@ import { Cron } from 'croner';
 import { env } from '../../config/env';
 import { 
     projects, languages, projectLanguages, labels, 
-    translationKeys, translations, keysToLabels 
+    translationKeys, translations, keysToLabels,
+    activityLogs, keyTemplates, keyGlossary, keyVariables
 } from '../localization/schema';
 import { settings } from '../settings/schema';
 
@@ -113,6 +114,10 @@ export class S3BackupService {
             const allTranslationKeys = await this.db.select().from(translationKeys);
             const allTranslations = await this.db.select().from(translations);
             const allKeysToLabels = await this.db.select().from(keysToLabels);
+            const allActivityLogs = await this.db.select().from(activityLogs);
+            const allKeyTemplates = await this.db.select().from(keyTemplates);
+            const allKeyGlossary = await this.db.select().from(keyGlossary);
+            const allKeyVariables = await this.db.select().from(keyVariables);
 
             const backupData = {
                 projects: allProjects,
@@ -122,6 +127,10 @@ export class S3BackupService {
                 translationKeys: allTranslationKeys,
                 translations: allTranslations,
                 keysToLabels: allKeysToLabels,
+                activityLogs: allActivityLogs,
+                keyTemplates: allKeyTemplates,
+                keyGlossary: allKeyGlossary,
+                keyVariables: allKeyVariables,
             };
 
             const zip = new AdmZip();
@@ -155,6 +164,25 @@ export class S3BackupService {
 
         } catch (error) {
             console.error('Failed to perform S3 backup', error);
+
+            try {
+                const { users } = await import('../../modules/users/schema');
+                const { NotificationService } = await import('../../services/notification.service');
+                const { eq } = await import('drizzle-orm');
+                const admins = await this.db.select().from(users).where(eq(users.isAdmin, true));
+                
+                for (const admin of admins) {
+                    if (admin.alertConfig) {
+                        await NotificationService.send(admin.alertConfig, 'backup.failed', {
+                            title: 'S3 Backup Failed 🚨',
+                            message: `The automated S3 backup failed. Please check the server logs.\nError: ${error instanceof Error ? error.message : String(error)}`
+                        });
+                    }
+                }
+            } catch (notifyError) {
+                console.error('Failed to send backup failed notifications', notifyError);
+            }
+
             throw error;
         }
     }

@@ -28,15 +28,15 @@ const {
 
 const items = [{
   label: 'Key Templates',
-  icon: 'i-lucide-layout-template',
+  icon: 'i-lucide-braces',
   slot: 'templates'
 }, {
   label: 'Global Variables',
-  icon: 'i-lucide-database',
+  icon: 'i-lucide-variable',
   slot: 'variables'
 }, {
   label: 'Glossary Linter',
-  icon: 'i-lucide-book-open-check',
+  icon: 'i-lucide-book-a',
   slot: 'glossary'
 }]
 
@@ -86,10 +86,13 @@ const handleDeleteTemplate = async (id: number) => {
 
 <template>
   <div class="flex flex-col gap-6">
-    <div class="flex flex-col md:flex-row justify-between gap-4">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
       <div>
-        <h1 class="text-xl font-bold">Conventions</h1>
-        <p class="text-sm text-neutral-400">Enforce naming rules and terminology across your translation keys.</p>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-book-open" class="w-5 h-5 text-primary-500" />
+            Conventions
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">Enforce naming rules and terminology across your translation keys.</p>
       </div>
     </div>
     
@@ -99,7 +102,16 @@ const handleDeleteTemplate = async (id: number) => {
       :ui="{ list: { background: 'bg-neutral-900 border border-neutral-800', width: 'w-fit', height: 'h-10', tab: { height: 'h-8', size: 'text-sm' } } }"
     >
       <template #templates="{ item }">
-        <div class="py-2">
+        <div class="py-2 flex flex-col gap-4">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+            <div>
+              <h3 class="text-white font-medium flex items-center gap-2">
+                <u-icon name="i-lucide-braces" class="w-5 h-5 text-primary-500" />
+                Key Templates
+              </h3>
+              <p class="text-sm text-neutral-400 mt-1">Define structural templates to enforce consistent key naming conventions.</p>
+            </div>
+          </div>
           <key-templates-settings 
             :templates="templates"
             :variables="variables"
@@ -111,7 +123,16 @@ const handleDeleteTemplate = async (id: number) => {
         </div>
       </template>
       <template #variables="{ item }">
-        <div class="py-2">
+        <div class="py-2 flex flex-col gap-4">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+            <div>
+              <h3 class="text-white font-medium flex items-center gap-2">
+                <u-icon name="i-lucide-variable" class="w-5 h-5 text-primary-500" />
+                Variables
+              </h3>
+              <p class="text-sm text-neutral-400 mt-1">Manage shared variables that can be used inside your key templates.</p>
+            </div>
+          </div>
           <variables-settings 
             :variables="variables"
             :is-loading="isLoading"
@@ -122,7 +143,16 @@ const handleDeleteTemplate = async (id: number) => {
         </div>
       </template>
       <template #glossary="{ item }">
-        <div class="py-2">
+        <div class="py-2 flex flex-col gap-4">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+            <div>
+              <h3 class="text-white font-medium flex items-center gap-2">
+                <u-icon name="i-lucide-book-a" class="w-5 h-5 text-primary-500" />
+                Glossary
+              </h3>
+              <p class="text-sm text-neutral-400 mt-1">Establish terminology rules to maintain consistent naming across keys.</p>
+            </div>
+          </div>
           <glossary-settings 
             :glossary="glossary"
             :is-loading="isLoading"

@@ -3,6 +3,8 @@ import { eq } from 'drizzle-orm';
 import { settings } from '../../settings/schema';
 import { env } from '../../../config/env';
 
+import { encryptString, decryptString } from '../../../utils/encryption';
+
 export class DeeplService {
     constructor(private db: FastifyInstance['db']) {}
 
@@ -10,7 +12,11 @@ export class DeeplService {
         const apiKeySetting = await this.db.select().from(settings).where(eq(settings.key, 'deeplApiKey')).limit(1);
         let apiKey = env.DEEPL_API_KEY;
         if (apiKeySetting.length > 0 && apiKeySetting[0].value) {
-            apiKey = apiKeySetting[0].value;
+            try {
+                apiKey = decryptString(apiKeySetting[0].value);
+            } catch {
+                apiKey = apiKeySetting[0].value;
+            }
         }
 
         const apiUrlSetting = await this.db.select().from(settings).where(eq(settings.key, 'deeplApiUrl')).limit(1);

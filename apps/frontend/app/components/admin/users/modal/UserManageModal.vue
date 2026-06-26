@@ -31,10 +31,17 @@ const hasUnsavedChanges = computed(() => {
   if (props.mode === 'create') return false
   return JSON.stringify(props.user) !== originalUser.value
 })
+
+const discard = () => {
+  if (originalUser.value) {
+    const orig = JSON.parse(originalUser.value)
+    Object.assign(props.user, orig)
+  }
+}
 </script>
 
 <template>
-  <u-modal v-model:open="isOpen" :title="mode === 'create' ? 'Create User' : `Edit User (ID: ${user.id})`">
+  <u-modal v-model:open="isOpen" :dismissible="!hasUnsavedChanges" :title="mode === 'create' ? 'Create User' : `Edit User (ID: ${user.id})`">
     <template #body>
       <div class="p-4 flex flex-col gap-4">
         <u-alert
@@ -118,12 +125,13 @@ const hasUnsavedChanges = computed(() => {
     <template #footer>
       <div class="flex justify-end gap-2">
         <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
-        <u-button :label="mode === 'create' ? 'Create' : 'Save Changes'" color="neutral" @click="emit('save')" />
+        <u-button v-if="mode === 'create'" label="Create" color="neutral" @click="emit('save')" />
       </div>
 
       <unsaved-changes-alert 
         :has-unsaved-changes="hasUnsavedChanges" 
-        :hide-buttons="true"
+        @save="emit('save')"
+        @discard="discard"
       />
     </template>
   </u-modal>

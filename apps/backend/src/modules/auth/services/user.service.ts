@@ -95,7 +95,7 @@ export class UserService {
             .returning();
     }
 
-    async updateUser(userId: number, data: Partial<{ username: string; email: string; password?: string; isAdmin: boolean; isOidc: boolean; isReviewer: boolean; requiresReview: boolean; allowSuggestions: boolean; enableSuggestions: boolean; translationQuota: number; baseTranslationQuota: number; quotaResetPeriodValue: number | null; quotaResetPeriodUnit: string | null; avatarUrl: string; oidcGroups: string }>) {
+    async updateUser(userId: number, data: Partial<{ username: string; email: string; password?: string; isAdmin: boolean; isOidc: boolean; isReviewer: boolean; requiresReview: boolean; allowSuggestions: boolean; enableSuggestions: boolean; translationQuota: number; baseTranslationQuota: number; quotaResetPeriodValue: number | null; quotaResetPeriodUnit: string | null; avatarUrl: string; oidcGroups: string; alertConfig: any }>) {
         const updateData: any = { ...data };
         if (updateData.password) {
             validatePasswordStrength(updateData.password);

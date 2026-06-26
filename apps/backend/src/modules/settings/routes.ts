@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import { settings } from './schema';
+import { encryptString, decryptString } from '../../utils/encryption';
 import { createAuthHooks } from '../auth/hooks';
 import { UserService } from '../auth/services/user.service';
 import { TeamService } from '../auth/services/team.service';
@@ -16,7 +17,15 @@ export const settingsRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
     const allSettings = await app.db.select().from(settings);
     const settingsObj: Record<string, any> = {};
     for (const row of allSettings) {
-      settingsObj[row.key] = row.value;
+      if (row.key === 'deepLApiKey' && row.value) {
+        try {
+          settingsObj[row.key] = decryptString(row.value);
+        } catch(e) {
+          settingsObj[row.key] = row.value;
+        }
+      } else {
+        settingsObj[row.key] = row.value;
+      }
     }
     const { env } = await import('../../config/env');
     settingsObj['s3Configured'] = !!(env.S3_ENDPOINT && env.S3_BUCKET && env.S3_ACCESS_KEY && env.S3_SECRET_KEY);
@@ -46,7 +55,11 @@ export const settingsRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
     // Execute all upserts using raw SQL to bypass ORM builder issues that cause hanging
     for (const [key, value] of entries) {
       if (key && value !== undefined && value !== null) {
-        await app.db.run(sql`INSERT INTO settings (key, value) VALUES (${key}, ${value}) ON CONFLICT(key) DO UPDATE SET value=excluded.value`);
+        let saveValue = value;
+        if (key === 'deepLApiKey' && value) {
+            saveValue = encryptString(value);
+        }
+        await app.db.run(sql`INSERT INTO settings (key, value) VALUES (${key}, ${saveValue}) ON CONFLICT(key) DO UPDATE SET value=excluded.value`);
       }
     }
     

@@ -42,6 +42,10 @@ export const translationKeys = sqliteTable('translation_keys', {
     id: integer('id').primaryKey({ autoIncrement: true }),
     projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
     key: text('key').notNull(),
+    draftKey: text('draft_key'),
+    reviewStatus: text('review_status').notNull().default('APPROVED'), // 'APPROVED', 'PENDING_REVIEW', 'REJECTED'
+    isPendingDelete: integer('is_pending_delete', { mode: 'boolean' }).notNull().default(false),
+    authorId: integer('author_id'),
 }, (table) => ({
     keyIdx: uniqueIndex('key_project_idx').on(table.projectId, table.key),
 }));

@@ -107,7 +107,7 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
         {
           label: 'Insights',
           icon: 'i-lucide-activity',
-          href: '/admin/activity'
+          href: '/admin/insights'
         },
         {
           label: 'Migration',
@@ -159,6 +159,11 @@ const secondaryItems = computed<NavigationMenuItem[]>(() => [
     icon: 'i-lucide-monitor-play',
     href: `/projects/${currentProject.value?.id}/in-context`,
     class: 'hidden md:flex'
+  },
+  {
+    label: 'Git Sync',
+    icon: 'i-lucide-git-merge',
+    href: `/projects/${currentProject.value?.id}/git-sync`
   },
   {
     label: 'Reviews',

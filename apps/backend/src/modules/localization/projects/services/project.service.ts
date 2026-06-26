@@ -171,7 +171,7 @@ export class ProjectService {
             
             const insertData = importAsPending 
                 ? { keyId, languageId, value: "", draftValue: value, reviewStatus: 'PENDING_REVIEW' as const }
-                : { keyId, languageId, value, draftValue: null, reviewStatus: null };
+                : { keyId, languageId, value, draftValue: null, reviewStatus: 'APPROVED' as const };
 
             await this.db.insert(translations)
                 .values(insertData)
@@ -284,7 +284,8 @@ export class ProjectService {
         // Always calculate personal stats
         const personalLogs = await this.db.select({ 
             action: activityLogs.action,
-            createdAt: activityLogs.createdAt
+            createdAt: activityLogs.createdAt,
+            details: activityLogs.details
         }).from(activityLogs).where(eq(activityLogs.userId, user.id));
 
         const now = new Date();
@@ -309,12 +310,33 @@ export class ProjectService {
             activityHeatmap.push({ date, count });
         });
 
+        const timeSpentArr: number[] = [];
+        personalLogs.filter(l => l.action === 'TRANSLATION_UPDATED').forEach(l => {
+            try {
+                if (l.details) {
+                    const parsed = JSON.parse(l.details);
+                    if (parsed.timeSpentMs && parsed.timeSpentMs > 0 && !parsed.isAutomated) {
+                        timeSpentArr.push(parsed.timeSpentMs);
+                    }
+                }
+            } catch (e) {}
+        });
+        
+        let averageTranslationSpeedMs = 0;
+        if (timeSpentArr.length > 0) {
+            // Use median to avoid outliers
+            timeSpentArr.sort((a, b) => a - b);
+            const mid = Math.floor(timeSpentArr.length / 2);
+            averageTranslationSpeedMs = timeSpentArr.length % 2 !== 0 ? timeSpentArr[mid] : (timeSpentArr[mid - 1] + timeSpentArr[mid]) / 2;
+        }
+
         const personalStats = {
             keysCreated: personalLogs.filter(l => l.action === 'KEY_CREATED').length,
             translationsUpdated: personalLogs.filter(l => l.action === 'TRANSLATION_UPDATED').length,
             languagesAdded: personalLogs.filter(l => l.action === 'LANGUAGE_ADDED').length,
             labelsCreated: personalLogs.filter(l => l.action === 'LABEL_CREATED').length,
-            activityHeatmap
+            activityHeatmap,
+            averageTranslationSpeedMs
         };
 
         if (!accessibleProjects.length) {

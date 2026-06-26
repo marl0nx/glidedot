@@ -39,7 +39,7 @@ export default defineNuxtConfig({
       provider: 'server',
       fallbackToApi: false,
       serverBundle: {
-        collections: ['lucide']
+        collections: ['lucide', 'simple-icons']
       }
     },
 

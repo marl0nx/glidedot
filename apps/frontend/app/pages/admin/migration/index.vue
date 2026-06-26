@@ -15,7 +15,7 @@ const s3BackupEnabled = computed({
     settings.value.s3BackupEnabled = String(val)
     const success = await saveSettings({ s3BackupEnabled: String(val) })
     if (success) {
-      toast.add({ title: val ? 'S3 Backups enabled' : 'S3 Backups disabled', color: 'success' })
+      toast.add({ title: 'Success', description: val ? 'S3 Backups enabled' : 'S3 Backups disabled', color: 'success' })
     }
   }
 })
@@ -46,7 +46,7 @@ const loadProjects = async () => {
     const projs = await fetchApi('/localization/projects')
     projects.value = projs as { id: number; name: string }[]
   } catch {
-    toast.add({ title: 'Failed to load projects', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to load projects', color: 'error' })
   }
 }
 
@@ -59,7 +59,7 @@ const loadLanguages = async () => {
     const langs = await fetchApi(`/localization/projects/${selectedProjectId.value}/languages`)
     languages.value = langs as { id: number; code: string; name: string }[]
   } catch {
-    toast.add({ title: 'Failed to load languages', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to load languages', color: 'error' })
   }
 }
 
@@ -89,9 +89,9 @@ const exportData = async () => {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    toast.add({ title: 'Export successful', color: 'success' })
+    toast.add({ title: 'Success', description: 'Export successful', color: 'success' })
   } catch {
-    toast.add({ title: 'Failed to export', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to export', color: 'error' })
   } finally {
     isExporting.value = false
   }
@@ -103,7 +103,7 @@ const handleFileSelect = async (event: Event) => {
   if (!file) return
 
   if (!selectedProjectId.value || !selectedLanguageId.value) {
-    toast.add({ title: 'Please select project and language first', color: 'error' })
+    toast.add({ title: 'Error', description: 'Please select project and language first', color: 'error' })
     return
   }
 
@@ -117,10 +117,10 @@ const handleFileSelect = async (event: Event) => {
       body: { data: jsonData, importAsPending: importAsPending.value }
     })
 
-    toast.add({ title: `Import successful (${result.imported} keys imported)`, color: 'success' })
+    toast.add({ title: 'Success', description: `Import successful (${result.imported} keys imported)`, color: 'success' })
   } catch (e) {
     console.error(e)
-    toast.add({ title: 'Failed to parse or import JSON', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to parse or import JSON', color: 'error' })
   } finally {
     isImporting.value = false
     if (fileInput.value) fileInput.value.value = ''
@@ -147,9 +147,9 @@ const exportConventions = async () => {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    toast.add({ title: 'Export successful', color: 'success' })
+    toast.add({ title: 'Success', description: 'Export successful', color: 'success' })
   } catch {
-    toast.add({ title: 'Failed to export conventions', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to export conventions', color: 'error' })
   } finally {
     isExportingConventions.value = false
   }
@@ -161,7 +161,7 @@ const handleConventionsFileSelect = async (event: Event) => {
   if (!file) return
 
   if (!selectedProjectId.value) {
-    toast.add({ title: 'Please select a project first', color: 'error' })
+    toast.add({ title: 'Error', description: 'Please select a project first', color: 'error' })
     return
   }
 
@@ -175,10 +175,10 @@ const handleConventionsFileSelect = async (event: Event) => {
       body: jsonData
     })
 
-    toast.add({ title: 'Conventions imported successfully', color: 'success' })
+    toast.add({ title: 'Success', description: 'Conventions imported successfully', color: 'success' })
   } catch (e) {
     console.error(e)
-    toast.add({ title: 'Failed to parse or import JSON', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to parse or import JSON', color: 'error' })
   } finally {
     isImportingConventions.value = false
     if (conventionsFileInput.value) conventionsFileInput.value.value = ''
@@ -201,13 +201,15 @@ const downloadBackup = async () => {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-    toast.add({ title: 'Backup downloaded successfully', color: 'success' })
+    toast.add({ title: 'Success', description: 'Backup downloaded successfully', color: 'success' })
   } catch {
-    toast.add({ title: 'Failed to download backup', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to download backup', color: 'error' })
   } finally {
     isBackingUp.value = false
   }
 }
+
+const restoreOptions = ref<{ projects: boolean, conventions: boolean }>({ projects: true, conventions: true })
 
 const handleBackupSelect = async (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -229,6 +231,8 @@ const handleBackupSelect = async (event: Event) => {
   
   try {
     const formData = new FormData()
+    formData.append('restoreProjects', String(restoreOptions.value.projects))
+    formData.append('restoreConventions', String(restoreOptions.value.conventions))
     formData.append('file', file)
 
     await fetchApi('/admin/migration/backup', {
@@ -236,7 +240,7 @@ const handleBackupSelect = async (event: Event) => {
       body: formData
     })
 
-    toast.add({ title: 'Backup restored successfully', color: 'success' })
+    toast.add({ title: 'Success', description: 'Backup restored successfully', color: 'success' })
     
     // Delay reload so the user can see the success toast
     setTimeout(() => {
@@ -244,7 +248,7 @@ const handleBackupSelect = async (event: Event) => {
     }, 2000)
   } catch (e) {
     console.error(e)
-    toast.add({ title: 'Failed to restore backup', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to restore backup', color: 'error' })
   } finally {
     isRestoring.value = false
     isRestoreModalOpen.value = false
@@ -257,7 +261,8 @@ const triggerBackupInput = () => {
   isRestoreModalOpen.value = true
 }
 
-const confirmAndSelectFile = () => {
+const confirmAndSelectFile = (options: { projects: boolean, conventions: boolean }) => {
+  restoreOptions.value = options
   backupFileInput.value?.click()
 }
 
@@ -265,9 +270,9 @@ const triggerS3Backup = async () => {
   isTriggeringS3.value = true
   try {
     await fetchApi('/admin/migration/s3-backup/trigger', { method: 'POST' })
-    toast.add({ title: 'S3 Backup successfully uploaded', color: 'success' })
+    toast.add({ title: 'Success', description: 'S3 Backup successfully uploaded', color: 'success' })
   } catch {
-    toast.add({ title: 'Failed to trigger S3 backup', color: 'error' })
+    toast.add({ title: 'Error', description: 'Failed to trigger S3 backup', color: 'error' })
   } finally {
     isTriggeringS3.value = false
   }
@@ -278,9 +283,14 @@ const triggerS3Backup = async () => {
   <div class="w-full">
     <div class="flex flex-col gap-10">
       <div class="flex flex-col gap-4">
-        <div>
-          <h1 class="text-xl font-bold">Data & Migration</h1>
-          <p class="text-sm text-neutral-400">Manage, migrate, and backup your Glide system data.</p>
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+          <div>
+            <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+                <u-icon name="i-lucide-database" class="w-5 h-5 text-primary-500" />
+                Data & Migration
+            </h1>
+            <p class="text-sm text-neutral-400 mt-1">Manage, migrate, and backup your glide. system data.</p>
+          </div>
         </div>
         <u-card class="flex flex-col h-full" :ui="{ body: { padding: 'p-2 sm:p-4' } }">
         <u-tabs 
@@ -293,12 +303,14 @@ const triggerS3Backup = async () => {
         >
           <template #project>
             <div class="flex flex-col gap-6 pt-4">
-              <div class="flex flex-col gap-1">
-                <h2 class="text-lg font-bold flex items-center gap-2">
-                  <u-icon name="i-lucide-file-json" class="w-5 h-5 text-primary-500" />
-                  Project Data
-                </h2>
-                <p class="text-sm text-neutral-400">Import or export JSON translations and formatting conventions for specific projects.</p>
+              <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+                <div>
+                  <h3 class="text-white font-medium flex items-center gap-2">
+                    <u-icon name="i-lucide-file-json" class="w-5 h-5 text-primary-500" />
+                    Project Data
+                  </h3>
+                  <p class="text-sm text-neutral-400 mt-1">Import or export JSON translations and formatting conventions for specific projects.</p>
+                </div>
               </div>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <u-form-field label="Project">
@@ -346,7 +358,11 @@ const triggerS3Backup = async () => {
 
                   <div class="flex flex-col gap-2 p-4 rounded-xl border border-neutral-800 bg-neutral-900/30">
                     <h3 class="font-medium text-sm">Import</h3>
-                    <p class="text-xs text-neutral-400 mb-2 flex-1">Upload a flat JSON file to import translations. Existing keys will be updated.</p>
+                    <p class="text-xs text-neutral-400 mb-2 flex-1">
+                      Upload a flat JSON file to import translations. Existing keys will be updated.
+                      <br><br>
+                      <span class="text-primary-400">Note:</span> If you are migrating from Traduora or similar tools, please make sure to select <b>JSON (Flat)</b> as the export format.
+                    </p>
                     <input 
                       ref="fileInput" 
                       type="file" 
@@ -421,12 +437,14 @@ const triggerS3Backup = async () => {
 
           <template #local>
             <div class="flex flex-col gap-6 pt-4">
-              <div class="flex flex-col gap-1">
-                <h2 class="text-lg font-bold flex items-center gap-2">
-                  <u-icon name="i-lucide-hard-drive-download" class="w-5 h-5 text-primary-500" />
-                  Local System Backup
-                </h2>
-                <p class="text-sm text-neutral-400">Export or import a complete snapshot of your Glide instance (projects, settings, conventions, and all translations, including those in review).</p>
+              <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+                <div>
+                  <h3 class="text-white font-medium flex items-center gap-2">
+                    <u-icon name="i-lucide-hard-drive-download" class="w-5 h-5 text-primary-500" />
+                    Local System Backup
+                  </h3>
+                  <p class="text-sm text-neutral-400 mt-1">Export or import a complete snapshot of your glide. instance (projects, settings, conventions, and all translations, including those in review).</p>
+                </div>
               </div>
               
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -469,12 +487,14 @@ const triggerS3Backup = async () => {
 
           <template #s3>
             <div class="flex flex-col gap-6 pt-4">
-              <div class="flex flex-col gap-1">
-                <h2 class="text-lg font-bold flex items-center gap-2">
-                  <u-icon name="i-lucide-cloud" class="w-5 h-5 text-primary-500" />
-                  Cloud Backup
-                </h2>
-                <p class="text-sm text-neutral-400">Configure automated remote backups of your entire localization database to an S3-compatible storage (AWS, MinIO, etc.).</p>
+              <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+                <div>
+                  <h3 class="text-white font-medium flex items-center gap-2">
+                    <u-icon name="i-lucide-cloud" class="w-5 h-5 text-primary-500" />
+                    Cloud Backup
+                  </h3>
+                  <p class="text-sm text-neutral-400 mt-1">Configure automated remote backups of your entire localization database to an S3-compatible storage (AWS, MinIO, etc.).</p>
+                </div>
               </div>
             
             <div class="flex flex-col gap-4">
@@ -483,7 +503,7 @@ const triggerS3Backup = async () => {
                 color="warning" 
                 variant="subtle" 
                 title="S3 Not Configured" 
-                description="Please provide S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, and S3_SECRET_KEY in your environment variables." 
+                description="Please provide S3_ENDPOINT, S3_REGION, S3_BUCKET, S3_ACCESS_KEY, and S3_SECRET_KEY in your environment variables for the backend."
                 icon="i-lucide-cloud-off" 
               />
               
@@ -503,7 +523,7 @@ const triggerS3Backup = async () => {
                     class="w-full"
                     @change="async () => {
                       const success = await saveSettings({ s3BackupFrequency: settings.s3BackupFrequency });
-                      if (success) toast.add({ title: 'Backup frequency updated', color: 'success' });
+                      if (success) toast.add({ title: 'Success', description: 'Backup frequency updated', color: 'success' });
                     }"
                   />
                 </u-form-field>

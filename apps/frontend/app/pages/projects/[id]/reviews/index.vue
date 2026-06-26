@@ -57,6 +57,12 @@ onMounted(async () => {
   }
 })
 
+const selectedTab = ref(0)
+const tabs = [
+  { label: 'Translations', slot: 'translations', icon: 'i-lucide-languages' },
+  { label: 'Keys', slot: 'keys', icon: 'i-lucide-logs' }
+]
+
 const searchQuery = ref('')
 
 const pendingReviews = computed(() => {
@@ -98,6 +104,22 @@ const filteredReviews = computed(() => {
       String(review.draftValue || '').toLowerCase().includes(query) ||
       String(review.originalValue || '').toLowerCase().includes(query) ||
       String(review.authorName || '').toLowerCase().includes(query)
+    )
+  })
+})
+
+const pendingKeys = computed(() => {
+  if (!keys.value) return []
+  return keys.value.filter(k => k.reviewStatus === 'PENDING_REVIEW')
+})
+
+const filteredKeys = computed(() => {
+  if (!searchQuery.value) return pendingKeys.value
+  const query = searchQuery.value.toLowerCase()
+  return pendingKeys.value.filter(key => {
+    return (
+      String(key.key).toLowerCase().includes(query) ||
+      String(key.draftKey || '').toLowerCase().includes(query)
     )
   })
 })
@@ -153,24 +175,57 @@ const handleReview = async (review: Review, action: 'approve' | 'reject') => {
     toast.add({ title: 'Error', description: (error as Error).message || `Failed to ${action} translation`, color: 'error' })
   }
 }
+
+const handleKeyReview = async (keyData: any, action: 'approve' | 'reject') => {
+  try {
+    const res = await fetchApi(`/localization/keys/${currentProject.value?.id}/${keyData.id}/${action}`, {
+      method: 'POST'
+    })
+    
+    // Refresh data globally to update UI
+    await init()
+    
+    toast.add({ title: 'Success', description: `Key ${action}d successfully.`, color: 'success' })
+  } catch (error) {
+    toast.add({ title: 'Error', description: (error as Error).message || `Failed to ${action} key`, color: 'error' })
+  }
+}
 </script>
 
 <template>
   <div class="flex flex-col gap-6 -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8">
-    <div class="flex flex-col md:flex-row justify-between md:items-center mb-2 gap-4">
-      <div class="flex flex-col gap-1">
-        <h1 class="text-xl font-semibold">Reviews</h1>
-        <p class="text-sm text-neutral-400">Review and approve suggested translations before they go live.</p>
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0 mb-2">
+      <div>
+        <h1 class="text-white font-medium flex items-center gap-2 text-lg">
+            <u-icon name="i-lucide-check-circle" class="w-5 h-5 text-primary-500" />
+            Reviews
+        </h1>
+        <p class="text-sm text-neutral-400 mt-1">Review and approve suggested translations before they go live.</p>
       </div>
     </div>
 
     <!-- Main Content -->
     <div class="flex flex-col gap-4">
-      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-        <u-input v-model="searchQuery" icon="i-lucide-search" placeholder="Search reviews..." class="w-full md:max-w-sm" />
-      </div>
-      <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
-        <div v-if="isLoading" class="p-8 text-center text-neutral-500">
+      <u-tabs
+        :items="tabs"
+        class="w-full"
+      >
+        <template #translations="{ item }">
+          <div class="flex flex-col gap-4 mt-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+              <div>
+                <h3 class="text-white font-medium flex items-center gap-2">
+                  <u-icon name="i-lucide-languages" class="w-5 h-5 text-primary-500" />
+                  Translation Reviews
+                </h3>
+                <p class="text-sm text-neutral-400 mt-1">Review, approve or reject AI-suggested and manually drafted translations.</p>
+              </div>
+            </div>
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+              <u-input v-model="searchQuery" icon="i-lucide-search" placeholder="Search translation reviews..." class="w-full md:max-w-sm" />
+            </div>
+            <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+              <div v-if="isLoading" class="p-8 text-center text-neutral-500">
           <u-icon name="i-lucide-loader-2" class="w-8 h-8 animate-spin mx-auto mb-2" />
           Loading reviews...
         </div>
@@ -324,15 +379,165 @@ const handleReview = async (review: Review, action: 'approve' | 'reject') => {
             </div>
           </div>
 
-          <div class="flex justify-end p-4 border-t border-neutral-800">
-            <u-pagination
+          <div class="flex items-center justify-between p-4 border-t border-neutral-800">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-neutral-500">Rows per page</span>
+              <u-select
+                :model-value="pagination.pageSize"
+                :items="[10, 20, 50, 100]"
+                class="w-20"
+                @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
+              />
+            </div>
+            <div class="flex items-center gap-4">
+          <span class="text-sm text-neutral-500">
+            {{ pendingReviews.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, pendingReviews.length) }} of {{ pendingReviews.length }}
+          </span>
+          <u-pagination
                 v-model:page="currentPagination"
                 :total="pendingReviews.length"
                 :items-per-page="pagination.pageSize"
             />
+        </div>
           </div>
         </div>
       </u-card>
+      </div>
+      </template>
+
+      <template #keys="{ item }">
+        <div class="flex flex-col gap-4 mt-4">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
+            <div>
+              <h3 class="text-white font-medium flex items-center gap-2">
+                <u-icon name="i-lucide-logs" class="w-5 h-5 text-primary-500" />
+                Key Reviews
+              </h3>
+              <p class="text-sm text-neutral-400 mt-1">Review structural changes such as new keys or renamed keys before they merge.</p>
+            </div>
+          </div>
+          <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <u-input v-model="searchQuery" icon="i-lucide-search" placeholder="Search key reviews..." class="w-full md:max-w-sm" />
+          </div>
+          <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+            <div v-if="isLoading" class="p-8 text-center text-neutral-500">
+              <u-icon name="i-lucide-loader-2" class="w-8 h-8 animate-spin mx-auto mb-2" />
+              Loading reviews...
+            </div>
+            
+            <div v-else-if="filteredKeys.length === 0" class="p-12 text-center text-neutral-500 flex flex-col items-center gap-2">
+              <u-icon name="i-lucide-check-circle-2" class="w-12 h-12 text-success-500/50 mb-2" />
+              <h3 class="text-lg font-medium text-neutral-300">All caught up!</h3>
+              <p class="max-w-md" v-if="searchQuery">No key reviews match your search query.</p>
+              <p class="max-w-md" v-else>There are no keys pending review right now.</p>
+            </div>
+            
+            <div v-else>
+              <div class="hidden md:block">
+                <u-table 
+                  :data="filteredKeys" 
+                  :columns="[{ accessorKey: 'key', header: 'Key Name' }, { accessorKey: 'diff', header: 'Change' }, { id: 'actions', header: '' }]" 
+                  :loading="isLoading"
+                >
+                  <template #key-cell="{ row }">
+                    <span class="font-mono text-sm text-neutral-400 break-all">{{ row.original.key }}</span>
+                  </template>
+                  
+                  <template #diff-cell="{ row }">
+                    <div class="flex items-center gap-4 text-sm font-mono p-3 bg-neutral-900 rounded-lg border border-neutral-800">
+                      <template v-if="!row.original.draftKey">
+                        <u-badge color="success" variant="subtle" size="xs">NEW KEY</u-badge>
+                        <span class="text-success-400">{{ row.original.key }}</span>
+                      </template>
+                      <template v-else>
+                        <span class="text-error-400 line-through opacity-70">{{ row.original.key }}</span>
+                        <u-icon name="i-lucide-arrow-right" class="w-4 h-4 text-neutral-500" />
+                        <span class="text-success-400">{{ row.original.draftKey }}</span>
+                      </template>
+                    </div>
+                  </template>
+                  
+                  <template #actions-cell="{ row }">
+                    <div class="flex items-center gap-2 justify-end">
+                      <template v-if="isAdmin || isReviewer">
+                        <u-button 
+                          icon="i-lucide-x" 
+                          color="error" 
+                          variant="soft" 
+                          size="sm"
+                          label="Reject"
+                          @click="handleKeyReview(row.original, 'reject')"
+                        />
+                        <u-button 
+                          icon="i-lucide-check" 
+                          color="success" 
+                          size="sm"
+                          label="Approve"
+                          @click="handleKeyReview(row.original, 'approve')"
+                        />
+                      </template>
+                      <div v-else class="text-xs text-neutral-500 italic">
+                        Waiting for Reviewer
+                      </div>
+                    </div>
+                  </template>
+                </u-table>
+              </div>
+
+              <!-- Mobile List -->
+              <div class="md:hidden flex flex-col p-4 gap-4">
+                <u-card v-for="key in filteredKeys" :key="key.id" :ui="{ body: { padding: 'p-4' } }">
+                  <div class="flex flex-col gap-4">
+                    <div class="flex flex-col gap-2 font-mono text-sm bg-neutral-900 p-3 rounded-lg border border-neutral-800">
+                      <template v-if="!key.draftKey">
+                        <div class="flex items-center gap-2">
+                          <u-badge color="success" variant="subtle" size="xs">NEW KEY</u-badge>
+                          <span class="text-success-400 break-all">{{ key.key }}</span>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="flex flex-col gap-1">
+                          <span class="text-[10px] uppercase font-bold text-error-500 font-sans">Current</span>
+                          <span class="text-error-400 line-through opacity-70 break-all">{{ key.key }}</span>
+                        </div>
+                        <div class="h-px w-full bg-neutral-800"></div>
+                        <div class="flex flex-col gap-1">
+                          <span class="text-[10px] uppercase font-bold text-success-500 font-sans">Suggested</span>
+                          <span class="text-success-400 break-all">{{ key.draftKey }}</span>
+                        </div>
+                      </template>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 justify-end">
+                      <template v-if="isAdmin || isReviewer">
+                        <u-button 
+                          icon="i-lucide-x" 
+                          color="error" 
+                          variant="soft" 
+                          size="xs"
+                          label="Reject"
+                          @click="handleKeyReview(key, 'reject')"
+                        />
+                        <u-button 
+                          icon="i-lucide-check" 
+                          color="success" 
+                          size="xs"
+                          label="Approve"
+                          @click="handleKeyReview(key, 'approve')"
+                        />
+                      </template>
+                      <div v-else class="text-[10px] text-neutral-500 italic">
+                        Waiting for Reviewer
+                      </div>
+                    </div>
+                  </div>
+                </u-card>
+              </div>
+            </div>
+          </u-card>
+        </div>
+      </template>
+    </u-tabs>
     </div>
   </div>
 </template>

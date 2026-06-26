@@ -10,6 +10,7 @@ import adminModule from './modules/admin';
 import localizationModule from './modules/localization';
 import settingsModule from './modules/settings';
 import migrationModule from './modules/migration';
+import gitModule from './modules/git';
 import multipart from '@fastify/multipart';
 
 export async function buildApp() {
@@ -45,6 +46,7 @@ export async function buildApp() {
     await app.register(localizationModule, { prefix: '/v1/localization' });
     await app.register(settingsModule, { prefix: '/v1/admin/settings' });
     await app.register(migrationModule, { prefix: '/v1/admin/migration' });
+    await app.register(gitModule, { prefix: '/v1/git' });
 
     return app;
 }

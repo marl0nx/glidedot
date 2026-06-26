@@ -42,7 +42,8 @@ export default async function adminRoutes(fastify: FastifyInstance) {
         const logsQuery = fastify.db.select({
             userId: activityLogs.userId,
             details: activityLogs.details,
-            action: activityLogs.action
+            action: activityLogs.action,
+            createdAt: activityLogs.createdAt
         })
         .from(activityLogs);
         
@@ -62,6 +63,9 @@ export default async function adminRoutes(fastify: FastifyInstance) {
             labelsCreated: 0,
             languagesAdded: 0,
             totalActivity: 0,
+            lastActivity: null as string | null,
+            averageTranslationSpeedMs: 0,
+            timeSpentArr: [] as number[],
             topLanguages: [] as { code: string, count: number }[]
         }));
 
@@ -75,6 +79,10 @@ export default async function adminRoutes(fastify: FastifyInstance) {
 
             stats.totalActivity++;
 
+            if (!stats.lastActivity || new Date(log.createdAt) > new Date(stats.lastActivity)) {
+                stats.lastActivity = log.createdAt;
+            }
+
             if (log.action === 'TRANSLATION_UPDATED') {
                 stats.translationsUpdated++;
                 try {
@@ -83,6 +91,9 @@ export default async function adminRoutes(fastify: FastifyInstance) {
                         if (!langCounts.has(log.userId)) langCounts.set(log.userId, new Map());
                         const userLangs = langCounts.get(log.userId)!;
                         userLangs.set(details.languageCode, (userLangs.get(details.languageCode) || 0) + 1);
+                    }
+                    if (!details.isAutomated && details.timeSpentMs && details.timeSpentMs > 0) {
+                        stats.timeSpentArr.push(details.timeSpentMs);
                     }
                 } catch (e) {}
             } else if (log.action === 'KEY_CREATED') {
@@ -102,11 +113,179 @@ export default async function adminRoutes(fastify: FastifyInstance) {
                     .sort((a, b) => b.count - a.count)
                     .slice(0, 3);
             }
+            
+            if (stats.timeSpentArr.length > 0) {
+                stats.timeSpentArr.sort((a, b) => a - b);
+                const mid = Math.floor(stats.timeSpentArr.length / 2);
+                stats.averageTranslationSpeedMs = stats.timeSpentArr.length % 2 !== 0 
+                    ? stats.timeSpentArr[mid] 
+                    : (stats.timeSpentArr[mid - 1] + stats.timeSpentArr[mid]) / 2;
+            }
+            // @ts-ignore
+            delete stats.timeSpentArr;
         }
 
         userStats.sort((a, b) => b.totalActivity - a.totalActivity);
 
         return { data: userStats };
+    });
+
+    fastify.get('/activity-logs/automation', { preHandler: [requireAdmin] }, async (request) => {
+        const { activityLogs } = await import('../../localization/schema');
+        const { desc, eq, and, gte, or } = await import('drizzle-orm');
+
+        const query = request.query as { timeframe?: string };
+        const timeframe = query.timeframe || '30d';
+
+        let fromDate = new Date(0);
+        const now = new Date();
+        if (timeframe === 'today') {
+            fromDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        } else if (timeframe === '7d') {
+            fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (timeframe === '14d') {
+            fromDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+        } else if (timeframe === '30d') {
+            fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        } else if (timeframe === '60d') {
+            fromDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+        } else if (timeframe === '90d') {
+            fromDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        } else if (timeframe === '180d') {
+            fromDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+        } else if (timeframe === 'year') {
+            fromDate = new Date(now.getFullYear(), 0, 1);
+        }
+
+        const dateStr = fromDate.toISOString().replace('T', ' ').slice(0, 19);
+
+        let logsQuery = fastify.db.select({
+            action: activityLogs.action,
+            details: activityLogs.details,
+            createdAt: activityLogs.createdAt
+        })
+        .from(activityLogs)
+        .where(or(eq(activityLogs.action, 'TRANSLATION_UPDATED'), eq(activityLogs.action, 'AUTO_TRANSLATED')));
+
+        let logs;
+        if (timeframe !== 'all') {
+            logs = await logsQuery.where(and(
+                or(eq(activityLogs.action, 'TRANSLATION_UPDATED'), eq(activityLogs.action, 'AUTO_TRANSLATED')), 
+                gte(activityLogs.createdAt, dateStr)
+            ));
+        } else {
+            logs = await logsQuery;
+        }
+
+        const timeSpentArr: number[] = [];
+        const dailyStats = new Map<string, { manualCount: number, autoCount: number, timeSavedMs: number }>();
+
+        for (const log of logs) {
+            const d = new Date(log.createdAt);
+            let dateKey = '';
+            if (timeframe === 'today') {
+                dateKey = d.toISOString().substring(0, 13) + ':00:00.000Z';
+            } else {
+                dateKey = d.toISOString().split('T')[0];
+            }
+            
+            if (!dailyStats.has(dateKey)) {
+                dailyStats.set(dateKey, { manualCount: 0, autoCount: 0, timeSavedMs: 0 });
+            }
+            
+            const stats = dailyStats.get(dateKey)!;
+
+            try {
+                if (log.details) {
+                    const parsed = JSON.parse(log.details);
+                    if (log.action === 'AUTO_TRANSLATED') {
+                        stats.autoCount += parsed.count || 1;
+                    } else if (log.action === 'TRANSLATION_UPDATED') {
+                        if (parsed.isAutomated) {
+                            stats.autoCount++;
+                        } else {
+                            stats.manualCount++;
+                            if (parsed.timeSpentMs && parsed.timeSpentMs > 0) {
+                                timeSpentArr.push(parsed.timeSpentMs);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+
+        let medianSpeedMs = 0;
+        if (timeSpentArr.length > 0) {
+            timeSpentArr.sort((a, b) => a - b);
+            const mid = Math.floor(timeSpentArr.length / 2);
+            medianSpeedMs = timeSpentArr.length % 2 !== 0 ? timeSpentArr[mid] : (timeSpentArr[mid - 1] + timeSpentArr[mid]) / 2;
+        }
+
+        let totalTimeSavedMs = 0;
+        let totalAuto = 0;
+        let totalManual = 0;
+
+        const timeline: { date: string, manualCount: number, autoCount: number, timeSavedMs: number }[] = [];
+        
+        // Populate the timeline and calculate time saved based on median speed
+        // To show 0s for missing days, we'll iterate through the date range
+        let currentDate = new Date(fromDate);
+        currentDate.setUTCHours(0, 0, 0, 0);
+
+        if (timeframe === 'all') {
+            // Find earliest date
+            if (logs.length > 0) {
+                const earliest = logs.reduce((min, log) => {
+                    const d = new Date(log.createdAt);
+                    return d < min ? d : min;
+                }, new Date());
+                currentDate = new Date(earliest);
+                currentDate.setUTCHours(0, 0, 0, 0);
+            }
+        }
+
+        const end = new Date();
+        end.setUTCHours(23, 59, 59, 999);
+
+        while (currentDate <= end) {
+            let dateKey = '';
+            if (timeframe === 'today') {
+                dateKey = currentDate.toISOString().substring(0, 13) + ':00:00.000Z';
+            } else {
+                dateKey = currentDate.toISOString().split('T')[0];
+            }
+            const stats = dailyStats.get(dateKey) || { manualCount: 0, autoCount: 0, timeSavedMs: 0 };
+            
+            const timeSaved = stats.autoCount * medianSpeedMs;
+            
+            totalTimeSavedMs += timeSaved;
+            totalAuto += stats.autoCount;
+            totalManual += stats.manualCount;
+
+            timeline.push({
+                date: dateKey,
+                manualCount: stats.manualCount,
+                autoCount: stats.autoCount,
+                timeSavedMs: timeSaved
+            });
+            if (timeframe === 'today') {
+                currentDate.setUTCHours(currentDate.getUTCHours() + 1);
+            } else {
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+        }
+
+        return {
+            data: {
+                timeline,
+                summary: {
+                    totalManual,
+                    totalAuto,
+                    totalTimeSavedMs,
+                    medianSpeedMs
+                }
+            }
+        };
     });
 
     fastify.get('/activity-logs', { preHandler: [requireAdmin] }, async (request) => {

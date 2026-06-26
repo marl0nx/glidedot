@@ -62,7 +62,7 @@ const goToLogin = () => {
           </template>
         </div>
         <h1 class="text-2xl font-bold text-white">Setup Wizard</h1>
-        <p class="text-neutral-400 text-center mt-2 px-4">Welcome to Glide! Let's get your environment ready in just a few steps.</p>
+        <p class="text-neutral-400 text-center mt-2 px-4">Welcome to glide.! Let's get your environment ready in just a few steps.</p>
       </div>
 
       <!-- Step 1: Welcome & Admin -->
