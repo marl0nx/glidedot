@@ -165,7 +165,7 @@ const save = async () => {
         </template>
         
         <div class="space-y-4">
-          <u-form-field label="Maintenance Mode" description="Lock down the system. Only administrators will be able to access Glide while this is active.">
+          <u-form-field label="Maintenance Mode" description="Lock down the system. Only administrators will be able to access glide. while this is active.">
             <div class="flex items-center gap-2 mt-2">
               <u-switch v-model="formData.maintenanceMode" color="warning" />
               <span class="text-sm font-medium" :class="formData.maintenanceMode ? 'text-warning-500' : 'text-neutral-400'">

@@ -5,7 +5,7 @@
       <div class="flex flex-col gap-2">
         <h1 class="text-3xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight">API Documentation</h1>
         <p class="text-base text-neutral-500 dark:text-neutral-400 max-w-2xl">
-          A comprehensive guide to all endpoints available in the Glide Backend. Use this documentation to seamlessly integrate with our platform.
+          A comprehensive guide to all endpoints available in the glide. Backend. Use this documentation to seamlessly integrate with our platform.
         </p>
       </div>
     </div>

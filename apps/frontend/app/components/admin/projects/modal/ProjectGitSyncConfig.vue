@@ -22,7 +22,7 @@ const providers = [
 const providerMap = {
   github: { icon: 'i-simple-icons-github', color: 'text-white' },
   gitlab: { icon: 'i-simple-icons-gitlab', color: 'text-[#FC6D26]' },
-  forgejo: { icon: 'i-simple-icons-gitea', color: 'text-[#609926]' }
+  forgejo: { icon: 'i-simple-icons-forgejo', color: 'text-[#FB8F2B]' }
 }
 
 const fetchData = async () => {

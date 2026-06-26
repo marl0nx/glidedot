@@ -63,15 +63,15 @@ const providerOptions = [
 
 const availableEvents = computed(() => {
   const events = [
-    { value: 'translation.rejected', label: 'Translation Rejected', description: 'When your translation is rejected by a reviewer' },
-    { value: 'translation.approved', label: 'Translation Approved', description: 'When your translation is approved and goes live' },
-    { value: 'quota.low', label: 'Quota Low', description: 'When your translation suggestion quota drops below 50' },
+    { value: 'translation.rejected', label: 'Translation Rejected', description: 'When your translation is rejected by a reviewer (sent immediately)' },
+    { value: 'translation.approved', label: 'Translation Approved', description: 'When your translation is approved and goes live (sent immediately)' },
+    { value: 'quota.low', label: 'Quota Low', description: 'When your translation suggestion quota drops below 50 (throttled to at most once per 24 hours)' },
   ]
   if (user.value?.isAdmin || user.value?.isReviewer) {
-    events.push({ value: 'pending.reviews', label: 'Pending Reviews', description: 'When a new translation draft needs approval' })
+    events.push({ value: 'pending.reviews', label: 'Pending Reviews', description: 'When a new translation draft needs approval (throttled to at most once per 2 hours to prevent spam)' })
   }
   if (user.value?.isAdmin) {
-    events.push({ value: 'backup.failed', label: 'Backup Failed', description: 'When an automated S3 backup fails' })
+    events.push({ value: 'backup.failed', label: 'Backup Failed', description: 'When an automated S3 backup fails (sent immediately on backup failure)' })
   }
   return events
 })

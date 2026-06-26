@@ -46,7 +46,7 @@ const saveConnection = async () => {
     toast.add({ title: 'Success', description: 'Account connected successfully', color: 'success' })
     connectModalOpen.value = false
     await fetchConnections()
-  } catch (e) {
+  } catch {
     toast.add({ title: 'Error', description: 'Failed to connect. Check token.', color: 'error' })
   } finally {
     isConnecting.value = false
@@ -71,7 +71,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <u-card :ui="{ body: { padding: 'p-6 sm:p-8' } }">
+  <u-card>
     <div class="space-y-6">
       <div>
         <h2 class="text-lg font-semibold text-neutral-200">Linked Accounts (Git Sync)</h2>
@@ -82,7 +82,7 @@ onMounted(() => {
         <!-- GitHub -->
         <div class="bg-neutral-900 border border-neutral-800 p-4 rounded-xl flex flex-col justify-between items-start gap-4">
           <div class="flex items-center gap-3">
-            <u-icon name="i-simple-icons-github" class="w-8 h-8 text-white" />
+            <u-icon name="i-simple-icons-github" class="w-6 h-6 text-white" />
             <h3 class="font-bold text-white">GitHub</h3>
           </div>
           <u-button v-if="!isConnected('github')" label="Connect GitHub" color="neutral" variant="soft" @click="openConnectModal('github')" />
@@ -92,7 +92,7 @@ onMounted(() => {
         <!-- GitLab -->
         <div class="bg-neutral-900 border border-neutral-800 p-4 rounded-xl flex flex-col justify-between items-start gap-4">
           <div class="flex items-center gap-3">
-            <u-icon name="i-simple-icons-gitlab" class="w-8 h-8 text-[#FC6D26]" />
+            <u-icon name="i-simple-icons-gitlab" class="w-6 h-6 text-[#FC6D26]" />
             <h3 class="font-bold text-white">GitLab</h3>
           </div>
           <u-button v-if="!isConnected('gitlab')" label="Connect GitLab" color="neutral" variant="soft" @click="openConnectModal('gitlab')" />
@@ -102,7 +102,7 @@ onMounted(() => {
         <!-- Forgejo / Gitea -->
         <div class="bg-neutral-900 border border-neutral-800 p-4 rounded-xl flex flex-col justify-between items-start gap-4">
           <div class="flex items-center gap-3">
-            <u-icon name="i-simple-icons-gitea" class="w-8 h-8 text-[#609926]" />
+            <u-icon name="i-simple-icons-forgejo" class="w-6 h-6 text-[#FB8F2B]" />
             <h3 class="font-bold text-white">Forgejo / Gitea</h3>
           </div>
           <u-button v-if="!isConnected('forgejo')" label="Connect Forgejo" color="neutral" variant="soft" @click="openConnectModal('forgejo')" />

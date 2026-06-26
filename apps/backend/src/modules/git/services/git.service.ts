@@ -25,7 +25,7 @@ export class GitService {
         if (provider === 'github') {
             url = 'https://api.github.com/user';
             headers['X-GitHub-Api-Version'] = '2022-11-28';
-            headers['User-Agent'] = 'Glide-App';
+            headers['User-Agent'] = 'glide.-App';
         } else if (provider === 'gitlab') {
             const base = baseUrl?.replace(/\/$/, '') || 'https://gitlab.com';
             url = `${base}/api/v4/user`;
@@ -330,7 +330,7 @@ export class GitService {
                 title: message,
                 head: newBranch,
                 base: baseBranch,
-                body: "Automated translation sync from Glide."
+                body: "Automated translation sync from glide."
             })
         });
         if (!prRes.ok) throw new Error("Could not create pull request");
@@ -382,7 +382,7 @@ export class GitService {
                 source_branch: newBranch,
                 target_branch: baseBranch,
                 title: message,
-                description: "Automated translation sync from Glide.",
+                description: "Automated translation sync from glide.",
                 remove_source_branch: true
             })
         });
@@ -391,31 +391,84 @@ export class GitService {
 
     private async pushToForgejo(token: string, baseUrl: string | null | undefined, repo: string, baseBranch: string, newBranch: string, message: string, files: {path: string, content: string}[]) {
         if (!baseUrl) throw new Error("Base URL required for Forgejo");
-        const headers = { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' };
-        const apiUrl = `${baseUrl}/api/v1/repos/${repo}`;
+        const cleanBaseUrl = baseUrl.replace(/\/$/, '');
+        const apiUrl = `${cleanBaseUrl}/api/v1/repos/${repo}`;
+        const headers = { 
+            'Authorization': `token ${token}`, 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
 
-        // Forgejo / Gitea requires creating branch first or pushing files.
-        // Wait, they have a Create file and Update file API, but they only support one file per request unless using the new Commits API.
-        // Gitea added a Create/Update multiple files API in recent versions (Create a commit with multiple files).
-        // Let's use the `/api/v1/repos/{owner}/{repo}/contents` which might not exist for multi-file.
-        // Wait, Gitea has `POST /repos/{owner}/{repo}/git/commits` but it's easier to use the high-level API.
-        // Actually, Gitea supports `POST /repos/{owner}/{repo}/git/trees` and `POST /repos/{owner}/{repo}/git/commits` just like GitHub!
-        // So we can use the exact same logic as GitHub, just changing the URL and Token header!
-
-        // Let's copy the GitHub flow for Forgejo/Gitea:
-        const refRes = await fetch(`${apiUrl}/git/trees/${baseBranch}`, { headers });
-        if (!refRes.ok) throw new Error("Could not fetch base tree");
+        // 1. Get base branch SHA
+        const refRes = await fetch(`${apiUrl}/git/refs/heads/${baseBranch}`, { headers });
+        if (!refRes.ok) throw new Error(`Could not fetch base branch: ${refRes.status} ${await refRes.text()}`);
         const refData = await refRes.json();
-        const baseTreeSha = refData.sha;
+        const baseSha = refData.object.sha;
 
-        // Create new branch (Actually, getting the SHA of base branch is needed)
-        const branchRes = await fetch(`${apiUrl}/git/refs/heads/${baseBranch}`, { headers });
-        const branchData = await branchRes.json();
-        const baseSha = branchData.object.sha;
+        // 2. Create new branch
+        const createRefRes = await fetch(`${apiUrl}/git/refs`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ ref: `refs/heads/${newBranch}`, sha: baseSha })
+        });
+        if (!createRefRes.ok) throw new Error(`Could not create new branch: ${createRefRes.status} ${await createRefRes.text()}`);
 
-        // Forgejo/Gitea might not support all these low-level APIs as fully as GitHub, but let's try.
-        // A safer way is using `POST /repos/{owner}/{repo}/branches` ? No.
-        // Let's assume Forgejo acts like GitHub.
-        throw new Error("Forgejo sync is currently partially implemented.");
+        // 3. Create blobs for each file
+        const treeItems = [];
+        for (const file of files) {
+            const blobRes = await fetch(`${apiUrl}/git/blobs`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ content: file.content, encoding: 'utf-8' })
+            });
+            if (!blobRes.ok) throw new Error(`Could not create blob for file ${file.path}: ${blobRes.status} ${await blobRes.text()}`);
+            const blobData = await blobRes.json();
+            treeItems.push({ path: file.path, mode: '100644', type: 'blob', sha: blobData.sha });
+        }
+
+        // 4. Create Tree
+        // Get the tree SHA from the base commit
+        const getCommitRes = await fetch(`${apiUrl}/git/commits/${baseSha}`, { headers });
+        if (!getCommitRes.ok) throw new Error(`Could not fetch base commit: ${getCommitRes.status}`);
+        const commitData = await getCommitRes.json();
+        const baseTreeSha = commitData.tree.sha;
+
+        const treeRes = await fetch(`${apiUrl}/git/trees`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ base_tree: baseTreeSha, tree: treeItems })
+        });
+        if (!treeRes.ok) throw new Error(`Could not create tree: ${treeRes.status} ${await treeRes.text()}`);
+        const treeData = await treeRes.json();
+
+        // 5. Create Commit
+        const createCommitRes = await fetch(`${apiUrl}/git/commits`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ message, tree: treeData.sha, parents: [baseSha] })
+        });
+        if (!createCommitRes.ok) throw new Error(`Could not create commit: ${createCommitRes.status} ${await createCommitRes.text()}`);
+        const newCommitData = await createCommitRes.json();
+
+        // 6. Update branch reference
+        const updateRefRes = await fetch(`${apiUrl}/git/refs/heads/${newBranch}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ sha: newCommitData.sha, force: true })
+        });
+        if (!updateRefRes.ok) throw new Error(`Could not update reference: ${updateRefRes.status} ${await updateRefRes.text()}`);
+
+        // 7. Create Pull Request
+        const prRes = await fetch(`${apiUrl}/pulls`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                title: message,
+                head: newBranch,
+                base: baseBranch,
+                body: "Automated translation sync from glide."
+            })
+        });
+        if (!prRes.ok) throw new Error(`Could not create pull request: ${prRes.status} ${await prRes.text()}`);
     }
 }

@@ -32,7 +32,7 @@ const pageSize = ref(15)
 const selectedTab = ref(0)
 const tabs = [
   { label: 'Activity Feed', slot: 'feed', icon: 'i-lucide-activity' },
-  { label: 'Leaderboard', slot: 'leaderboard', icon: 'i-lucide-trophy' },
+  { label: 'Member Contributions', slot: 'leaderboard', icon: 'i-lucide-users' },
   { label: 'Automation Efficiency', slot: 'graphs', icon: 'i-lucide-bot' }
 ]
 
@@ -294,10 +294,10 @@ const formatSpeed = (ms?: number) => {
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>
               <h3 class="text-white font-medium flex items-center gap-2">
-                  <u-icon name="i-lucide-trophy" class="w-5 h-5 text-primary-500" />
-                  Contributor Leaderboard
+                  <u-icon name="i-lucide-users" class="w-5 h-5 text-primary-500" />
+                  Member Contributions
               </h3>
-              <p class="text-sm text-neutral-400 mt-1">Rankings and detailed statistics of user contributions over time.</p>
+              <p class="text-sm text-neutral-400 mt-1">Detailed statistics of user contributions over time.</p>
             </div>
           </div>
           <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">

@@ -289,7 +289,7 @@ const triggerS3Backup = async () => {
                 <u-icon name="i-lucide-database" class="w-5 h-5 text-primary-500" />
                 Data & Migration
             </h1>
-            <p class="text-sm text-neutral-400 mt-1">Manage, migrate, and backup your Glide system data.</p>
+            <p class="text-sm text-neutral-400 mt-1">Manage, migrate, and backup your glide. system data.</p>
           </div>
         </div>
         <u-card class="flex flex-col h-full" :ui="{ body: { padding: 'p-2 sm:p-4' } }">
@@ -443,7 +443,7 @@ const triggerS3Backup = async () => {
                     <u-icon name="i-lucide-hard-drive-download" class="w-5 h-5 text-primary-500" />
                     Local System Backup
                   </h3>
-                  <p class="text-sm text-neutral-400 mt-1">Export or import a complete snapshot of your Glide instance (projects, settings, conventions, and all translations, including those in review).</p>
+                  <p class="text-sm text-neutral-400 mt-1">Export or import a complete snapshot of your glide. instance (projects, settings, conventions, and all translations, including those in review).</p>
                 </div>
               </div>
               

@@ -8,7 +8,7 @@ const route = useRoute()
 const projectId = route.params.id as string
 const toast = useToast()
 const { fetchApi } = useApi()
-const { isAdmin } = useAuth()
+const { user, isAdmin } = useAuth()
 
 const isLoading = ref(false)
 const syncs = ref<any[]>([])
@@ -16,7 +16,7 @@ const syncs = ref<any[]>([])
 const providerMap = {
   github: { icon: 'i-simple-icons-github', color: 'text-white' },
   gitlab: { icon: 'i-simple-icons-gitlab', color: 'text-[#FC6D26]' },
-  forgejo: { icon: 'i-simple-icons-gitea', color: 'text-[#609926]' }
+  forgejo: { icon: 'i-simple-icons-forgejo', color: 'text-[#FB8F2B]' }
 }
 
 const fetchData = async () => {
@@ -37,19 +37,23 @@ const confirmModalOpen = ref(false)
 const pendingSyncId = ref<number | null>(null)
 const lastSyncTimeStr = ref('')
 const lastSyncedByName = ref<string | null>(null)
+const confirmUsername = ref('')
+const showTimeWarning = ref(false)
 
 const attemptPush = (sync: any) => {
+  pendingSyncId.value = sync.id
+  confirmUsername.value = ''
+  showTimeWarning.value = false
+  
   if (sync.lastSyncedAt) {
-    const diffMins = (new Date().getTime() - new Date(sync.lastSyncedAt).getTime()) / 1000 / 60;
+    const diffMins = (new Date().getTime() - new Date(sync.lastSyncedAt).getTime()) / 1000 / 60
     if (diffMins < 60) {
-      lastSyncTimeStr.value = formatDistanceToNow(new Date(sync.lastSyncedAt), { addSuffix: true });
-      lastSyncedByName.value = sync.lastSyncedByName;
-      pendingSyncId.value = sync.id;
-      confirmModalOpen.value = true;
-      return;
+      lastSyncTimeStr.value = formatDistanceToNow(new Date(sync.lastSyncedAt), { addSuffix: true })
+      lastSyncedByName.value = sync.lastSyncedByName
+      showTimeWarning.value = true
     }
   }
-  pushSync(sync.id);
+  confirmModalOpen.value = true
 }
 
 const pushSync = async (id: number) => {
@@ -114,14 +118,28 @@ onMounted(() => {
     <!-- Confirm Modal -->
     <u-modal v-model:open="confirmModalOpen" title="Create Pull Request">
       <template #body>
-        <p class="p-4 text-sm text-neutral-400">
-          A Pull Request was already created <strong class="text-neutral-200">{{ lastSyncTimeStr }}</strong><span v-if="lastSyncedByName"> by <strong class="text-neutral-200">{{ lastSyncedByName }}</strong></span>. Are you sure you want to open another one right now? Please coordinate with your team to avoid spamming the repository.
-        </p>
+        <div class="p-4 space-y-4 text-sm text-neutral-400">
+          <p v-if="showTimeWarning">
+            A Pull Request was already created <strong class="text-neutral-200">{{ lastSyncTimeStr }}</strong><span v-if="lastSyncedByName"> by <strong class="text-neutral-200">{{ lastSyncedByName }}</strong></span>. Are you sure you want to open another one right now? Please coordinate with your team to avoid spamming the repository.
+          </p>
+          <p v-else>
+            You are about to push translation updates and create a new Pull Request.
+          </p>
+
+          <u-form-field :label="`Please type your username '${user?.username}' to confirm:`" required class="pt-2">
+            <u-input v-model="confirmUsername" :placeholder="user?.username" class="w-full" @keyup.enter="confirmUsername.trim() === user?.username ? pushSync(pendingSyncId!) : null" />
+          </u-form-field>
+        </div>
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
           <u-button label="Cancel" color="neutral" variant="ghost" @click="confirmModalOpen = false" />
-          <u-button label="Yes, create PR anyway" color="error" @click="pushSync(pendingSyncId!)" />
+          <u-button 
+            label="Create Pull Request" 
+            :color="showTimeWarning ? 'error' : 'neutral'" 
+            :disabled="confirmUsername.trim() !== user?.username" 
+            @click="pushSync(pendingSyncId!)" 
+          />
         </div>
       </template>
     </u-modal>

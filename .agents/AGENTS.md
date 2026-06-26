@@ -1,4 +1,4 @@
-# Glide Project Rules
+# glide. Project Rules
 
 These rules must be followed by all agents working on the `glide` / `glidedot` project.
 

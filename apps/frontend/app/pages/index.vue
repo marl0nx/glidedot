@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 definePageMeta({
   layout: 'default'
@@ -118,7 +118,7 @@ onUnmounted(() => {
           <div class="absolute -right-4 -bottom-4 opacity-5 text-neutral-400 pointer-events-none">
              <u-icon name="i-lucide-timer" class="w-24 h-24" />
           </div>
-          <span class="text-[10px] uppercase tracking-wider font-bold text-neutral-500 z-10 flex items-center gap-1.5">Avg Speed</span>
+          <span class="text-[10px] uppercase tracking-wider font-bold text-neutral-500 z-10 flex items-center gap-1.5">Avg Translation Speed</span>
           <span class="text-2xl font-bold text-neutral-200 z-10">{{ formatSpeed(stats.personalStats?.averageTranslationSpeedMs) }}</span>
         </div>
 

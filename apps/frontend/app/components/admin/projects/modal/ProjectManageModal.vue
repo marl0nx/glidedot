@@ -53,6 +53,15 @@ const discard = () => {
 
         <u-form-field v-if="mode === 'edit'" label="In-Context Preview URL" description="URL where your app is running to enable live visual editing.">
           <u-input v-model="project.inContextUrl" placeholder="https://staging.myapp.com" class="w-full" @keyup.enter="emit('save')" />
+          <div v-if="project.inContextUrl" class="mt-2 p-3 bg-amber-500/10 border border-warning-500/25 rounded-lg text-xs text-neutral-300 space-y-1">
+            <p class="font-semibold text-warning-500 flex items-center gap-1.5">
+              <u-icon name="i-lucide-alert-triangle" class="w-4 h-4" />
+              In-Context Setup Notice
+            </p>
+            <p>
+              Ensure your development or staging environment renders <strong>raw translation keys with dots</strong> (e.g., <code>homepage.hero.title</code>) instead of actual translated values. glide. will automatically scan the page, detect these keys, and replace them with interactive translations.
+            </p>
+          </div>
         </u-form-field>
 
         <div v-if="mode === 'edit'" class="flex items-center justify-between p-4 rounded-lg ring-1 ring-default bg-neutral-800/50 mt-2">

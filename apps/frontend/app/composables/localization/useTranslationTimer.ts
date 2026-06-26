@@ -8,6 +8,7 @@ export function useTranslationTimer() {
   let timerInterval: any = null
   let idleTimeout: any = null
   let lastActiveTime = Date.now()
+  let lastTickTime = Date.now()
 
   const IDLE_THRESHOLD_MS = 10000 // 10 seconds of inactivity pauses the timer
   const MAX_TIME_MS = 120000 // Cap at 2 minutes per save
@@ -31,31 +32,51 @@ export function useTranslationTimer() {
     isTracking.value = true
     hasStartedTyping.value = false
     lastActiveTime = Date.now()
+    lastTickTime = Date.now()
     
     timerInterval = setInterval(() => {
       const now = Date.now()
+      const delta = now - lastTickTime
+      lastTickTime = now
+      
       // Only add time if we are not idle and the user has started typing
       if (hasStartedTyping.value && now - lastActiveTime < IDLE_THRESHOLD_MS) {
-        timeSpentMs.value += 1000
+        timeSpentMs.value += delta
         // Enforce max cap
         if (timeSpentMs.value > MAX_TIME_MS) {
             timeSpentMs.value = MAX_TIME_MS
         }
       }
-    }, 1000)
+    }, 100) // Run every 100ms for responsiveness and high precision
     
     startIdleDetection()
   }
 
   const stopTracking = () => {
+    if (!isTracking.value) return
     isTracking.value = false
+    
+    // Perform one final tick calculation to capture exact milliseconds up to the moment of save
+    const now = Date.now()
+    const delta = now - lastTickTime
+    if (hasStartedTyping.value && now - lastActiveTime < IDLE_THRESHOLD_MS) {
+      timeSpentMs.value += delta
+      if (timeSpentMs.value > MAX_TIME_MS) {
+        timeSpentMs.value = MAX_TIME_MS
+      }
+    }
+    
     clearTimeouts()
   }
 
   const registerActivity = () => {
     if (!isTracking.value) return
-    if (!hasStartedTyping.value) hasStartedTyping.value = true
+    if (!hasStartedTyping.value) {
+      hasStartedTyping.value = true
+      lastTickTime = Date.now() // Start delta calculation from the exact moment they typed
+    }
     lastActiveTime = Date.now()
+    startIdleDetection()
   }
 
   const startIdleDetection = () => {
