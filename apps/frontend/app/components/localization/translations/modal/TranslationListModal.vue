@@ -125,7 +125,7 @@ const handleFocus = (keyId: number, event: FocusEvent) => {
     v-model:open="isOpen"
     :title="`Edit Translations: ${lang?.name || ''}`"
     description="Edit existing translations in a list format."
-    :ui="{ content: 'sm:max-w-7xl sm:w-full' }"
+    fullscreen
   >
     <template #body>
       <div class="flex flex-col gap-4 py-2">
