@@ -164,7 +164,7 @@ const handleFocus = (keyId: number, event: FocusEvent) => {
                   :model-value="localTranslations[row.original.keyId] ?? row.original.targetText"
                   class="w-full"
                   :rows="1"
-                  :ui="{ base: focusedKeyId !== row.original.keyId ? 'overflow-hidden whitespace-nowrap text-ellipsis resize-none !h-[36px]' : '' }"
+                  :ui="{ base: focusedKeyId !== row.original.keyId ? 'px-3 py-2 overflow-hidden whitespace-nowrap text-ellipsis resize-none !h-[36px]' : 'p-3' }"
                   placeholder="Enter translation..."
                   autoresize
                   :maxrows="focusedKeyId === row.original.keyId ? 10 : 10"
