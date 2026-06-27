@@ -15,7 +15,7 @@ export const projects = sqliteTable('projects', {
 export const languages = sqliteTable('languages', {
     id: integer('id').primaryKey({ autoIncrement: true }),
     code: text('code').notNull().unique(), // e.g., 'en', 'de'
-    name: text('name').notNull().unique(),
+    name: text('name').notNull(),
     flag: text('flag'),
 });
 
