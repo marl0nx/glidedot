@@ -9,10 +9,14 @@ export default defineEventHandler(async (event) => {
   try {
     // Fetch public settings from backend API
     const settings = await $fetch<Record<string, string>>(`${apiBase}/admin/settings/public`)
-    if (settings && settings.logoUrlMinimal) {
-      logoUrlMinimal = settings.logoUrlMinimal
-    } else if (settings && settings.logoUrl) {
-      logoUrlMinimal = settings.logoUrl
+    if (settings) {
+      const minimal = settings.logoUrlMinimal?.trim()
+      const main = settings.logoUrl?.trim()
+      if (minimal && minimal !== '') {
+        logoUrlMinimal = minimal
+      } else if (main && main !== '') {
+        logoUrlMinimal = main
+      }
     }
   } catch (e) {
     console.error('Failed to fetch settings for dynamic manifest:', e)

@@ -31,6 +31,16 @@ onMounted(async () => {
   }
 
   isInitializing.value = false
+
+  // Prevent programmatic and multi-touch pinch-to-zoom on mobile devices
+  document.addEventListener('gesturestart', (e) => {
+    e.preventDefault()
+  })
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1) {
+      e.preventDefault()
+    }
+  }, { passive: false })
 })
 
 const handleLogout = async () => {
