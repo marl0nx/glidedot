@@ -140,7 +140,7 @@ const performDelete = () => {
       </template>
     </u-table>
 
-    <div class="flex items-center justify-between border-t border-default pt-4">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-default pt-4">
       <div class="flex items-center gap-2">
         <span class="text-sm text-neutral-500">Rows per page</span>
         <u-select
@@ -150,16 +150,16 @@ const performDelete = () => {
           @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
         />
       </div>
-      <div class="flex items-center gap-4">
-          <span class="text-sm text-neutral-500">
-            {{ variables.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, variables.length) }} of {{ variables.length }}
-          </span>
-          <u-pagination
-        v-model:page="currentPagination"
-        :total="variables.length"
-        :items-per-page="pagination.pageSize"
-      />
-        </div>
+      <div class="flex flex-col min-[450px]:flex-row items-center gap-3 min-[450px]:gap-4">
+        <span class="text-sm text-neutral-500">
+          {{ variables.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, variables.length) }} of {{ variables.length }}
+        </span>
+        <u-pagination
+          v-model:page="currentPagination"
+          :total="variables.length"
+          :items-per-page="pagination.pageSize"
+        />
+      </div>
     </div>
 
     <u-modal v-model:open="isModalOpen" :title="editingId ? 'Edit Variable' : 'Add Variable'" :ui="{ content: 'sm:max-w-xl' }">

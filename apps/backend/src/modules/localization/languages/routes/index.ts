@@ -19,4 +19,10 @@ export default async function languageRoutes(fastify: FastifyInstance) {
         const { id } = request.params as { id: string };
         return service.delete(parseInt(id));
     });
+
+    fastify.patch('/:id', { preHandler: [requireAdmin] }, async (request) => {
+        const { id } = request.params as { id: string };
+        const body = request.body as { code?: string; name?: string; flag?: string };
+        return service.update(parseInt(id), body);
+    });
 }

@@ -33,9 +33,8 @@ const columns: TableColumn<Language>[] = [
   {accessorKey: 'flag', header: 'Flag'},
   {accessorKey: 'code', header: 'Language Code'},
   {accessorKey: 'reference', header: 'Reference'},
+  {id: 'actions'}
 ]
-
-
 
 const {
   init,
@@ -43,6 +42,7 @@ const {
   isLoading,
   addProjectLanguage,
   bulkRemoveProjectLanguages,
+  updateLanguage,
   setReferenceLanguage
 } = useTranslation()
 
@@ -68,6 +68,23 @@ const deleteSelected = async () => {
 const addLanguage = async (payload: { code: string, name: string, flag: string }) => {
   await addProjectLanguage(payload.code, payload.name, payload.flag)
   isAddModalOpen.value = false
+}
+
+const isEditModalOpen = ref(false)
+const languageToEdit = ref<Language | null>(null)
+
+const openEditModal = (lang: Language) => {
+  languageToEdit.value = lang
+  isEditModalOpen.value = true
+}
+
+const saveEditedLanguage = async (payload: { id: number, code: string, name: string, flag: string }) => {
+  await updateLanguage(payload.id, payload.code, payload.name, payload.flag)
+}
+
+const confirmDeleteSingle = (lang: Language) => {
+  isDeleteModalOpen.value = true
+  rowSelection.value = { [realLanguages.value.indexOf(lang).toString()]: true }
 }
 
 const bulkActions = computed<DropdownMenuItem[][]>(() => [
@@ -130,6 +147,12 @@ const toggleSelection = (lang: Language) => {
       v-model="isAddModalOpen"
       :existing-languages="realLanguages"
       @create="addLanguage"
+    />
+
+    <language-edit-modal
+      v-model="isEditModalOpen"
+      :language="languageToEdit"
+      @save="saveEditedLanguage"
     />
 
     <div class="flex flex-col md:flex-row justify-between py-4 gap-4">
@@ -200,6 +223,25 @@ const toggleSelection = (lang: Language) => {
           <template #reference-cell="{ row }">
             <u-icon v-if="row.original.isRef" name="i-lucide-circle-check-big" class="size-4 text-success"/>
           </template>
+
+          <template #actions-cell="{ row }">
+            <div class="flex justify-end gap-2" @click.stop>
+              <u-button 
+                icon="i-lucide-pencil" 
+                color="neutral" 
+                variant="ghost" 
+                size="sm"
+                @click="openEditModal(row.original)" 
+              />
+              <u-button 
+                icon="i-lucide-trash-2" 
+                color="error" 
+                variant="ghost" 
+                size="sm"
+                @click="confirmDeleteSingle(row.original)" 
+              />
+            </div>
+          </template>
         </u-table>
       </div>
 
@@ -214,7 +256,25 @@ const toggleSelection = (lang: Language) => {
             />
             <span class="text-3xl">{{ lang.flag }}</span>
             <div class="flex flex-col flex-1">
-              <span class="font-bold text-neutral-200">{{ lang.name }}</span>
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-neutral-200">{{ lang.name }}</span>
+                <div class="flex items-center gap-1" @click.stop>
+                  <u-button 
+                    icon="i-lucide-pencil" 
+                    size="xs" 
+                    variant="ghost" 
+                    color="neutral" 
+                    @click="openEditModal(lang)" 
+                  />
+                  <u-button 
+                    icon="i-lucide-trash-2" 
+                    size="xs" 
+                    variant="ghost" 
+                    color="error" 
+                    @click="confirmDeleteSingle(lang)" 
+                  />
+                </div>
+              </div>
               <div class="flex items-center gap-2 mt-1">
                 <u-badge variant="subtle" color="neutral" size="xs" class="font-mono">{{ lang.code }}</u-badge>
                 <u-badge v-if="lang.isRef" variant="subtle" color="success" size="xs">Reference</u-badge>
@@ -227,7 +287,7 @@ const toggleSelection = (lang: Language) => {
         </div>
       </div>
 
-      <div class="flex items-center justify-between border-t border-default pt-4 px-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-default pt-4 px-4">
         <div class="flex items-center gap-2">
           <span class="text-sm text-neutral-500">Rows per page</span>
           <u-select
@@ -237,7 +297,7 @@ const toggleSelection = (lang: Language) => {
             @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
           />
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col min-[450px]:flex-row items-center gap-3 min-[450px]:gap-4">
           <span class="text-sm text-neutral-500">
             {{ realLanguages.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, realLanguages.length) }} of {{ realLanguages.length }}
           </span>
@@ -245,7 +305,7 @@ const toggleSelection = (lang: Language) => {
             v-model:page="currentPagination"
             :total="realLanguages.length"
             :items-per-page="pagination.pageSize"
-        />
+          />
         </div>
       </div>
     </div>

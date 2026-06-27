@@ -379,7 +379,7 @@ const handleKeyReview = async (keyData: any, action: 'approve' | 'reject') => {
             </div>
           </div>
 
-          <div class="flex items-center justify-between p-4 border-t border-neutral-800">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-neutral-800">
             <div class="flex items-center gap-2">
               <span class="text-sm text-neutral-500">Rows per page</span>
               <u-select
@@ -389,16 +389,16 @@ const handleKeyReview = async (keyData: any, action: 'approve' | 'reject') => {
                 @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
               />
             </div>
-            <div class="flex items-center gap-4">
-          <span class="text-sm text-neutral-500">
-            {{ pendingReviews.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, pendingReviews.length) }} of {{ pendingReviews.length }}
-          </span>
-          <u-pagination
+            <div class="flex flex-col min-[450px]:flex-row items-center gap-3 min-[450px]:gap-4">
+              <span class="text-sm text-neutral-500">
+                {{ pendingReviews.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, pendingReviews.length) }} of {{ pendingReviews.length }}
+              </span>
+              <u-pagination
                 v-model:page="currentPagination"
                 :total="pendingReviews.length"
                 :items-per-page="pagination.pageSize"
-            />
-        </div>
+              />
+            </div>
           </div>
         </div>
       </u-card>

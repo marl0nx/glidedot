@@ -91,27 +91,27 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
       children: [
         {
           label: 'Manage Projects',
-          icon: 'i-lucide-folder-cog',
+          icon: 'i-lucide-folder-git-2',
           href: '/admin/projects'
         },
         {
           label: 'Manage Teams',
-          icon: 'i-lucide-users-round',
+          icon: 'i-lucide-users',
           href: '/admin/teams'
         },
         {
           label: 'Manage Users',
-          icon: 'i-lucide-user-cog',
+          icon: 'i-lucide-users',
           href: '/admin/users'
         },
         {
           label: 'Insights',
-          icon: 'i-lucide-activity',
+          icon: 'i-lucide-bar-chart-2',
           href: '/admin/insights'
         },
         {
           label: 'Migration',
-          icon: 'i-lucide-file-json-2',
+          icon: 'i-lucide-database',
           href: '/admin/migration'
         },
         {
@@ -121,12 +121,12 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
           children: [
             {
               label: 'General',
-              icon: 'i-lucide-sliders',
+              icon: 'i-lucide-settings-2',
               href: '/admin/settings'
             },
             {
               label: 'Theming',
-              icon: 'i-lucide-palette',
+              icon: 'i-lucide-paintbrush',
               href: '/admin/settings/theming'
             }
           ]
@@ -141,17 +141,17 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
 const secondaryItems = computed<NavigationMenuItem[]>(() => [
   {
     label: 'Structure',
-    icon: 'i-lucide-database',
+    icon: 'i-lucide-layers',
     href: `/projects/${currentProject.value?.id}/structure`
   },
   {
     label: 'Conventions',
-    icon: 'i-lucide-book-dashed',
+    icon: 'i-lucide-book-open',
     href: `/projects/${currentProject.value?.id}/conventions`
   },
   {
     label: 'Translations',
-    icon: 'i-lucide-a-large-small',
+    icon: 'i-lucide-languages',
     href: `/projects/${currentProject.value?.id}/translations`
   },
   {
@@ -162,7 +162,7 @@ const secondaryItems = computed<NavigationMenuItem[]>(() => [
   },
   {
     label: 'Git Sync',
-    icon: 'i-lucide-git-merge',
+    icon: 'i-lucide-git-pull-request',
     href: `/projects/${currentProject.value?.id}/git-sync`
   },
   {
@@ -201,6 +201,113 @@ watch(() => route.path, () => {
   isSettingsMenuOpen.value = false
 })
 
+const isBottomSheetOpen = ref(false)
+const bottomSheetType = ref<'more' | 'projects' | 'admin' | 'profile' | null>(null)
+
+const openBottomSheet = (type: 'more' | 'projects' | 'admin' | 'profile') => {
+  bottomSheetType.value = type
+  isBottomSheetOpen.value = true
+}
+
+const closeBottomSheet = () => {
+  isBottomSheetOpen.value = false
+}
+
+const navigateAndClose = (href: string) => {
+  closeBottomSheet()
+  useRouter().push(href)
+}
+
+const navigateToProject = (id: number) => {
+  closeBottomSheet()
+  useRouter().push(`/projects/${id}`)
+}
+
+const adminItems = [
+  { label: 'Projects', icon: 'i-lucide-folder-git-2', href: '/admin/projects' },
+  { label: 'Teams', icon: 'i-lucide-users', href: '/admin/teams' },
+  { label: 'Users', icon: 'i-lucide-users', href: '/admin/users' },
+  { label: 'Insights', icon: 'i-lucide-bar-chart-2', href: '/admin/insights' },
+  { label: 'Migration', icon: 'i-lucide-database', href: '/admin/migration' },
+  { label: 'Settings', icon: 'i-lucide-settings-2', href: '/admin/settings' },
+  { label: 'Theming', icon: 'i-lucide-paintbrush', href: '/admin/settings/theming' },
+]
+
+const projectMoreItems = computed(() => [
+  { label: 'Conventions', icon: 'i-lucide-book-open', href: `/projects/${currentProject.value?.id}/conventions` },
+  { label: 'Git Sync', icon: 'i-lucide-git-pull-request', href: `/projects/${currentProject.value?.id}/git-sync` },
+  { label: 'Reviews', icon: 'i-lucide-check-circle', href: `/projects/${currentProject.value?.id}/reviews` },
+  { label: 'In-Context Editor', icon: 'i-lucide-monitor-play', href: `/projects/${currentProject.value?.id}/in-context`, badge: 'Desktop Only' },
+  { label: 'Back to Dashboard', icon: 'i-lucide-arrow-left', href: '/' },
+])
+
+const mobileNavItems = computed(() => {
+  if (isProjectContext.value) {
+    return [
+      {
+        label: 'Back',
+        icon: 'i-lucide-arrow-left',
+        href: '/',
+        active: false
+      },
+      {
+        label: 'Translations',
+        icon: 'i-lucide-languages',
+        href: `/projects/${currentProject.value?.id}/translations`,
+        active: route.path.startsWith(`/projects/${currentProject.value?.id}/translations`)
+      },
+      {
+        label: 'Structure',
+        icon: 'i-lucide-layers',
+        href: `/projects/${currentProject.value?.id}/structure`,
+        active: route.path.startsWith(`/projects/${currentProject.value?.id}/structure`)
+      },
+      {
+        label: 'More',
+        icon: 'i-lucide-menu',
+        onClick: () => openBottomSheet('more'),
+        active: isBottomSheetOpen.value && bottomSheetType.value === 'more'
+      }
+    ]
+  } else {
+    return [
+      {
+        label: 'Home',
+        icon: 'i-lucide-house',
+        href: '/',
+        active: route.path === '/'
+      },
+      {
+        label: 'Projects',
+        icon: 'i-lucide-folder',
+        onClick: () => openBottomSheet('projects'),
+        active: isBottomSheetOpen.value && bottomSheetType.value === 'projects'
+      },
+      ...(isAdmin.value ? [{
+        label: 'Admin',
+        icon: 'i-lucide-shield-check',
+        onClick: () => openBottomSheet('admin'),
+        active: (isBottomSheetOpen.value && bottomSheetType.value === 'admin') || route.path.startsWith('/admin')
+      }] : []),
+      {
+        label: 'Profile',
+        icon: 'i-lucide-user',
+        onClick: () => openBottomSheet('profile'),
+        active: isBottomSheetOpen.value && bottomSheetType.value === 'profile'
+      }
+    ]
+  }
+})
+
+const handleMobileNavClick = (item: any) => {
+  if (item.onClick) {
+    item.onClick()
+  } else if (item.href) {
+    closeBottomSheet()
+    useRouter().push(item.href)
+  }
+}
+
 // Removed v-model arrays and watchers entirely to let UNavigationMenu run uncontrolled.
 // This prevents the Nuxt UI 3 bug where clicking a nested child Accordion 
 // overwrites the root Accordion's v-model and forces the parent to collapse.
@@ -208,7 +315,7 @@ watch(() => route.path, () => {
 
 <template>
   <div class="fixed inset-0 flex bg-black overflow-hidden">
-    <u-sidebar class="flex" v-model:open="isSidebarOpen" variant="inset" collapsible="icon" side="left" title="Navigation"
+    <u-sidebar class="flex max-md:!hidden" v-model:open="isSidebarOpen" variant="inset" collapsible="icon" side="left" title="Navigation"
                :ui="{ header: 'min-h-none p-2' }">
 
       <template #header>
@@ -286,14 +393,16 @@ watch(() => route.path, () => {
             @click="toggleSidebar"
         />
 
-        <u-breadcrumb :items="breadcrumbItems">
-          <template #separator>
-            <span class="mx-2 text-muted">/</span>
-          </template>
-        </u-breadcrumb>
+        <div class="flex-1 overflow-x-auto scrollbar-none select-none py-1">
+          <u-breadcrumb :items="breadcrumbItems">
+            <template #separator>
+              <span class="mx-2 text-muted">/</span>
+            </template>
+          </u-breadcrumb>
+        </div>
       </div>
 
-      <div class="flex-1 p-4 relative">
+      <div class="flex-1 p-4 relative pb-28 md:pb-4">
         <transition 
           enter-active-class="transition-opacity duration-300 delay-150" 
           enter-from-class="opacity-0" 
@@ -310,5 +419,148 @@ watch(() => route.path, () => {
       </div>
     </div>
 
+    <!-- Floating Bottom Navigation Bar (Mobile only) -->
+    <div 
+      class="md:hidden fixed left-4 right-4 h-16 bg-neutral-950/80 backdrop-blur-xl border border-neutral-800/80 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[60] flex items-center justify-around px-2 select-none"
+      style="bottom: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px));"
+    >
+      <button
+        v-for="item in mobileNavItems"
+        :key="item.label"
+        @click="handleMobileNavClick(item)"
+        class="flex flex-col items-center justify-center flex-1 py-1.5 relative transition-all duration-200 active:scale-95 text-neutral-400"
+        :class="item.active ? 'text-primary-500' : 'hover:text-white'"
+      >
+        <u-icon :name="item.icon" class="w-6 h-6 transition-transform duration-200" :class="item.active ? 'scale-110' : ''" />
+        <span class="text-[10px] mt-1 font-medium">{{ item.label }}</span>
+        <span 
+          v-if="item.active" 
+          class="absolute bottom-1 w-1.5 h-1.5 bg-primary-500 rounded-full shadow-[0_0_10px_rgba(var(--color-primary-500),0.8)]"
+        ></span>
+      </button>
+    </div>
+
+    <!-- Custom Slide-Up Bottom Sheet & Backdrop (Mobile only) -->
+    <teleport to="body">
+      <!-- Backdrop -->
+      <transition name="fade">
+        <div 
+          v-if="isBottomSheetOpen" 
+          class="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[90]" 
+          @click="closeBottomSheet"
+        ></div>
+      </transition>
+
+      <!-- Bottom Sheet Drawer -->
+      <transition name="slide-up">
+        <div 
+          v-if="isBottomSheetOpen" 
+          class="md:hidden fixed bottom-0 left-0 right-0 max-h-[85vh] bg-neutral-950/95 border-t border-neutral-800/80 rounded-t-[2rem] shadow-[0_-15px_30px_rgba(0,0,0,0.5)] z-[100] flex flex-col backdrop-blur-2xl"
+          style="padding-bottom: 1.5rem; padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));"
+        >
+          <!-- Handle bar drag indicator -->
+          <div class="w-12 h-1 bg-neutral-800 rounded-full mx-auto my-3 shrink-0"></div>
+
+          <!-- Sheet Content -->
+          <div class="overflow-y-auto px-6 py-2 flex-1">
+            <!-- MORE MENU (Project Context) -->
+            <div v-if="bottomSheetType === 'more'" class="flex flex-col gap-4">
+              <div class="flex items-center gap-2 mb-2">
+                <u-icon name="i-lucide-menu" class="w-5 h-5 text-primary-500" />
+                <h3 class="text-sm font-semibold text-neutral-400 uppercase tracking-wider">Project Navigation</h3>
+              </div>
+              <div class="flex flex-col gap-2">
+                <button
+                  v-for="sub in projectMoreItems"
+                  :key="sub.href"
+                  @click="navigateAndClose(sub.href)"
+                  class="flex items-center gap-3 p-3.5 rounded-xl bg-neutral-900 border border-neutral-800/80 hover:border-neutral-700 text-left transition-all duration-200 active:scale-98"
+                >
+                  <u-icon :name="sub.icon" class="w-5 h-5 text-neutral-400" />
+                  <span class="text-sm font-medium text-white flex-1">{{ sub.label }}</span>
+                  <u-badge v-if="sub.badge" size="xs" variant="soft" color="neutral" class="shrink-0">{{ sub.badge }}</u-badge>
+                  <u-icon v-else name="i-lucide-chevron-right" class="w-4 h-4 text-neutral-500" />
+                </button>
+              </div>
+            </div>
+
+            <!-- PROJECTS SELECTION (Global Context) -->
+            <div v-if="bottomSheetType === 'projects'" class="flex flex-col gap-4">
+              <div class="flex items-center gap-2 mb-2">
+                <u-icon name="i-lucide-folder" class="w-5 h-5 text-primary-500" />
+                <h3 class="text-sm font-semibold text-neutral-400 uppercase tracking-wider">Select Project</h3>
+              </div>
+              <div class="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-1">
+                <button
+                  v-for="project in projects"
+                  :key="project.id"
+                  @click="navigateToProject(project.id)"
+                  class="flex items-center gap-3 p-3 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-left transition-all duration-200 active:scale-98"
+                >
+                  <div class="w-10 h-10 rounded-lg bg-neutral-800/80 flex items-center justify-center border border-neutral-700/50">
+                    <u-icon name="i-lucide-folder" class="w-5 h-5 text-neutral-400" />
+                  </div>
+                  <div class="flex-grow min-w-0">
+                    <div class="font-medium text-white text-sm truncate">{{ project.name }}</div>
+                    <div class="text-xs text-neutral-500 truncate" v-if="project.description">{{ project.description }}</div>
+                  </div>
+                  <u-icon name="i-lucide-chevron-right" class="w-4 h-4 text-neutral-500" />
+                </button>
+                <div v-if="projects.length === 0" class="text-center py-6 text-neutral-500 text-sm">
+                  No projects found.
+                </div>
+              </div>
+            </div>
+
+            <!-- ADMIN CONTROLS (Global Context, Admin only) -->
+            <div v-if="bottomSheetType === 'admin'" class="flex flex-col gap-4">
+              <div class="flex items-center gap-2 mb-2">
+                <u-icon name="i-lucide-shield-check" class="w-5 h-5 text-primary-500" />
+                <h3 class="text-sm font-semibold text-neutral-400 uppercase tracking-wider">Admin Controls</h3>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <button
+                  v-for="sub in adminItems"
+                  :key="sub.href"
+                  @click="navigateAndClose(sub.href)"
+                  class="flex flex-col items-center justify-center p-4 rounded-xl bg-neutral-900 border border-neutral-800 hover:border-neutral-700 text-center transition-all duration-200 active:scale-95 gap-2"
+                >
+                  <u-icon :name="sub.icon" class="w-6 h-6 text-neutral-400" />
+                  <span class="text-xs font-medium text-neutral-300">{{ sub.label }}</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- PROFILE MENU (Global/Project Context) -->
+            <div v-if="bottomSheetType === 'profile'" class="flex flex-col gap-4">
+              <div class="flex items-center gap-3 p-3.5 rounded-xl bg-neutral-900 border border-neutral-800/80 mb-2">
+                <u-avatar
+                  :src="user?.avatarUrl || undefined"
+                  :icon="!user?.avatarUrl ? 'i-lucide-user' : undefined"
+                  :class="!user?.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''"
+                  size="lg"
+                />
+                <div class="flex-grow min-w-0">
+                  <div class="font-bold text-white text-base truncate">{{ user?.username }}</div>
+                  <div class="text-xs text-neutral-400 truncate">{{ user?.isAdmin ? 'Administrator' : 'Member' }}</div>
+                </div>
+              </div>
+              <div class="flex flex-col gap-2">
+                <button
+                  v-for="sub in profileItems"
+                  :key="sub.href"
+                  @click="navigateAndClose(sub.href)"
+                  class="flex items-center gap-3 p-3.5 rounded-xl bg-neutral-900 border border-neutral-800/80 hover:border-neutral-700 text-left transition-all duration-200 active:scale-98"
+                >
+                  <u-icon :name="sub.icon" class="w-5 h-5 text-neutral-400" />
+                  <span class="text-sm font-medium text-white flex-1">{{ sub.label }}</span>
+                  <u-icon name="i-lucide-chevron-right" class="w-4 h-4 text-neutral-500" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </transition>
+    </teleport>
   </div>
 </template>

@@ -461,6 +461,19 @@ export function useTranslation() {
         }
     }
 
+    const updateLanguage = async (languageId: number, code: string, name: string, flag?: string) => {
+        try {
+            await fetchApi(`/localization/languages/${languageId}`, { 
+                method: 'PATCH', 
+                body: { code, name, flag } 
+            })
+            toast.add({ title: 'Success', description: 'Language updated successfully', color: 'success' })
+            await init()
+        } catch {
+            toast.add({ title: 'Error', description: 'Failed to update language', color: 'error' })
+        }
+    }
+
     const setReferenceLanguage = async (languageId: number) => {
         if (!projectId.value) return
         try {
@@ -509,6 +522,7 @@ export function useTranslation() {
         addProjectLanguage,
         removeProjectLanguage,
         bulkRemoveProjectLanguages,
+        updateLanguage,
         setReferenceLanguage
     }
 }

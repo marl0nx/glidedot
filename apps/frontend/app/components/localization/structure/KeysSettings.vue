@@ -85,6 +85,7 @@ const columns: TableColumn<TranslationKey>[] = [
   {accessorKey: 'key', header: 'Translation Key'},
   {id: 'conventions', header: 'Conventions'},
   {accessorKey: 'labels', header: 'Labels'},
+  {id: 'actions'}
 ]
 
 onMounted(() => {
@@ -154,6 +155,11 @@ const saveKeyName = async (keyId: number) => {
     }
   }
   editingKeyId.value = null
+}
+
+const confirmDeleteSingleKey = (keyObj: TranslationKey) => {
+  isDeleteModalOpen.value = true
+  rowSelection.value = { [realKeys.value.indexOf(keyObj).toString()]: true }
 }
 
 
@@ -581,6 +587,24 @@ watch([glossary, templates, variables], () => {
               </u-popover>
             </div>
           </template>
+          <template #actions-cell="{ row }">
+            <div class="flex justify-end gap-2" @click.stop>
+              <u-button 
+                icon="i-lucide-pencil" 
+                color="neutral" 
+                variant="ghost" 
+                size="sm"
+                @click="startEditingKey(row.original)" 
+              />
+              <u-button 
+                icon="i-lucide-trash-2" 
+                color="error" 
+                variant="ghost" 
+                size="sm"
+                @click="confirmDeleteSingleKey(row.original)" 
+              />
+            </div>
+          </template>
         </u-table>
       </div>
 
@@ -607,14 +631,22 @@ watch([glossary, templates, variables], () => {
                   @blur="saveKeyName(keyObj.id)" 
                   @click.stop
                 />
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1" @click.stop>
                   <u-button 
                     v-if="editingKeyId !== keyObj.id" 
                     icon="i-lucide-pencil" 
                     size="xs" 
                     variant="ghost" 
                     color="neutral" 
-                    @click.stop="startEditingKey(keyObj)" 
+                    @click="startEditingKey(keyObj)" 
+                  />
+                  <u-button 
+                    v-if="editingKeyId !== keyObj.id" 
+                    icon="i-lucide-trash-2" 
+                    size="xs" 
+                    variant="ghost" 
+                    color="error" 
+                    @click="confirmDeleteSingleKey(keyObj)" 
                   />
                   <div class="flex items-center">
                     <template v-if="validateKey(keyObj.key).length === 0">
@@ -623,7 +655,7 @@ watch([glossary, templates, variables], () => {
                     <template v-else>
                       <div class="flex items-center gap-1">
                         <u-tooltip :text="validateKey(keyObj.key).join(' • ')">
-                          <u-badge color="warning" variant="subtle" size="xs"><u-icon name="i-lucide-alert-triangle" class="w-3 h-3" /></u-badge>
+                           <u-badge color="warning" variant="subtle" size="xs"><u-icon name="i-lucide-alert-triangle" class="w-3 h-3" /></u-badge>
                         </u-tooltip>
                         <u-button
                           v-if="getGlossaryFixes(keyObj.key).length > 0"
@@ -679,7 +711,7 @@ watch([glossary, templates, variables], () => {
         </div>
       </div>
 
-      <div class="flex items-center justify-between border-t border-default pt-4 px-4">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-default pt-4 px-4">
         <div class="flex items-center gap-2">
           <span class="text-sm text-neutral-500">Rows per page</span>
           <u-select
@@ -689,7 +721,7 @@ watch([glossary, templates, variables], () => {
             @update:model-value="(val) => { pagination = { ...pagination, pageSize: Number(val), pageIndex: 0 } }"
           />
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col min-[450px]:flex-row items-center gap-3 min-[450px]:gap-4">
           <span class="text-sm text-neutral-500">
             {{ realKeys.length > 0 ? (pagination.pageIndex * pagination.pageSize + 1) : 0 }}-{{ Math.min((pagination.pageIndex + 1) * pagination.pageSize, realKeys.length) }} of {{ realKeys.length }}
           </span>
@@ -697,7 +729,7 @@ watch([glossary, templates, variables], () => {
             v-model:page="currentPagination"
             :total="realKeys.length"
             :items-per-page="pagination.pageSize"
-        />
+          />
         </div>
       </div>
     </div>

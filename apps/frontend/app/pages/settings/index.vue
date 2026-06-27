@@ -279,20 +279,21 @@ onUnmounted(() => {
           <p class="text-sm text-neutral-400 mt-1">Configure external webhooks to receive important notifications.</p>
         </div>
 
-        <div class="flex gap-4">
-          <u-form-field label="Provider" class="w-1/3">
+        <div class="flex flex-col sm:flex-row gap-4">
+          <u-form-field label="Provider" class="w-full sm:w-1/3">
             <u-select v-model="alertConfig.provider" :items="providerOptions" class="w-full" />
           </u-form-field>
-          <u-form-field label="Webhook URL / Target" class="flex-1" v-if="alertConfig.provider !== 'none'">
-            <div class="flex items-center gap-2">
-              <u-input v-model="alertConfig.url" placeholder="https://..." class="w-full" />
-              <u-dropdown-menu :items="testDropdownItems" :disabled="!alertConfig.url">
+          <u-form-field label="Webhook URL / Target" class="flex-1 w-full" v-if="alertConfig.provider !== 'none'">
+            <div class="flex flex-col min-[450px]:flex-row items-stretch min-[450px]:items-center gap-2">
+              <u-input v-model="alertConfig.url" placeholder="https://..." class="flex-grow min-w-0" />
+              <u-dropdown-menu :items="testDropdownItems" :disabled="!alertConfig.url" class="shrink-0">
                 <u-button 
                   label="Test Notification" 
                   color="primary" 
                   variant="outline" 
                   icon="i-lucide-chevron-down"
                   trailing
+                  class="w-full justify-center"
                   :loading="isTestingAlert" 
                   :disabled="!alertConfig.url"
                 />
@@ -304,11 +305,11 @@ onUnmounted(() => {
           </u-form-field>
         </div>
 
-        <div v-if="alertConfig.provider === 'discord'" class="flex gap-4">
-          <u-form-field label="Ping User ID (Optional)" class="w-1/2" description="Discord User ID to ping on events">
+        <div v-if="alertConfig.provider === 'discord'" class="flex flex-col sm:flex-row gap-4">
+          <u-form-field label="Ping User ID (Optional)" class="w-full sm:w-1/2" description="Discord User ID to ping on events">
             <u-input v-model="alertConfig.pingUserId" placeholder="e.g. 123456789012345678" class="w-full" />
           </u-form-field>
-          <u-form-field label="Avatar URL (Optional)" class="w-1/2" description="Custom image URL for the bot avatar">
+          <u-form-field label="Avatar URL (Optional)" class="w-full sm:w-1/2" description="Custom image URL for the bot avatar">
             <u-input v-model="alertConfig.avatarUrl" placeholder="https://..." class="w-full" />
           </u-form-field>
         </div>

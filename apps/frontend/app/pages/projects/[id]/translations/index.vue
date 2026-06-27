@@ -103,7 +103,40 @@ definePageMeta({
     </div>
 
     <!-- Main Content -->
-    <div class="flex flex-col md:flex-row gap-6 items-start">
+    <div class="flex flex-col md:flex-row gap-6 items-start w-full">
+
+      <!-- Mobile Scope Selector -->
+      <div class="md:hidden w-full flex flex-col gap-2 shrink-0 mb-1 px-4">
+        <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Browse Namespace</span>
+        <div class="flex gap-2 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-none snap-x">
+          <u-button
+            :variant="selectedScope === null ? 'soft' : 'outline'"
+            :color="selectedScope === null ? 'primary' : 'neutral'"
+            size="sm"
+            class="snap-start shrink-0 rounded-full"
+            @click="selectedScope = null"
+          >
+            <u-icon name="i-lucide-globe" class="w-4 h-4 mr-1" />
+            All Translations
+          </u-button>
+          
+          <u-button
+            v-for="node in visibleScopes"
+            :key="node.id"
+            :variant="selectedScope === node.id ? 'soft' : 'outline'"
+            :color="selectedScope === node.id ? 'primary' : 'neutral'"
+            size="sm"
+            class="snap-start shrink-0 rounded-full"
+            @click="selectedScope = node.id"
+          >
+            <u-icon :name="node.hasChildren ? 'i-lucide-folder' : 'i-lucide-hash'" class="w-4 h-4 mr-1" />
+            {{ node.name }}
+            <span v-if="node.keyCount > 0" class="text-[9px] opacity-75 font-mono ml-1 bg-neutral-800 px-1 py-0.5 rounded">
+              {{ node.keyCount }}
+            </span>
+          </u-button>
+        </div>
+      </div>
 
       <!-- Sidebar -->
       <translation-sidebar

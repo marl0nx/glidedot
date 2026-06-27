@@ -264,7 +264,7 @@ const formatSpeed = (ms?: number) => {
         </template>
       </u-table>
 
-      <div v-if="totalLogs > 0" class="flex items-center justify-between border-t border-default p-4">
+      <div v-if="totalLogs > 0" class="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-default p-4">
         <div class="flex items-center gap-2">
           <span class="text-sm text-neutral-500">Rows per page</span>
           <u-select
@@ -274,7 +274,7 @@ const formatSpeed = (ms?: number) => {
             @update:model-value="(val) => { pageSize = Number(val); currentPage = 1; }"
           />
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col min-[450px]:flex-row items-center gap-3 min-[450px]:gap-4">
           <span class="text-sm text-neutral-500">
             {{ totalLogs > 0 ? ((currentPage - 1) * pageSize + 1) : 0 }}-{{ Math.min(currentPage * pageSize, totalLogs) }} of {{ totalLogs }}
           </span>
@@ -282,7 +282,7 @@ const formatSpeed = (ms?: number) => {
             v-model:page="currentPage"
             :total="totalLogs"
             :items-per-page="pageSize"
-        />
+          />
         </div>
       </div>
         </u-card>

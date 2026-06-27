@@ -160,6 +160,17 @@ onUnmounted(() => {
 })
 
 const save = async () => {
+  if (formData.value.logoType === 'image') {
+    if (!formData.value.logoUrl || !formData.value.logoUrl.trim()) {
+      toast.add({ title: 'Validation Error', description: 'Please provide a URL for the Expanded Logo.', color: 'error' })
+      return
+    }
+    if (!formData.value.logoUrlMinimal || !formData.value.logoUrlMinimal.trim()) {
+      toast.add({ title: 'Validation Error', description: 'Please provide a URL for the Minimal Logo.', color: 'error' })
+      return
+    }
+  }
+
   isLoading.value = true
   const success = await saveSettings({
     primaryColor: formData.value.primaryColor,
@@ -198,7 +209,7 @@ const save = async () => {
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0 mb-2">
       <div>
         <h1 class="text-white font-medium flex items-center gap-2 text-lg">
-            <u-icon name="i-lucide-paint-brush" class="w-5 h-5 text-primary-500" />
+            <u-icon name="i-lucide-paintbrush" class="w-5 h-5 text-primary-500" />
             Theming Settings
         </h1>
         <p class="text-sm text-neutral-400 mt-1">Customize the appearance and branding of your workspace.</p>
@@ -346,11 +357,11 @@ const save = async () => {
           </template>
 
           <template v-if="formData.logoType === 'image'">
-            <u-form-field label="Expanded Logo" description="URL for the logo shown when sidebar is fully expanded (Supports PNG, WebP, SVG).">
+            <u-form-field label="Expanded Logo" required description="URL for the logo shown when sidebar is fully expanded (Supports PNG, WebP, SVG).">
               <u-input v-model="formData.logoUrl" size="lg" class="w-full" icon="i-lucide-link" placeholder="https://example.com/logo.svg" />
             </u-form-field>
             
-            <u-form-field label="Minimal Logo" description="URL for the logo shown when sidebar is collapsed (e.g., an icon).">
+            <u-form-field label="Minimal Logo" required description="URL for the logo shown when sidebar is collapsed (e.g., an icon).">
               <u-input v-model="formData.logoUrlMinimal" size="lg" class="w-full" icon="i-lucide-link" placeholder="https://example.com/icon.svg" />
             </u-form-field>
           </template>

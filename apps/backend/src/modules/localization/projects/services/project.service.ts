@@ -160,8 +160,17 @@ export class ProjectService {
         const existingKeys = await this.db.select().from(translationKeys).where(eq(translationKeys.projectId, projectId));
         const keyMap = new Map(existingKeys.map(k => [k.key, k.id]));
 
-        for (const [keyName, value] of Object.entries(data)) {
+        for (const [rawKeyName, value] of Object.entries(data)) {
             if (typeof value !== 'string') continue;
+            
+            // Sanitize key name: replace colons, double colons, slashes, and backslashes with dots, and collapse any consecutive dots
+            const keyName = rawKeyName
+                .replace(/[:\\/]+/g, '.')
+                .replace(/\.+/g, '.')
+                .replace(/^\.|\.$/g, '');
+                
+            if (!keyName) continue;
+
             let keyId = keyMap.get(keyName);
             if (!keyId) {
                 const [newKey] = await this.db.insert(translationKeys).values({ projectId, key: keyName }).returning();
