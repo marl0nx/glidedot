@@ -66,7 +66,7 @@ const pushSync = async (id: number) => {
   confirmModalOpen.value = false;
   isPushing.value[id] = true
   try {
-    const res = await fetchApi(`/git/projects/${projectId}/syncs/${id}/execute`, { method: 'POST' })
+    const res = await fetchApi<{ branch: string }>(`/git/projects/${projectId}/syncs/${id}/execute`, { method: 'POST' })
     toast.add({ title: 'PR Created!', description: `Successfully opened a pull request on branch: ${res.branch}`, color: 'success' })
     await fetchData() // refresh to get new lastSyncedAt
   } catch (e: any) {

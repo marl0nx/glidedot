@@ -53,9 +53,9 @@ const goToLogin = () => {
     <div class="max-w-md w-full bg-neutral-900 border border-neutral-800 rounded-2xl p-8 space-y-8 shadow-2xl">
 
       <div class="flex flex-col items-center">
-        <div class="font-black tracking-tighter text-white font-sans flex items-baseline mb-6 transition-all" :style="{ fontSize: ((settings.logoSize || 24) * 2) + 'px' }">
+        <div class="font-black tracking-tighter text-white font-sans flex items-baseline mb-6 transition-all" :style="{ fontSize: (Number(settings.logoSize || 24) * 2) + 'px' }">
           <template v-if="settings.logoType === 'image'">
-            <img :src="settings.logoUrlMinimal || settings.logoUrl" alt="Logo" class="w-auto max-w-[200px] object-contain shrink-0 transition-all" :style="{ height: ((settings.logoSize || 24) * 2) + 'px' }">
+            <img :src="settings.logoUrlMinimal || settings.logoUrl" alt="Logo" class="w-auto max-w-[200px] object-contain shrink-0 transition-all" :style="{ height: (Number(settings.logoSize || 24) * 2) + 'px' }">
           </template>
           <template v-else>
             {{ settings.logoText || 'glide' }}<span v-if="settings.logoShowDot !== 'false'" class="text-primary-500">.</span>

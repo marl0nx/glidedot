@@ -506,7 +506,7 @@ watch([glossary, templates, variables], () => {
               <u-button 
                 v-if="editingKeyId !== row.original.id" 
                 icon="i-lucide-pencil" 
-                size="2xs" 
+                size="xs" 
                 variant="ghost" 
                 color="neutral" 
                 class="opacity-0 group-hover:opacity-100 transition-opacity ml-2" 
@@ -532,7 +532,7 @@ watch([glossary, templates, variables], () => {
                     <u-tooltip v-if="realKeys.some(rk => rk.id !== row.original.id && rk.key === applyGlossaryFixesToName(row.original.key, getGlossaryFixes(row.original.key)))" text="Auto-fix unavailable: The destination key name already exists.">
                       <u-button
                         icon="i-lucide-wand-2"
-                        size="2xs"
+                        size="xs"
                         color="neutral"
                         variant="ghost"
                         class="opacity-50 cursor-not-allowed"
@@ -541,7 +541,7 @@ watch([glossary, templates, variables], () => {
                     <u-button
                       v-else
                       icon="i-lucide-wand-2"
-                      size="2xs"
+                      size="xs"
                       color="warning"
                       variant="ghost"
                       @click.stop="autoFixKey(row.original)"
@@ -558,12 +558,12 @@ watch([glossary, templates, variables], () => {
                 <u-badge v-for="label in row.original.labels" :key="label.id" variant="subtle" color="neutral" size="md"
                         :style="{ backgroundColor: `${label.color}20`, color: label.color, borderColor: `${label.color}20` }">
                   {{ label.name }}
-                  <u-button icon="i-lucide-x" size="2xs" color="neutral" variant="ghost" :padded="false" class="ml-1 -mr-1 opacity-50 hover:opacity-100" @click.stop="removeLabelFromKey(row.original.id, label.id)" />
+                  <u-button icon="i-lucide-x" size="xs" color="neutral" variant="ghost" :padded="false" class="ml-1 -mr-1 opacity-50 hover:opacity-100" @click.stop="removeLabelFromKey(row.original.id, label.id)" />
                 </u-badge>
               </template>
               
               <u-popover>
-                <u-button icon="i-lucide-plus" size="2xs" color="neutral" variant="ghost" :class="row.original.labels?.length ? 'opacity-0 group-hover:opacity-100 transition-opacity' : 'opacity-60 hover:opacity-100 transition-opacity'" />
+                <u-button icon="i-lucide-plus" size="xs" color="neutral" variant="ghost" :class="row.original.labels?.length ? 'opacity-0 group-hover:opacity-100 transition-opacity' : 'opacity-60 hover:opacity-100 transition-opacity'" />
                 <template #content>
                   <div class="p-2 flex flex-col gap-1 w-48">
                     <span class="text-xs font-semibold text-neutral-400 mb-1 px-1">Add Label</span>
@@ -610,7 +610,7 @@ watch([glossary, templates, variables], () => {
 
       <!-- Mobile List -->
       <div class="flex flex-col gap-3 md:hidden">
-        <u-card v-for="keyObj in paginatedKeysMobile" :key="keyObj.id" :ui="{ body: { padding: 'p-4' } }" class="cursor-pointer" @click="toggleSelection(keyObj)">
+        <u-card v-for="keyObj in paginatedKeysMobile" :key="keyObj.id" :ui="{ body: 'p-4' }" class="cursor-pointer" @click="toggleSelection(keyObj)">
           <div class="flex items-start gap-4">
             <u-checkbox
               class="mt-1"
@@ -660,7 +660,7 @@ watch([glossary, templates, variables], () => {
                         <u-button
                           v-if="getGlossaryFixes(keyObj.key).length > 0"
                           icon="i-lucide-wand-2"
-                          size="2xs"
+                          size="xs"
                           color="warning"
                           variant="ghost"
                           @click.stop="autoFixKey(keyObj)"
@@ -675,12 +675,12 @@ watch([glossary, templates, variables], () => {
                   <u-badge v-for="label in keyObj.labels" :key="label.id" variant="subtle" color="neutral" size="xs"
                           :style="{ backgroundColor: `${label.color}20`, color: label.color, borderColor: `${label.color}20` }">
                     {{ label.name }}
-                    <u-button icon="i-lucide-x" size="2xs" color="neutral" variant="ghost" :padded="false" class="ml-1 -mr-1 opacity-50 hover:opacity-100" @click.stop="removeLabelFromKey(keyObj.id, label.id)" />
+                    <u-button icon="i-lucide-x" size="xs" color="neutral" variant="ghost" :padded="false" class="ml-1 -mr-1 opacity-50 hover:opacity-100" @click.stop="removeLabelFromKey(keyObj.id, label.id)" />
                   </u-badge>
                 </template>
 
                 <u-popover>
-                  <u-button icon="i-lucide-plus" size="2xs" color="neutral" variant="ghost" @click.stop :class="keyObj.labels?.length ? '' : 'opacity-60 hover:opacity-100'" />
+                  <u-button icon="i-lucide-plus" size="xs" color="neutral" variant="ghost" @click.stop :class="keyObj.labels?.length ? '' : 'opacity-60 hover:opacity-100'" />
                   <template #content>
                     <div class="p-2 flex flex-col gap-1 w-48" @click.stop>
                       <span class="text-xs font-semibold text-neutral-400 mb-1 px-1">Add Label</span>

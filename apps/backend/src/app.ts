@@ -3,15 +3,16 @@ import cors from '@fastify/cors';
 import pluginDB from './plugins/db';
 import authModule from './modules/auth';
 import setupModule from './modules/setup';
-import sessionsModule from './modules/sessions';
-import usersModule from './modules/users';
-import teamsModule from './modules/teams';
+import sessionsModule from './modules/auth/sessions';
+import usersModule from './modules/admin/users';
+import teamsModule from './modules/admin/teams';
 import adminModule from './modules/admin';
 import localizationModule from './modules/localization';
 import settingsModule from './modules/settings';
-import migrationModule from './modules/migration';
+import migrationModule from './modules/settings/migration';
 import gitModule from './modules/git';
 import multipart from '@fastify/multipart';
+import responseWrapper from './plugins/response-wrapper';
 
 export async function buildApp() {
     const app = Fastify({
@@ -30,6 +31,7 @@ export async function buildApp() {
 
     // Register Plugins
     await app.register(pluginDB);
+    await app.register(responseWrapper);
     await app.register(multipart, {
         limits: {
             fileSize: 100 * 1024 * 1024 // 100MB

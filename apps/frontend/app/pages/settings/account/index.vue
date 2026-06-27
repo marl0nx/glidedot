@@ -172,7 +172,7 @@ const resetApiKey = () => {
     </div>
 
     <div class="space-y-6">
-      <u-card :ui="{ body: { padding: 'p-6 sm:p-6' } }">
+      <u-card :ui="{ body: 'p-6 sm:p-6' }">
         <template #header>
           <div class="flex items-center gap-4 py-1">
             <u-avatar
@@ -211,7 +211,7 @@ const resetApiKey = () => {
         </div>
       </u-card>
 
-      <u-card :ui="{ body: { padding: 'p-6 sm:p-6' } }">
+      <u-card :ui="{ body: 'p-6 sm:p-6' }">
         <template #header>
           <div>
             <h3 class="text-lg font-medium text-neutral-100">Security</h3>
@@ -232,7 +232,7 @@ const resetApiKey = () => {
         </div>
       </u-card>
 
-      <u-card :ui="{ body: { padding: 'p-6 sm:p-6' } }">
+      <u-card :ui="{ body: 'p-6 sm:p-6' }">
         <template #header>
           <div>
             <h3 class="text-lg font-medium text-neutral-100">API Key</h3>

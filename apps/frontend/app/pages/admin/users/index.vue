@@ -107,7 +107,7 @@ const confirmResetApiKey = async () => {
       </div>
     </div>
 
-    <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+    <u-card :ui="{ body: 'p-0 sm:p-0' }">
       <u-table :data="users" :columns="columns" :loading="isLoading">
         <template #id-cell="{ row }">
           <span class="text-sm text-neutral-400">{{ row.original.id }}</span>

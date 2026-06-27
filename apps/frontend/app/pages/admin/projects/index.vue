@@ -122,7 +122,7 @@ const confirmDelete = async () => {
       <u-button icon="i-lucide-folder-plus" label="Create Project" color="neutral" variant="subtle" @click="openCreateModal" />
     </div>
 
-    <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+    <u-card :ui="{ body: 'p-0 sm:p-0' }">
       <u-table :data="projects" :columns="columns" :loading="isLoading">
         <template #name-cell="{ row }">
           <span class="font-medium">{{ row.original.name }}</span>

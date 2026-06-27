@@ -158,15 +158,19 @@ const handleReview = async (review: Review, action: 'approve' | 'reject') => {
       method: 'POST'
     })
     
-    // Update local state
-    if (translations.value[review.keyId] && translations.value[review.keyId][review.languageCode]) {
-      if (action === 'approve') {
-        translations.value[review.keyId][review.languageCode].text = res.value
-        translations.value[review.keyId][review.languageCode].reviewStatus = 'APPROVED'
-        translations.value[review.keyId][review.languageCode].draftValue = undefined
-      } else {
-        translations.value[review.keyId][review.languageCode].reviewStatus = 'REJECTED'
-        translations.value[review.keyId][review.languageCode].draftValue = undefined
+    // Update local state cleanly with strong checks
+    const keyTrans = translations.value[review.keyId]
+    if (keyTrans) {
+      const trans = keyTrans[review.languageCode]
+      if (trans) {
+        if (action === 'approve') {
+          trans.text = (res as { value: string }).value
+          trans.reviewStatus = 'APPROVED'
+          trans.draftValue = undefined
+        } else {
+          trans.reviewStatus = 'REJECTED'
+          trans.draftValue = undefined
+        }
       }
     }
     
@@ -176,7 +180,7 @@ const handleReview = async (review: Review, action: 'approve' | 'reject') => {
   }
 }
 
-const handleKeyReview = async (keyData: any, action: 'approve' | 'reject') => {
+const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'reject') => {
   try {
     const res = await fetchApi(`/localization/keys/${currentProject.value?.id}/${keyData.id}/${action}`, {
       method: 'POST'
@@ -224,7 +228,7 @@ const handleKeyReview = async (keyData: any, action: 'approve' | 'reject') => {
             <div class="flex flex-col md:flex-row justify-between items-center gap-4">
               <u-input v-model="searchQuery" icon="i-lucide-search" placeholder="Search translation reviews..." class="w-full md:max-w-sm" />
             </div>
-            <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+            <u-card :ui="{ body: 'p-0 sm:p-0' }">
               <div v-if="isLoading" class="p-8 text-center text-neutral-500">
           <u-icon name="i-lucide-loader-2" class="w-8 h-8 animate-spin mx-auto mb-2" />
           Loading reviews...
@@ -315,7 +319,7 @@ const handleKeyReview = async (keyData: any, action: 'approve' | 'reject') => {
           
           <!-- Mobile List -->
           <div class="flex flex-col gap-4 p-4 md:hidden">
-            <u-card v-for="(review, index) in paginatedReviewsMobile" :key="review.keyId + '-' + review.languageCode" :ui="{ body: { padding: 'p-4' } }">
+            <u-card v-for="(review, index) in paginatedReviewsMobile" :key="review.keyId + '-' + review.languageCode" :ui="{ body: 'p-4' }">
               <div class="flex flex-col gap-4">
                 <div class="flex justify-between items-start">
                   <div class="flex flex-col">
@@ -419,7 +423,7 @@ const handleKeyReview = async (keyData: any, action: 'approve' | 'reject') => {
           <div class="flex flex-col md:flex-row justify-between items-center gap-4">
             <u-input v-model="searchQuery" icon="i-lucide-search" placeholder="Search key reviews..." class="w-full md:max-w-sm" />
           </div>
-          <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+          <u-card :ui="{ body: 'p-0 sm:p-0' }">
             <div v-if="isLoading" class="p-8 text-center text-neutral-500">
               <u-icon name="i-lucide-loader-2" class="w-8 h-8 animate-spin mx-auto mb-2" />
               Loading reviews...
@@ -486,7 +490,7 @@ const handleKeyReview = async (keyData: any, action: 'approve' | 'reject') => {
 
               <!-- Mobile List -->
               <div class="md:hidden flex flex-col p-4 gap-4">
-                <u-card v-for="key in filteredKeys" :key="key.id" :ui="{ body: { padding: 'p-4' } }">
+                <u-card v-for="key in filteredKeys" :key="key.id" :ui="{ body: 'p-4' }">
                   <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-2 font-mono text-sm bg-neutral-900 p-3 rounded-lg border border-neutral-800">
                       <template v-if="!key.draftKey">

@@ -33,6 +33,13 @@ const hasUnsavedChanges = computed(() => {
   return JSON.stringify(props.project) !== originalProject.value
 })
 
+const inContextUrlProxy = computed({
+  get: () => props.project.inContextUrl || '',
+  set: (val) => {
+    props.project.inContextUrl = val || undefined
+  }
+})
+
 const discard = () => {
   if (originalProject.value) {
     const orig = JSON.parse(originalProject.value)
@@ -52,7 +59,7 @@ const discard = () => {
 
 
         <u-form-field v-if="mode === 'edit'" label="In-Context Preview URL" description="URL where your app is running to enable live visual editing.">
-          <u-input v-model="project.inContextUrl" placeholder="https://staging.myapp.com" class="w-full" @keyup.enter="emit('save')" />
+          <u-input v-model="inContextUrlProxy" placeholder="https://staging.myapp.com" class="w-full" @keyup.enter="emit('save')" />
           <div v-if="project.inContextUrl" class="mt-2 p-3 bg-amber-500/10 border border-warning-500/25 rounded-lg text-xs text-neutral-300 space-y-1">
             <p class="font-semibold text-warning-500 flex items-center gap-1.5">
               <u-icon name="i-lucide-alert-triangle" class="w-4 h-4" />
@@ -81,7 +88,7 @@ const discard = () => {
         </div>
 
         <div v-if="mode === 'edit' && project.id" class="mt-4 pt-4 border-t border-neutral-800">
-          <ProjectGitSyncConfig :project-id="project.id" />
+          <ProjectGitSyncConfig :project-id="Number(project.id)" />
         </div>
       </div>
     </template>

@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>✨ glide.</h1>
+  <h1>glide.</h1>
   <p><strong>A modern localization and translation management platform.</strong></p>
   
   <p>
@@ -46,9 +46,12 @@ glide. is structured as a monorepo (powered by Bun Workspaces) and uses the foll
 
 Check out the guides to learn how to deploy, configure, and use glide.:
 
-- [**Installation & Deployment**](docs/INSTALL.md) — Learn how to run glide. locally or deploy it using Docker.
-- [**In-Context Editing**](docs/IN-CONTEXT-EDIT.md) — Set up visual editing inside your target applications.
+- [**Comprehensive Setup & Configuration**](SETUP.md) — Detailed guide explaining installation steps, Docker Compose, and all environment variables.
+- [**Project Structure: Keys, Labels & Languages**](docs/STRUCTURE.md) — Manage unique keys, grouping labels, and languages in your projects.
+- [**Translations Editor & Workspace**](docs/TRANSLATIONS.md) — Learn how to translate, search, filter, and view version history.
 - [**Key Conventions & Templates**](docs/CONVENTIONS.md) — Enforce naming rules using templates, variables, and linting.
+- [**In-Context Editing**](docs/IN-CONTEXT-EDIT.md) — Set up visual editing inside your target applications.
+- [**Git Sync (Continuous Localization)**](docs/GIT-SYNC.md) — Push translations as automated Pull Requests on GitHub, GitLab, or Forgejo.
 - [**The Review System**](docs/REVIEWS.md) — Understand how the drafting and approval lifecycle works.
 - [**AI Translation & DeepL**](docs/AI-TRANSLATION.md) — Configure machine translation, inline suggestions, and manage translation quotas.
 - [**Insights & Analytics**](docs/INSIGHTS.md) — View team productivity, automation impact, and time saved tracking.

@@ -6,7 +6,7 @@ import {
     projects, languages, projectLanguages, labels, 
     translationKeys, translations, keysToLabels, activityLogs,
     keyTemplates, keyGlossary, keyVariables
-} from '../localization/schema';
+} from '../../localization/schema';
 
 // Helper function to insert in chunks to avoid SQLite 'too many SQL variables' error
 async function insertInChunks(tx: any, table: any, data: any[], chunkSize: number = 500) {
@@ -78,8 +78,15 @@ const migrationModule: FastifyPluginAsync = async (fastify, opts) => {
             const backupDataStr = backupEntry.getData().toString('utf8');
             const backupData = JSON.parse(backupDataStr);
 
-            const restoreProjects = data.fields?.restoreProjects ? data.fields.restoreProjects.value === 'true' : true;
-            const restoreConventions = data.fields?.restoreConventions ? data.fields.restoreConventions.value === 'true' : true;
+            const restoreProjectsField = data.fields?.restoreProjects;
+            const restoreProjects = restoreProjectsField && !Array.isArray(restoreProjectsField) && restoreProjectsField.type === 'field'
+                ? restoreProjectsField.value === 'true'
+                : true;
+
+            const restoreConventionsField = data.fields?.restoreConventions;
+            const restoreConventions = restoreConventionsField && !Array.isArray(restoreConventionsField) && restoreConventionsField.type === 'field'
+                ? restoreConventionsField.value === 'true'
+                : true;
 
             // Import data
             await fastify.db.transaction(async (tx) => {

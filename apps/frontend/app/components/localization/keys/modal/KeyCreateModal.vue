@@ -29,8 +29,9 @@ const selectedLabelIds = ref<number[]>([])
 // Initialize state when modal opens
 watch(isOpen, (val) => {
   if (val) {
-    if (props.requireTemplate && props.templates && props.templates.length > 0) {
-      selectedTemplateId.value = props.templates[0].id
+    const firstTemplate = props.templates?.[0]
+    if (props.requireTemplate && firstTemplate) {
+      selectedTemplateId.value = firstTemplate.id
     } else {
       selectedTemplateId.value = 'freeform'
     }
@@ -67,12 +68,12 @@ watch(selectedTemplateId, () => {
   if (selectedTemplateId.value !== 'freeform') {
     templateValues.value = currentSegments.value.map(seg => {
       if (seg.type === 'constant') return seg.constantValue || ''
-      if (seg.type === 'enum' && seg.options && seg.options.length > 0) return seg.options[0]
+      if (seg.type === 'enum' && seg.options && seg.options.length > 0) return seg.options[0] || ''
       if (seg.type === 'shared-enum' && seg.variableId) {
         const v = props.variables?.find(v => v.id === seg.variableId)
         if (v) {
           const opts = v.options.split(',').map(s => s.trim()).filter(Boolean)
-          if (opts.length > 0) return opts[0]
+          if (opts.length > 0) return opts[0] || ''
         }
       }
       return ''

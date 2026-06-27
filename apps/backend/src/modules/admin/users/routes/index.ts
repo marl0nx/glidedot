@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { UserService } from "../../auth/services/user.service";
+import { UserService } from "../../../auth/services/user.service";
 
 export default async function usersRoutes(fastify: FastifyInstance) {
     const userService = new UserService(fastify.db);
@@ -16,8 +16,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     });
 
     fastify.get('/me', async (request) => {
-        const { env } = await import('../../../config/env');
-        const { settings } = await import('../../settings/schema');
+        const { settings } = await import('../../../settings/schema');
         const { eq } = await import('drizzle-orm');
         
         const apiKeySetting = await fastify.db.select().from(settings).where(eq(settings.key, 'deeplApiKey')).limit(1);
@@ -25,7 +24,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
 
         return {
             ...request.user,
-            hasDeepL: !!env.DEEPL_API_KEY || hasDeepLSetting
+            hasDeepL: hasDeepLSetting
         };
     });
 
@@ -65,7 +64,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
 
     fastify.post('/me/test-alert', async (request, reply) => {
         const { alertConfig, testEvent } = request.body as any;
-        const { NotificationService } = await import('../../../services/notification.service');
+        const { NotificationService } = await import('../../../../services/notification.service');
         
         let payload: any = {
             title: 'Test Notification',

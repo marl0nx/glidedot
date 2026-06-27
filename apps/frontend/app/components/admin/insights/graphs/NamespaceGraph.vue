@@ -63,7 +63,7 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 onMounted(async () => {
   window.addEventListener('keydown', handleKeydown)
-  await fetchProjects()
+  await fetchKeys()
 })
 
 onUnmounted(() => {
@@ -342,7 +342,7 @@ const chartOptions = computed(() => {
       </div>
     </div>
 
-    <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }" class="flex-1 min-h-0 flex flex-col">
+    <u-card :ui="{ body: 'p-0 sm:p-0' }" class="flex-1 min-h-0 flex flex-col">
       <div v-if="isLoading" :class="isFullscreen ? 'h-full min-h-[400px]' : 'h-[600px]'" class="flex items-center justify-center flex-1">
         <u-icon name="i-lucide-loader-2" class="w-8 h-8 text-neutral-500 animate-spin" />
       </div>

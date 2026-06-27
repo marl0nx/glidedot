@@ -2,13 +2,7 @@
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useTranslation } from '~/composables/localization/useTranslation'
-
-interface Language {
-  id: number
-  code: string
-  name: string
-  flag: string
-}
+import type { Language } from '~/types'
 
 const search = ref("")
 const pagination = ref({pageIndex: 0, pageSize: 15})
@@ -95,8 +89,9 @@ const bulkActions = computed<DropdownMenuItem[][]>(() => [
       color: 'success' as const,
       disabled: selectedLanguages.value.length !== 1,
       onSelect: () => {
-        if (selectedLanguages.value.length === 1) {
-           setReferenceLanguage(selectedLanguages.value[0].id)
+        const firstSelected = selectedLanguages.value[0]
+        if (firstSelected) {
+           setReferenceLanguage(firstSelected.id)
            rowSelection.value = {}
         }
       }
@@ -247,7 +242,7 @@ const toggleSelection = (lang: Language) => {
 
       <!-- Mobile List -->
       <div class="flex flex-col gap-3 md:hidden">
-        <u-card v-for="lang in paginatedLanguagesMobile" :key="lang.id" :ui="{ body: { padding: 'p-4' } }" class="cursor-pointer" @click="toggleSelection(lang)">
+        <u-card v-for="lang in paginatedLanguagesMobile" :key="lang.id" :ui="{ body: 'p-4' }" class="cursor-pointer" @click="toggleSelection(lang)">
           <div class="flex items-center gap-4">
             <u-checkbox
               :model-value="rowSelection[realLanguages.indexOf(lang).toString()]"

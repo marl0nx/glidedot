@@ -218,7 +218,7 @@ const navigateAndClose = (href: string) => {
   useRouter().push(href)
 }
 
-const navigateToProject = (id: number) => {
+const navigateToProject = (id: number | string) => {
   closeBottomSheet()
   useRouter().push(`/projects/${id}`)
 }
@@ -322,17 +322,17 @@ const handleMobileNavClick = (item: any) => {
         <div class="flex flex-col items-center w-full">
           <div class="flex flex-row items-center">
             <a href="/" class="flex items-center justify-center py-2 px-1">
-              <div v-if="isSidebarOpen" class="font-black tracking-tighter text-white font-sans flex items-baseline transition-all" :style="{ fontSize: (settings.logoSize || 24) + 'px' }">
+              <div v-if="isSidebarOpen" class="font-black tracking-tighter text-white font-sans flex items-baseline transition-all" :style="{ fontSize: (Number(settings.logoSize || 24)) + 'px' }">
                 <template v-if="settings.logoType === 'image'">
-                  <img :src="settings.logoUrl" alt="Logo" class="w-auto object-contain shrink-0 transition-all" :style="{ height: (settings.logoSize || 24) + 'px' }">
+                  <img :src="settings.logoUrl" alt="Logo" class="w-auto object-contain shrink-0 transition-all" :style="{ height: (Number(settings.logoSize || 24)) + 'px' }">
                 </template>
                 <template v-else>
                   {{ settings.logoText || 'glide' }}<span v-if="settings.logoShowDot !== 'false'" class="text-primary-500">.</span>
                 </template>
               </div>
-              <div v-else class="font-black tracking-tighter text-white font-sans flex items-baseline transition-all" :style="{ fontSize: (Math.max(16, (settings.logoSize || 24) - 4)) + 'px' }">
+              <div v-else class="font-black tracking-tighter text-white font-sans flex items-baseline transition-all" :style="{ fontSize: (Math.max(16, Number(settings.logoSize || 24) - 4)) + 'px' }">
                 <template v-if="settings.logoType === 'image'">
-                  <img :src="settings.logoUrlMinimal || settings.logoUrl" alt="Logo" class="w-auto object-contain shrink-0 transition-all" :style="{ height: (Math.max(16, (settings.logoSize || 24) - 4)) + 'px' }">
+                  <img :src="settings.logoUrlMinimal || settings.logoUrl" alt="Logo" class="w-auto object-contain shrink-0 transition-all" :style="{ height: (Math.max(16, Number(settings.logoSize || 24) - 4)) + 'px' }">
                 </template>
                 <template v-else>
                   {{ settings.logoTextMinimal || 'g' }}<span v-if="settings.logoShowDot !== 'false'" class="text-primary-500">.</span>
@@ -548,8 +548,8 @@ const handleMobileNavClick = (item: any) => {
               <div class="flex flex-col gap-2">
                 <button
                   v-for="sub in profileItems"
-                  :key="sub.href"
-                  @click="navigateAndClose(sub.href)"
+                  :key="sub.href as string"
+                  @click="navigateAndClose(sub.href as string)"
                   class="flex items-center gap-3 p-3.5 rounded-xl bg-neutral-900 border border-neutral-800/80 hover:border-neutral-700 text-left transition-all duration-200 active:scale-98"
                 >
                   <u-icon :name="sub.icon" class="w-5 h-5 text-neutral-400" />

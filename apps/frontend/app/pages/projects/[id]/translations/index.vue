@@ -57,7 +57,7 @@ onMounted(async () => {
     if (targetLang && targetKey) {
       const parts = editKeyStr.split('.')
       if (parts.length > 0) {
-        selectedScope.value = parts[0]
+        selectedScope.value = parts[0] || null
       }
       
       listModalLanguage.value = targetLang

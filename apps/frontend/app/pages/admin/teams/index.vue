@@ -1,20 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-
-interface TeamMember {
-  userId: number
-  username: string
-}
-
-interface Team {
-  id: number
-  name: string
-  membersCount: number
-  projectsCount: number
-  members?: TeamMember[]
-  projects?: number[]
-  oidcMappedGroups?: string
-}
+import type { Team, User, Project } from '~/types'
 
 definePageMeta({
   layout: 'default'
@@ -26,9 +12,9 @@ const config = useRuntimeConfig()
 const isOidcEnabled = computed(() => config.public.oidcEnabled)
 const loading = ref(false)
 
-const { data: teams, refresh: refreshTeams } = await useAsyncData('teams', () => fetchApi('/admin/teams'))
-const { data: users } = await useAsyncData('users', () => fetchApi('/users'))
-const { data: projects } = await useAsyncData('projects', () => fetchApi('/localization/projects'))
+const { data: teams, refresh: refreshTeams } = await useAsyncData<Team[]>('teams', () => fetchApi('/admin/teams'))
+const { data: users } = await useAsyncData<User[]>('users', () => fetchApi('/users'))
+const { data: projects } = await useAsyncData<Project[]>('projects', () => fetchApi('/localization/projects'))
 
 const isCreateModalOpen = ref(false)
 const isManageModalOpen = ref(false)
@@ -70,7 +56,8 @@ const createTeam = async (teamName: string) => {
     await refreshTeams()
     await refreshNuxtData('projects')
     toast.add({ title: 'Success', description: 'Team created successfully', color: 'success' })
-  } catch {
+  } catch (e) {
+    console.error(e)
     toast.add({ title: 'Error', description: 'Failed to create team', color: 'error' })
   } finally {
     loading.value = false
@@ -87,7 +74,7 @@ const addMember = async (userId: number) => {
     await refreshTeams()
     updateSelectedTeamRef()
     toast.add({ title: 'Success', description: 'Member added successfully', color: 'success' })
-  } catch {
+  } catch (e) {
     console.error(e)
     toast.add({ title: 'Error', description: 'Failed to add member', color: 'error' })
   }
@@ -104,7 +91,7 @@ const addProject = async (projectId: number) => {
     updateSelectedTeamRef()
     await refreshNuxtData('projects')
     toast.add({ title: 'Success', description: 'Project linked successfully', color: 'success' })
-  } catch {
+  } catch (e) {
     console.error(e)
     toast.add({ title: 'Error', description: 'Failed to link project', color: 'error' })
   }
@@ -116,7 +103,7 @@ const removeMember = async (teamId: number, userId: number) => {
     await refreshTeams()
     updateSelectedTeamRef()
     toast.add({ title: 'Success', description: 'Member removed successfully', color: 'success' })
-  } catch {
+  } catch (e) {
     console.error(e)
     toast.add({ title: 'Error', description: 'Failed to remove member', color: 'error' })
   }
@@ -129,7 +116,7 @@ const removeProject = async (teamId: number, projectId: number) => {
     updateSelectedTeamRef()
     await refreshNuxtData('projects')
     toast.add({ title: 'Success', description: 'Project unlinked successfully', color: 'success' })
-  } catch {
+  } catch (e) {
     console.error(e)
     toast.add({ title: 'Error', description: 'Failed to unlink project', color: 'error' })
   }
@@ -143,7 +130,7 @@ const confirmDelete = async () => {
     await refreshTeams()
     await refreshNuxtData('projects')
     toast.add({ title: 'Success', description: 'Team deleted successfully', color: 'success' })
-  } catch {
+  } catch (e) {
     console.error(e)
     toast.add({ title: 'Error', description: 'Failed to delete team', color: 'error' })
   }
@@ -163,15 +150,13 @@ const saveTeamSettings = async (payload: { name: string, mappedGroups: string[] 
     await refreshTeams()
     toast.add({ title: 'Success', description: 'Team settings saved successfully', color: 'success' })
     isManageModalOpen.value = false
-  } catch {
+  } catch (e) {
     console.error(e)
     toast.add({ title: 'Error', description: 'Failed to save team settings', color: 'error' })
   } finally {
     loading.value = false
   }
 }
-
-
 
 const updateSelectedTeamRef = () => {
   if (selectedTeam.value) {
@@ -196,7 +181,7 @@ const updateSelectedTeamRef = () => {
       <u-button icon="i-lucide-users" label="Create Team" color="neutral" variant="subtle" @click="openCreateModal" />
     </div>
 
-    <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+    <u-card :ui="{ body: 'p-0 sm:p-0' }">
       <u-table :data="teams || []" :columns="columns">
         <template #id-cell="{ row }">
           <span class="text-sm text-neutral-400">{{ row.original.id }}</span>

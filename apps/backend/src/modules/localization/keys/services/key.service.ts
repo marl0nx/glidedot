@@ -19,7 +19,7 @@ export class KeyService {
 
         if (keyIds.length === 0) return [];
 
-        const { users } = await import('../../../users/schema');
+        const { users } = await import('../../../admin/users/schema');
         const allTranslations = await this.db.select({
             id: translations.id,
             keyId: translations.keyId,
@@ -53,7 +53,7 @@ export class KeyService {
     }
 
     async createKey(projectId: number, key: string, labelIds?: number[], userId?: number) {
-        const { users } = await import('../../../users/schema');
+        const { users } = await import('../../../admin/users/schema');
         const { projects } = await import('../../schema');
 
         let needsReview = false;
@@ -105,7 +105,7 @@ export class KeyService {
     }
 
     async updateKey(projectId: number, keyId: number, newKeyName: string, userId?: number, forceReview: boolean = false) {
-        const { users } = await import('../../../users/schema');
+        const { users } = await import('../../../admin/users/schema');
         const { projects } = await import('../../schema');
         
         let needsReview = forceReview;
@@ -157,7 +157,7 @@ export class KeyService {
     async bulkUpdateKeys(projectId: number, updates: { id: number, key: string }[], userId?: number, forceReview: boolean = false) {
         if (!updates.length) return [];
         
-        const { users } = await import('../../../users/schema');
+        const { users } = await import('../../../admin/users/schema');
         const { projects } = await import('../../schema');
         
         let needsReview = forceReview;
@@ -261,7 +261,7 @@ export class KeyService {
     }
 
     async upsertTranslation(projectId: number, keyId: number, languageId: number, value: string, userId: number) {
-        const { users } = await import('../../../users/schema');
+        const { users } = await import('../../../admin/users/schema');
         const { projects, translations } = await import('../../schema');
         const [user] = await this.db.select().from(users).where(eq(users.id, userId));
         const [project] = await this.db.select().from(projects).where(eq(projects.id, projectId));
@@ -317,7 +317,7 @@ export class KeyService {
 
     async checkAndDecrementQuota(userId?: number, count: number = 1): Promise<number | null> {
         if (!userId) return null;
-        const { users } = await import('../../../users/schema');
+        const { users } = await import('../../../admin/users/schema');
         const [user] = await this.db.select().from(users).where(eq(users.id, userId));
         if (!user) return null;
         if (!user.allowSuggestions) throw new Error('Translation suggestions are disabled for this user');

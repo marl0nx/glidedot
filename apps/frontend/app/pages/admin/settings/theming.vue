@@ -46,7 +46,8 @@ const selectCustomColor = (color: string) => {
   formData.value.primaryColor = color
 }
 
-const onColorPickerUpdate = (color: string) => {
+const onColorPickerUpdate = (color: string | undefined) => {
+  if (!color) return
   hexInputString.value = color
   selectCustomColor(color)
 }

@@ -16,7 +16,7 @@ const isInitializing = ref(true)
 useThemeColor(computed(() => appConfig.ui.colors.primary))
 useThemeBackground(computed(() => settings.value.themeMode || 'dark'), computed(() => settings.value.customBackgroundColor || '#111111'))
 
-const isMaintenanceActive = computed(() => settings.value.maintenanceMode === true || settings.value.maintenanceMode === 'true')
+const isMaintenanceActive = computed(() => settings.value.maintenanceMode === 'true')
 
 onMounted(async () => {
   const saved = localStorage.getItem('glide_primary_color')
@@ -59,9 +59,9 @@ const handleLogout = async () => {
     <div v-else-if="isMaintenanceActive && !auth.isAdmin.value && route.path !== '/login'" class="fixed inset-0 z-[9999] bg-neutral-950 flex flex-col justify-center items-center space-y-4">
       
       <div class="flex items-center justify-center mb-4 mt-8">
-        <div class="font-black tracking-tighter text-white font-sans flex items-baseline transition-all" :style="{ fontSize: ((settings.logoSize || 24) * 2) + 'px' }">
+        <div class="font-black tracking-tighter text-white font-sans flex items-baseline transition-all" :style="{ fontSize: (Number(settings.logoSize || 24) * 2) + 'px' }">
           <template v-if="settings.logoType === 'image'">
-            <img :src="settings.logoUrlMinimal || settings.logoUrl" alt="Logo" class="w-auto max-w-[200px] object-contain shrink-0 transition-all" :style="{ height: ((settings.logoSize || 24) * 2) + 'px' }">
+            <img :src="settings.logoUrlMinimal || settings.logoUrl" alt="Logo" class="w-auto max-w-[200px] object-contain shrink-0 transition-all" :style="{ height: (Number(settings.logoSize || 24) * 2) + 'px' }">
           </template>
           <template v-else>
             {{ settings.logoText || 'glide' }}<span v-if="settings.logoShowDot !== 'false'" class="text-primary-500">.</span>

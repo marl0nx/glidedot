@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { projects, projectLanguages, languages, translations, translationKeys, activityLogs, keyTemplates, keyGlossary, keyVariables } from '../../schema';
 import { eq, and, inArray, desc } from 'drizzle-orm';
-import { users } from '../../../users/schema';
-import { teamMembers, teamProjects, teams } from '../../../teams/schema';
+import { users } from '../../../admin/users/schema';
+import { teamMembers, teamProjects, teams } from '../../../admin/teams/schema';
 
 export class ProjectService {
     constructor(private db: FastifyInstance['db']) {}

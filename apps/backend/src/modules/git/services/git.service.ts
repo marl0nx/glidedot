@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { userGitConnections, projectGitSyncs } from "../schema";
-import { users } from "../../users/schema";
+import { users } from "../../admin/users/schema";
 import { projects, languages, projectLanguages, translationKeys, translations } from "../../localization/schema";
 import { encryptString, decryptString } from "../../../utils/encryption";
 

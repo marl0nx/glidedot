@@ -2,22 +2,22 @@ import crypto from 'node:crypto'
 
 // Auto-hashing and padding of weak/missing OIDC secrets to guarantee 100% stable,
 // production-ready secrets and prevent 500 server-side errors on launch.
-if (process.env.NUXT_OIDC_SESSION_SECRET) {
-  if (process.env.NUXT_OIDC_SESSION_SECRET.length < 48) {
-    process.env.NUXT_OIDC_SESSION_SECRET = crypto
-      .createHash('sha512')
-      .update(process.env.NUXT_OIDC_SESSION_SECRET)
-      .digest('hex')
-  }
+if (!process.env.NUXT_OIDC_SESSION_SECRET) {
+  process.env.NUXT_OIDC_SESSION_SECRET = crypto.randomBytes(32).toString('hex')
+} else if (process.env.NUXT_OIDC_SESSION_SECRET.length < 48) {
+  process.env.NUXT_OIDC_SESSION_SECRET = crypto
+    .createHash('sha512')
+    .update(process.env.NUXT_OIDC_SESSION_SECRET)
+    .digest('hex')
 }
 
-if (process.env.NUXT_OIDC_AUTH_SESSION_SECRET) {
-  if (process.env.NUXT_OIDC_AUTH_SESSION_SECRET.length < 48) {
-    process.env.NUXT_OIDC_AUTH_SESSION_SECRET = crypto
-      .createHash('sha512')
-      .update(process.env.NUXT_OIDC_AUTH_SESSION_SECRET)
-      .digest('hex')
-  }
+if (!process.env.NUXT_OIDC_AUTH_SESSION_SECRET) {
+  process.env.NUXT_OIDC_AUTH_SESSION_SECRET = crypto.randomBytes(32).toString('hex')
+} else if (process.env.NUXT_OIDC_AUTH_SESSION_SECRET.length < 48) {
+  process.env.NUXT_OIDC_AUTH_SESSION_SECRET = crypto
+    .createHash('sha512')
+    .update(process.env.NUXT_OIDC_AUTH_SESSION_SECRET)
+    .digest('hex')
 }
 
 if (!process.env.NUXT_OIDC_TOKEN_KEY) {

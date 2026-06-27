@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { useApi } from '~/composables/useApi'
 import { useToast } from '#imports'
-import type { KeyTemplate, KeyGlossaryTerm, KeyVariable } from '~/types'
+import type { KeyTemplate, KeyGlossaryTerm, KeyVariable, KeyTemplateSegment } from '~/types'
 
 export const useConventions = () => {
   const { fetchApi } = useApi()
@@ -34,11 +34,13 @@ export const useConventions = () => {
   // --- Glossary Methods ---
   const addGlossaryTerm = async (projectId: number, badWord: string, goodWord: string) => {
     try {
-      const result = await fetchApi(`/localization/projects/${projectId}/glossary`, {
+      const result = await fetchApi<KeyGlossaryTerm[]>(`/localization/projects/${projectId}/glossary`, {
         method: 'POST',
         body: { badWord, goodWord }
       })
-      glossary.value.push(result[0])
+      if (result && result[0]) {
+        glossary.value.push(result[0])
+      }
       toast.add({ title: 'Success', description: 'Glossary term added', color: 'success' })
       return true
     } catch (e) {
@@ -49,12 +51,12 @@ export const useConventions = () => {
 
   const updateGlossaryTerm = async (projectId: number, glossaryId: number, badWord: string, goodWord: string) => {
     try {
-      const result = await fetchApi(`/localization/projects/${projectId}/glossary/${glossaryId}`, {
+      const result = await fetchApi<KeyGlossaryTerm[]>(`/localization/projects/${projectId}/glossary/${glossaryId}`, {
         method: 'PATCH',
         body: { badWord, goodWord }
       })
       const idx = glossary.value.findIndex(g => g.id === glossaryId)
-      if (idx !== -1) {
+      if (idx !== -1 && result && result[0]) {
         glossary.value[idx] = result[0]
       }
       toast.add({ title: 'Success', description: 'Glossary term updated', color: 'success' })
@@ -78,13 +80,15 @@ export const useConventions = () => {
   }
 
   // --- Template Methods ---
-  const addTemplate = async (projectId: number, name: string, segments: any[]) => {
+  const addTemplate = async (projectId: number, name: string, segments: KeyTemplateSegment[]) => {
     try {
-      const result = await fetchApi(`/localization/projects/${projectId}/templates`, {
+      const result = await fetchApi<KeyTemplate[]>(`/localization/projects/${projectId}/templates`, {
         method: 'POST',
         body: { name, segments: JSON.stringify(segments) }
       })
-      templates.value.push(result[0])
+      if (result && result[0]) {
+        templates.value.push(result[0])
+      }
       toast.add({ title: 'Success', description: 'Template added', color: 'success' })
       return true
     } catch (e) {
@@ -93,14 +97,14 @@ export const useConventions = () => {
     }
   }
 
-  const updateTemplate = async (projectId: number, templateId: number, name: string, segments: any[]) => {
+  const updateTemplate = async (projectId: number, templateId: number, name: string, segments: KeyTemplateSegment[]) => {
     try {
-      const result = await fetchApi(`/localization/projects/${projectId}/templates/${templateId}`, {
+      const result = await fetchApi<KeyTemplate[]>(`/localization/projects/${projectId}/templates/${templateId}`, {
         method: 'PATCH',
         body: { name, segments: JSON.stringify(segments) }
       })
       const idx = templates.value.findIndex(t => t.id === templateId)
-      if (idx !== -1) {
+      if (idx !== -1 && result && result[0]) {
         templates.value[idx] = result[0]
       }
       toast.add({ title: 'Success', description: 'Template updated', color: 'success' })
@@ -125,11 +129,13 @@ export const useConventions = () => {
 
   const addVariable = async (projectId: number, name: string, options: string) => {
     try {
-      const result = await fetchApi(`/localization/projects/${projectId}/variables`, {
+      const result = await fetchApi<KeyVariable[]>(`/localization/projects/${projectId}/variables`, {
         method: 'POST',
         body: { name, options }
       })
-      variables.value.push(result[0])
+      if (result && result[0]) {
+        variables.value.push(result[0])
+      }
       toast.add({ title: 'Success', description: 'Variable created', color: 'success' })
       return true
     } catch (e) {
@@ -140,12 +146,12 @@ export const useConventions = () => {
 
   const updateVariable = async (projectId: number, variableId: number, name: string, options: string) => {
     try {
-      const result = await fetchApi(`/localization/projects/${projectId}/variables/${variableId}`, {
+      const result = await fetchApi<KeyVariable[]>(`/localization/projects/${projectId}/variables/${variableId}`, {
         method: 'PATCH',
         body: { name, options }
       })
       const idx = variables.value.findIndex(v => v.id === variableId)
-      if (idx !== -1) variables.value[idx] = result[0]
+      if (idx !== -1 && result && result[0]) variables.value[idx] = result[0]
       toast.add({ title: 'Success', description: 'Variable updated', color: 'success' })
       return true
     } catch (e) {

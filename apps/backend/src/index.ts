@@ -1,7 +1,7 @@
 import { buildApp } from './app';
 import { env } from './config/env';
 import { UserService } from './modules/auth/services/user.service';
-import { S3BackupService } from './modules/migration/s3-backup.service';
+import { S3BackupService } from './modules/settings/migration/s3-backup.service';
 import { LogCleanupService } from './modules/admin/services/log-cleanup.service';
 
 async function start() {

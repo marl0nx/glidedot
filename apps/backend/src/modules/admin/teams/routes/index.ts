@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { TeamService } from "../../auth/services/team.service";
+import { TeamService } from "../../../auth/services/team.service";
 
 export default async function teamsRoutes(fastify: FastifyInstance) {
     const teamService = new TeamService(fastify.db);

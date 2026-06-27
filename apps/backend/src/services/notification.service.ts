@@ -4,7 +4,7 @@ export class NotificationService {
     private static throttleMap = new Map<string, number>();
 
     static async send(
-        alertConfig: { provider: 'none' | 'discord' | 'slack' | 'ntfy' | 'custom' | 'telegram' | 'gotify'; url: string; events: string[]; pingUserId?: string } | null | undefined,
+        alertConfig: { provider: 'none' | 'discord' | 'slack' | 'ntfy' | 'custom' | 'telegram' | 'gotify'; url: string; events: string[]; pingUserId?: string; avatarUrl?: string } | null | undefined,
         event: string,
         payload: { title: string; message: string; [key: string]: any },
         options?: { throttleKey?: string; throttleHours?: number }

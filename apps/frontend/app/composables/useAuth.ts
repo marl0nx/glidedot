@@ -1,17 +1,19 @@
 import { ref, computed } from 'vue'
+import type { User } from '~/types'
 
-interface User {
-  id: number
-  username: string
-  email: string
-  isAdmin: boolean
-  isOidc: boolean
-  isReviewer: boolean
-  requiresReview: boolean
-  allowSuggestions?: boolean
-  enableSuggestions: boolean
-  apiKey: string
-  avatarUrl?: string
+interface OidcUserInfo {
+  sub?: string
+  id?: string
+  userId?: string
+  email?: string
+  preferred_username?: string
+  display_name?: string
+  name?: string
+  nickname?: string
+  iss?: string
+  picture?: string
+  groups?: string[]
+  userInfo?: OidcUserInfo
 }
 
 const user = ref<User | null>(null)
@@ -30,7 +32,7 @@ export const useAuth = () => {
     // Sync OIDC user to backend to get API key if missing
     if (oidcLoggedIn.value && oidcUser.value && !apiKeyCookie.value) {
       try {
-        const oidcInfo = oidcUser.value;
+        const oidcInfo = oidcUser.value as unknown as OidcUserInfo;
         console.log('Syncing OIDC user:', JSON.parse(JSON.stringify(oidcInfo)));
         const info = oidcInfo.userInfo || oidcInfo;
         const userId = info.sub || info.id || info.userId || 'undefined_id';
@@ -49,15 +51,7 @@ export const useAuth = () => {
           }
         });
         apiKeyCookie.value = data.apiKey;
-        user.value = {
-          id: data.id,
-          username: data.username,
-          isAdmin: data.isAdmin,
-          isOidc: data.isOidc,
-          enableSuggestions: data.enableSuggestions,
-          apiKey: data.apiKey,
-          avatarUrl: data.avatarUrl
-        };
+        user.value = data;
         console.log('OIDC Sync successful, apiKey generated');
         return user.value;
       } catch (e) {
@@ -85,15 +79,7 @@ export const useAuth = () => {
       })
 
       apiKeyCookie.value = data.apiKey
-      user.value = {
-        id: data.id,
-        username: data.username,
-        isAdmin: data.isAdmin,
-        isOidc: data.isOidc,
-        enableSuggestions: data.enableSuggestions,
-        apiKey: data.apiKey,
-        avatarUrl: data.avatarUrl
-      }
+      user.value = data
       return true
     } catch {
       return false

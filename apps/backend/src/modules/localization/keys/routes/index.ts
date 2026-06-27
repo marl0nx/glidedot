@@ -111,7 +111,7 @@ export default async function keyRoutes(fastify: FastifyInstance) {
         await service.logActivity(request.user.id, parseInt(projectId), 'TRANSLATION_APPROVED', JSON.stringify({ keyId, languageId }));
 
         if (existing.authorId && existing.authorId !== request.user.id) {
-            const { users } = await import('../../../users/schema');
+            const { users } = await import('../../../admin/users/schema');
             const { NotificationService } = await import('../../../../services/notification.service');
             const [author] = await fastify.db.select().from(users).where(eq(users.id, existing.authorId));
             if (author?.alertConfig) {
@@ -150,7 +150,7 @@ export default async function keyRoutes(fastify: FastifyInstance) {
         await service.logActivity(request.user.id, parseInt(projectId), 'TRANSLATION_REJECTED', JSON.stringify({ keyId, languageId }));
 
         if (existing.authorId && existing.authorId !== request.user.id) {
-            const { users } = await import('../../../users/schema');
+            const { users } = await import('../../../admin/users/schema');
             const { NotificationService } = await import('../../../../services/notification.service');
             const [author] = await fastify.db.select().from(users).where(eq(users.id, existing.authorId));
             if (author?.alertConfig) {

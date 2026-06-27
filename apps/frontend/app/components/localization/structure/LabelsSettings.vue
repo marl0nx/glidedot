@@ -82,7 +82,7 @@ const saveLabelName = async (labelId: number) => {
 
 const confirmDeleteSingleLabel = (label: TranslationLabel) => {
   isDeleteModalOpen.value = true
-  rowSelection.value = { [realLabels.value.indexOf(label).toString()]: true }
+  rowSelection.value = { [realLabels.value.indexOf(label as { id: number; name: string; color: string }).toString()]: true }
 }
 
 const updateLabelColor = useDebounceFn(async (label: TranslationLabel, newColor: string) => {
@@ -122,7 +122,7 @@ const paginatedLabelsMobile = computed(() => {
 })
 
 const toggleSelection = (label: TranslationLabel) => {
-  const idx = realLabels.value.indexOf(label).toString()
+  const idx = realLabels.value.indexOf(label as { id: number; name: string; color: string }).toString()
   rowSelection.value[idx] = !rowSelection.value[idx]
 }
 </script>
@@ -211,7 +211,7 @@ const toggleSelection = (label: TranslationLabel) => {
               <u-button 
                 v-if="editingLabelId !== row.original.id" 
                 icon="i-lucide-pencil" 
-                size="2xs" 
+                size="xs" 
                 variant="ghost" 
                 color="neutral" 
                 class="opacity-0 group-hover:opacity-100 transition-opacity ml-2" 
@@ -236,11 +236,11 @@ const toggleSelection = (label: TranslationLabel) => {
                 <div class="p-3 bg-neutral-900 border border-neutral-800 rounded-lg shadow-xl flex flex-col gap-3 min-w-[200px]" @click.stop>
                   <u-color-picker 
                     :model-value="row.original.color" 
-                    @update:model-value="val => updateLabelColor(row.original, val)"
+                    @update:model-value="val => updateLabelColor(row.original, val || '#ffffff')"
                   />
                   <u-input 
                     :model-value="row.original.color" 
-                    @update:model-value="val => updateLabelColor(row.original, val)"
+                    @update:model-value="val => updateLabelColor(row.original, val || '#ffffff')"
                     placeholder="#000000" 
                     size="sm"
                   />
@@ -272,7 +272,7 @@ const toggleSelection = (label: TranslationLabel) => {
 
       <!-- Mobile List -->
       <div class="flex flex-col gap-3 md:hidden">
-        <u-card v-for="label in paginatedLabelsMobile" :key="label.id" :ui="{ body: { padding: 'p-4' } }" class="cursor-pointer" @click="toggleSelection(label)">
+        <u-card v-for="label in paginatedLabelsMobile" :key="label.id" :ui="{ body: 'p-4' }" class="cursor-pointer" @click="toggleSelection(label)">
           <div class="flex items-center gap-4">
             <u-checkbox
               :model-value="rowSelection[realLabels.indexOf(label).toString()]"
@@ -327,11 +327,11 @@ const toggleSelection = (label: TranslationLabel) => {
                     <div class="p-3 bg-neutral-900 border border-neutral-800 rounded-lg shadow-xl flex flex-col gap-3 min-w-[200px]" @click.stop>
                       <u-color-picker 
                         :model-value="label.color" 
-                        @update:model-value="val => updateLabelColor(label, val)"
+                        @update:model-value="val => updateLabelColor(label, val || '#ffffff')"
                       />
                       <u-input 
                         :model-value="label.color" 
-                        @update:model-value="val => updateLabelColor(label, val)"
+                        @update:model-value="val => updateLabelColor(label, val || '#ffffff')"
                         placeholder="#000000" 
                         size="sm"
                       />

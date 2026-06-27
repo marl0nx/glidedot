@@ -6,7 +6,7 @@ import { useApi } from '~/composables/useApi'
 const languages = ref<Language[]>([])
 const keys = ref<TranslationKey[]>([])
 const labels = ref<{ id: number; name: string; color: string }[]>([])
-const translations = ref<Record<number, Record<string, { text: string; isGenerated?: boolean; draftValue?: string; reviewStatus?: string }>>>({})
+const translations = ref<Record<number, Record<string, { text: string; isGenerated?: boolean; draftValue?: string; reviewStatus?: string; authorName?: string; authorAvatar?: string }>>>({})
 
 const selectedScope = ref<string | null>(null)
 const expandedScopes = ref<Record<string, boolean>>({})
@@ -51,20 +51,24 @@ export function useTranslation() {
 
             languages.value = mappedLangs
             
-            labels.value = (labelsData as { id: number; name: string; color: string }[]).map(l => ({
+            const labelsList = (labelsData as { id: number; name: string; color: string }[]).map(l => ({
                 id: l.id,
                 name: l.name,
                 color: l.color
             }))
+            labels.value = labelsList
 
-            keys.value = (keysData as { id: number; key: string; draftKey?: string; reviewStatus?: 'APPROVED' | 'PENDING_REVIEW' | 'REJECTED'; isPendingDelete?: boolean; labels: number[] }[]).map(k => ({
-                id: k.id,
-                key: k.key,
-                draftKey: k.draftKey,
-                reviewStatus: k.reviewStatus,
-                isPendingDelete: k.isPendingDelete,
-                labels: k.labels || []
-            }))
+            keys.value = (keysData as { id: number; key: string; draftKey?: string; reviewStatus?: 'APPROVED' | 'PENDING_REVIEW' | 'REJECTED'; isPendingDelete?: boolean; labels: number[] }[]).map(k => {
+                const mappedLabels = (k.labels || []).map(labelId => labelsList.find(l => l.id === labelId)).filter((l): l is { id: number; name: string; color: string } => !!l)
+                return {
+                    id: k.id,
+                    key: k.key,
+                    draftKey: k.draftKey,
+                    reviewStatus: k.reviewStatus,
+                    isPendingDelete: k.isPendingDelete,
+                    labels: mappedLabels
+                }
+            })
 
             const transMap: Record<number, Record<string, { text: string; draftValue?: string; reviewStatus?: string; authorName?: string; authorAvatar?: string }>> = {}
             ;(keysData as { id: number; translations?: { languageId: number; value: string; draftValue?: string; reviewStatus?: string; authorName?: string; authorAvatar?: string }[] }[]).forEach(k => {
@@ -73,12 +77,15 @@ export function useTranslation() {
                     k.translations.forEach((t) => {
                         const lang = languages.value.find(l => l.id === t.languageId)
                         if (lang) {
-                            transMap[k.id][lang.code] = { 
-                                text: t.value,
-                                draftValue: t.draftValue,
-                                reviewStatus: t.reviewStatus,
-                                authorName: t.authorName,
-                                authorAvatar: t.authorAvatar
+                            const kTrans = transMap[k.id]
+                            if (kTrans) {
+                                kTrans[lang.code] = { 
+                                    text: t.value,
+                                    draftValue: t.draftValue,
+                                    reviewStatus: t.reviewStatus,
+                                    authorName: t.authorName,
+                                    authorAvatar: t.authorAvatar
+                                }
                             }
                         }
                     })
@@ -421,9 +428,9 @@ export function useTranslation() {
     const addProjectLanguage = async (code: string, name: string, flag?: string) => {
         if (!projectId.value) return
         try {
-            let lang;
+            let lang: { id: number; code: string; name: string; flag?: string } | undefined;
             try {
-               const l = await fetchApi(`/localization/languages`, { method: 'POST', body: { code, name, flag } })
+               const l = await fetchApi<{ id: number; code: string; name: string; flag?: string }>(`/localization/languages`, { method: 'POST', body: { code, name, flag } })
                lang = l
             } catch {
                const langs = await fetchApi(`/localization/languages`) as { id: number; code: string; name: string; flag?: string }[];

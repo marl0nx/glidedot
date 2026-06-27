@@ -35,8 +35,8 @@ const isOpen = computed({
 const localName = ref('')
 const mappedGroups = ref<string[]>([])
 const mappedGroupInput = ref('')
-const selectedUserToAdd = ref<number | null>(null)
-const selectedProjectToAdd = ref<number | null>(null)
+const selectedUserToAdd = ref<number | undefined>(undefined)
+const selectedProjectToAdd = ref<number | undefined>(undefined)
 
 watch(() => props.team, (newTeam) => {
   if (newTeam) {
@@ -81,14 +81,14 @@ const handleSave = () => {
 const handleAddMember = () => {
   if (selectedUserToAdd.value) {
     emit('add-member', selectedUserToAdd.value)
-    selectedUserToAdd.value = null
+    selectedUserToAdd.value = undefined
   }
 }
 
 const handleAddProject = () => {
   if (selectedProjectToAdd.value) {
     emit('add-project', selectedProjectToAdd.value)
-    selectedProjectToAdd.value = null
+    selectedProjectToAdd.value = undefined
   }
 }
 
@@ -141,7 +141,7 @@ const getAvatarColor = (name: string) => {
           <div v-if="mappedGroups.length > 0" class="flex flex-wrap gap-2">
             <u-badge v-for="group in mappedGroups" :key="group" color="neutral" variant="subtle" class="flex items-center gap-1 pl-2 pr-1 py-1 text-sm">
               {{ group }}
-              <u-button icon="i-lucide-x" size="2xs" color="neutral" variant="ghost" :padded="false" class="ml-1" @click="removeMappedGroup(group)" />
+              <u-button icon="i-lucide-x" size="xs" color="neutral" variant="ghost" :padded="false" class="ml-1" @click="removeMappedGroup(group)" />
             </u-badge>
           </div>
 
@@ -160,9 +160,8 @@ const getAvatarColor = (name: string) => {
                 <u-avatar
                   :src="users?.find(u => u.id === member.userId)?.avatarUrl || undefined"
                   :icon="!(users?.find(u => u.id === member.userId)?.avatarUrl) ? 'i-lucide-user' : undefined"
-                  :class="!(users?.find(u => u.id === member.userId)?.avatarUrl) ? 'bg-neutral-800 text-neutral-400' : ''"
+                  class="rounded-full"
                   size="sm"
-                  :ui="{ rounded: 'rounded-full' }"
                 />
                 <span class="text-sm font-medium">{{ member.username }}</span>
                 <u-badge v-if="users?.find(u => u.id === member.userId)?.isOidc" color="neutral" variant="solid" size="xs">Managed by OIDC</u-badge>
@@ -173,7 +172,7 @@ const getAvatarColor = (name: string) => {
                 @click="emit('remove-member', member.userId)" 
               />
             </div>
-            <div v-if="!team.members?.length" class="p-4 text-center text-sm text-neutral-500 italic">
+            <div v-if="!team?.members?.length" class="p-4 text-center text-sm text-neutral-500 italic">
               No members assigned
             </div>
           </div>
@@ -181,7 +180,7 @@ const getAvatarColor = (name: string) => {
           <div class="flex gap-2">
             <u-select
               v-model="selectedUserToAdd"
-              :items="users?.filter(u => !team.members?.some((m: { userId: number }) => m.userId === u.id)).map(u => ({ label: u.username + (u.isOidc ? ' (Managed by OIDC)' : ''), value: u.id, disabled: u.isOidc })) || []"
+              :items="users?.filter(u => !team?.members?.some((m: { userId: number }) => m.userId === u.id)).map(u => ({ label: u.username + (u.isOidc ? ' (Managed by OIDC)' : ''), value: u.id, disabled: u.isOidc })) || []"
               placeholder="Select user to add"
               class="flex-1"
             />
@@ -193,14 +192,14 @@ const getAvatarColor = (name: string) => {
         <div class="space-y-4">
           <h3 class="font-semibold text-neutral-200">Linked Projects</h3>
           <div class="bg-neutral-900 border border-neutral-800 rounded-lg divide-y divide-neutral-800">
-            <div v-for="projectId in team.projects" :key="projectId" class="flex justify-between items-center p-3">
+            <div v-for="projectId in team?.projects" :key="projectId" class="flex justify-between items-center p-3">
               <div class="flex items-center gap-3">
                 <u-icon name="i-lucide-folder" class="w-4 h-4 text-neutral-400" />
-                <span class="text-sm font-medium">{{ projects?.find(p => p.id === projectId)?.name || `Project #${projectId}` }}</span>
+                <span class="text-sm font-medium">{{ projects?.find(p => p.id === String(projectId))?.name || `Project #${projectId}` }}</span>
               </div>
               <u-button icon="i-lucide-trash-2" size="xs" color="error" variant="ghost" @click="emit('remove-project', projectId)" />
             </div>
-            <div v-if="!team.projects?.length" class="p-4 text-center text-sm text-neutral-500 italic">
+            <div v-if="!team?.projects?.length" class="p-4 text-center text-sm text-neutral-500 italic">
               No linked projects
             </div>
           </div>
@@ -208,7 +207,7 @@ const getAvatarColor = (name: string) => {
           <div class="flex gap-2">
             <u-select
               v-model="selectedProjectToAdd"
-              :items="projects?.filter(p => !team.projects?.includes(p.id)).map(p => ({ label: p.name, value: p.id })) || []"
+              :items="projects?.filter(p => !team?.projects?.includes(Number(p.id))).map(p => ({ label: p.name, value: Number(p.id) })) || []"
               placeholder="Select project to link"
               class="flex-1"
             />

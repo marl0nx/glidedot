@@ -48,17 +48,20 @@ const iframeSrc = computed(() => {
 })
 
 // Local state for target language selection
-const localTargetLanguageId = ref<number | null>(null)
+const localTargetLanguageId = ref<number | undefined>(undefined)
 
 watch(languages, (langs) => {
-  if (langs.length > 0 && !localTargetLanguageId.value) {
-    localTargetLanguageId.value = langs[0].id
+  if (langs && langs.length > 0 && !localTargetLanguageId.value) {
+    const firstLang = langs[0]
+    if (firstLang) {
+      localTargetLanguageId.value = firstLang.id
+    }
   }
 }, { immediate: true })
 
 watch(localTargetLanguageId, (id) => {
   if (id) {
-    const lang = languages.value.find(l => String(l.id) === String(id))
+    const lang = languages.value?.find(l => String(l.id) === String(id))
     if (lang) {
       targetLanguage.value = lang
       sendTranslationsToIframe()
@@ -168,7 +171,7 @@ const sendTranslationsToIframe = () => {
           <span class="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Preview Language:</span>
           <u-select
             v-model="localTargetLanguageId"
-            :items="languages.map(l => ({ label: `${l.flag} ${l.name}`, value: l.id }))"
+            :items="languages?.map(l => ({ label: `${l.flag} ${l.name}`, value: l.id })) || []"
             size="sm"
             class="w-48"
             placeholder="Select language..."

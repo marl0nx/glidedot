@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
-import { users } from '../../users/schema';
-import { teams, teamMembers, teamProjects } from '../../teams/schema';
+import { users } from '../../admin/users/schema';
+import { teams, teamMembers, teamProjects } from '../../admin/teams/schema';
 import { eq, and } from 'drizzle-orm';
 
 export class TeamService {

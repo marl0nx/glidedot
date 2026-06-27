@@ -182,25 +182,31 @@ const touchStartX = ref(0)
 const touchStartY = ref(0)
 
 const handleTouchStart = (e: TouchEvent) => {
-  touchStartX.value = e.changedTouches[0].screenX
-  touchStartY.value = e.changedTouches[0].screenY
+  const touch = e.changedTouches?.[0]
+  if (touch) {
+    touchStartX.value = touch.screenX
+    touchStartY.value = touch.screenY
+  }
 }
 
 const handleTouchEnd = (e: TouchEvent) => {
-  const touchEndX = e.changedTouches[0].screenX
-  const touchEndY = e.changedTouches[0].screenY
-  
-  const diffX = touchStartX.value - touchEndX
-  const diffY = touchStartY.value - touchEndY
-  
-  // Check if horizontal swipe is dominant and exceeds threshold
-  if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
-    if (diffX > 0 && canGoNext.value) {
-      // Swiped left
-      doNext()
-    } else if (diffX < 0 && canGoPrev.value) {
-      // Swiped right
-      doPrev()
+  const touch = e.changedTouches?.[0]
+  if (touch) {
+    const touchEndX = touch.screenX
+    const touchEndY = touch.screenY
+    
+    const diffX = touchStartX.value - touchEndX
+    const diffY = touchStartY.value - touchEndY
+    
+    // Check if horizontal swipe is dominant and exceeds threshold
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+      if (diffX > 0 && canGoNext.value) {
+        // Swiped left
+        doNext()
+      } else if (diffX < 0 && canGoPrev.value) {
+        // Swiped right
+        doPrev()
+      }
     }
   }
 }

@@ -64,8 +64,10 @@ export function useTranslationFlashcard() {
         if (!targetLanguage.value || currentIndex.value < 0) return false
         for (let i = currentIndex.value + 1; i < currentScopeKeys.value.length; i++) {
             const key = currentScopeKeys.value[i]
-            const t = translations.value[key.id]?.[targetLanguage.value.code]
-            if (isUntranslated(t)) return true
+            if (key) {
+                const t = translations.value[key.id]?.[targetLanguage.value.code]
+                if (isUntranslated(t)) return true
+            }
         }
         return false
     })
@@ -74,8 +76,10 @@ export function useTranslationFlashcard() {
         if (!targetLanguage.value || currentIndex.value <= 0) return false
         for (let i = currentIndex.value - 1; i >= 0; i--) {
             const key = currentScopeKeys.value[i]
-            const t = translations.value[key.id]?.[targetLanguage.value.code]
-            if (isUntranslated(t)) return true
+            if (key) {
+                const t = translations.value[key.id]?.[targetLanguage.value.code]
+                if (isUntranslated(t)) return true
+            }
         }
         return false
     })
@@ -94,10 +98,12 @@ export function useTranslationFlashcard() {
         if (!targetLanguage.value) return
         for (let i = currentIndex.value + 1; i < currentScopeKeys.value.length; i++) {
             const key = currentScopeKeys.value[i]
-            const t = translations.value[key.id]?.[targetLanguage.value.code]
-            if (isUntranslated(t)) {
-                activeKeyId.value = key.id
-                return
+            if (key) {
+                const t = translations.value[key.id]?.[targetLanguage.value.code]
+                if (isUntranslated(t)) {
+                    activeKeyId.value = key.id
+                    return
+                }
             }
         }
     }
@@ -106,10 +112,12 @@ export function useTranslationFlashcard() {
         if (!targetLanguage.value) return
         for (let i = currentIndex.value - 1; i >= 0; i--) {
             const key = currentScopeKeys.value[i]
-            const t = translations.value[key.id]?.[targetLanguage.value.code]
-            if (isUntranslated(t)) {
-                activeKeyId.value = key.id
-                return
+            if (key) {
+                const t = translations.value[key.id]?.[targetLanguage.value.code]
+                if (isUntranslated(t)) {
+                    activeKeyId.value = key.id
+                    return
+                }
             }
         }
     }

@@ -2,13 +2,13 @@ import { FastifyInstance } from 'fastify';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import AdmZip from 'adm-zip';
 import { Cron } from 'croner';
-import { env } from '../../config/env';
+import { env } from '../../../config/env';
 import { 
     projects, languages, projectLanguages, labels, 
     translationKeys, translations, keysToLabels,
     activityLogs, keyTemplates, keyGlossary, keyVariables
-} from '../localization/schema';
-import { settings } from '../settings/schema';
+} from '../../localization/schema';
+import { settings } from '../schema';
 
 export class S3BackupService {
     private s3: S3Client | null = null;
@@ -166,8 +166,8 @@ export class S3BackupService {
             console.error('Failed to perform S3 backup', error);
 
             try {
-                const { users } = await import('../../modules/users/schema');
-                const { NotificationService } = await import('../../services/notification.service');
+                const { users } = await import('../../admin/users/schema');
+                const { NotificationService } = await import('../../../services/notification.service');
                 const { eq } = await import('drizzle-orm');
                 const admins = await this.db.select().from(users).where(eq(users.isAdmin, true));
                 

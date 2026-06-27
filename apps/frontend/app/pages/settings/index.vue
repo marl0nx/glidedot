@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useShortcuts } from '~/composables/useShortcuts'
+import { useShortcuts, type ShortcutMap } from '~/composables/useShortcuts'
 import { useAuth } from '~/composables/useAuth'
 import { useApi } from '~/composables/useApi'
 import DiscordWebhookPreview from '~/components/settings/DiscordWebhookPreview.vue'
@@ -216,7 +216,7 @@ onUnmounted(() => {
     </div>
 
 
-    <u-card :ui="{ body: { padding: 'p-6 sm:p-8' } }">
+    <u-card :ui="{ body: 'p-6 sm:p-8' }">
       <div class="space-y-6">
         <div>
           <h2 class="text-lg font-semibold text-neutral-200">Translation Preferences</h2>
@@ -245,7 +245,7 @@ onUnmounted(() => {
       </div>
     </u-card>
 
-    <u-card class="hidden md:block" :ui="{ body: { padding: 'p-6 sm:p-8' } }">
+    <u-card class="hidden md:block" :ui="{ body: 'p-6 sm:p-8' }">
       <div class="space-y-6">
         <div class="flex flex-row justify-between items-start">
           <div>
@@ -260,10 +260,10 @@ onUnmounted(() => {
             <div v-for="(label, key) in { saveNext: 'Save & Next', next: 'Next Translation', prev: 'Previous Translation', approve: 'Approve Suggestion', copySource: 'Copy Source Text', close: 'Close Window' }" :key="key" class="bg-neutral-900 p-4 flex items-center justify-between group">
               <span class="text-sm font-medium text-neutral-300">{{ label }}</span>
               <div class="flex items-center gap-4">
-                <button v-if="recordingShortcut !== key" class="opacity-0 group-hover:opacity-100 text-xs text-neutral-500 hover:text-neutral-300 transition-opacity" @click="resetShortcut(key as string)">Reset</button>
-                <button class="flex gap-1 hover:ring-2 ring-primary-500 rounded p-1 transition-all outline-none" :class="recordingShortcut === key && 'ring-2 ring-primary-500 bg-primary-500/20'" @click="startRecording(key as string)">
+                <button v-if="recordingShortcut !== key" class="opacity-0 group-hover:opacity-100 text-xs text-neutral-500 hover:text-neutral-300 transition-opacity" @click="resetShortcut(key as keyof ShortcutMap)">Reset</button>
+                <button class="flex gap-1 hover:ring-2 ring-primary-500 rounded p-1 transition-all outline-none" :class="recordingShortcut === key && 'ring-2 ring-primary-500 bg-primary-500/20'" @click="startRecording(key as keyof ShortcutMap)">
                   <span v-if="recordingShortcut === key" class="text-xs text-primary-500 font-medium px-2 py-1 animate-pulse">Press any key...</span>
-                  <kbd v-for="k in formatShortcut(shortcuts[key as keyof typeof shortcuts])" v-else :key="k" class="px-2 py-1 rounded bg-neutral-800 border border-neutral-700 text-xs font-mono">{{ k }}</kbd>
+                  <kbd v-for="k in formatShortcut(shortcuts[key as keyof ShortcutMap])" v-else :key="k" class="px-2 py-1 rounded bg-neutral-800 border border-neutral-700 text-xs font-mono">{{ k }}</kbd>
                 </button>
               </div>
             </div>
@@ -272,7 +272,7 @@ onUnmounted(() => {
       </div>
     </u-card>
 
-    <u-card :ui="{ body: { padding: 'p-6 sm:p-8' } }">
+    <u-card :ui="{ body: 'p-6 sm:p-8' }">
       <div class="space-y-6">
         <div>
           <h2 class="text-lg font-semibold text-neutral-200">Alerts & Notifications</h2>
@@ -320,7 +320,7 @@ onUnmounted(() => {
             v-for="event in availableEvents" 
             :key="event.value"
             :model-value="alertConfig.events.includes(event.value)"
-            @update:model-value="(checked: boolean) => toggleEvent(event.value, checked)"
+            @update:model-value="(checked: boolean | 'indeterminate') => toggleEvent(event.value, checked === true)"
             :label="event.label"
             :description="event.description"
           />

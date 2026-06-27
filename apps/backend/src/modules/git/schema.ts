@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core";
-import { users } from "../users/schema";
+import { users } from "../admin/users/schema";
 import { projects } from "../localization/schema";
 
 export const userGitConnections = sqliteTable('user_git_connections', {

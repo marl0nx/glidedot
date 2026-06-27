@@ -100,31 +100,46 @@ const moveSegment = (index: number, direction: -1 | 1) => {
   const newIndex = index + direction
   if (newIndex < 0 || newIndex >= segments.value.length) return
   const temp = segments.value[index]
-  segments.value[index] = segments.value[newIndex]
-  segments.value[newIndex] = temp
-  enforceOptionalRules()
+  const target = segments.value[newIndex]
+  if (temp && target) {
+    segments.value[index] = target
+    segments.value[newIndex] = temp
+    enforceOptionalRules()
+  }
 }
 
 const enforceOptionalRules = () => {
   const firstOptIndex = segments.value.findIndex(s => s.isOptional)
   if (firstOptIndex !== -1) {
     for (let i = firstOptIndex + 1; i < segments.value.length; i++) {
-      segments.value[i].isOptional = true
+      const s = segments.value[i]
+      if (s) {
+        s.isOptional = true
+      }
     }
   }
 }
 
 const toggleOptional = (index: number, val: boolean) => {
-  segments.value[index].isOptional = val
+  const current = segments.value[index]
+  if (current) {
+    current.isOptional = val
+  }
   if (val) {
     // If making this optional, all subsequent must be optional
     for (let i = index + 1; i < segments.value.length; i++) {
-      segments.value[i].isOptional = true
+      const s = segments.value[i]
+      if (s) {
+        s.isOptional = true
+      }
     }
   } else {
     // If making this required, all preceding must be required
     for (let i = 0; i < index; i++) {
-      segments.value[i].isOptional = false
+      const s = segments.value[i]
+      if (s) {
+        s.isOptional = false
+      }
     }
   }
 }

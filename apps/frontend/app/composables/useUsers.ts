@@ -15,6 +15,8 @@ export interface AppUser {
   quotaNextResetAt: number | null
   avatarUrl?: string
   password?: string
+  isReviewer?: boolean
+  requiresReview?: boolean
 }
 
 export const useUsers = () => {

@@ -209,7 +209,7 @@ const formatSpeed = (ms?: number) => {
               <p class="text-sm text-neutral-400 mt-1">A real-time log of all localization changes and system events.</p>
             </div>
           </div>
-          <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+          <u-card :ui="{ body: 'p-0 sm:p-0' }">
       <template #header>
         <div class="flex justify-between items-center">
           <u-input v-model="searchQuery" icon="i-lucide-search" placeholder="Search logs..." class="max-w-sm" />
@@ -231,7 +231,7 @@ const formatSpeed = (ms?: number) => {
               :icon="!row.original.avatarUrl ? 'i-lucide-user' : undefined"
               :class="!row.original.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''"
               size="xs"
-              :ui="{ rounded: 'rounded-full' }"
+              :ui="{ root: 'rounded-full' }"
             />
             <span class="font-medium text-sm">{{ row.original.username || 'System' }}</span>
           </div>
@@ -300,7 +300,7 @@ const formatSpeed = (ms?: number) => {
               <p class="text-sm text-neutral-400 mt-1">Detailed statistics of user contributions over time.</p>
             </div>
           </div>
-          <u-card :ui="{ body: { padding: 'p-0 sm:p-0' } }">
+          <u-card :ui="{ body: 'p-0 sm:p-0' }">
       <template #header>
         <div class="flex justify-between items-center">
           <u-input v-model="leaderboardSearch" icon="i-lucide-search" placeholder="Search members..." class="max-w-sm" />
@@ -323,7 +323,7 @@ const formatSpeed = (ms?: number) => {
               :icon="!row.original.avatarUrl ? 'i-lucide-user' : undefined"
               :class="!row.original.avatarUrl ? 'bg-neutral-800 text-neutral-400' : ''"
               size="sm"
-              :ui="{ rounded: 'rounded-full' }"
+              :ui="{ root: 'rounded-full' }"
             />
             <span class="font-medium">{{ row.original.username || 'Unknown' }}</span>
           </div>

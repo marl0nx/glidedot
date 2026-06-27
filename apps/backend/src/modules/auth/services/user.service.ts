@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { users } from '../../users/schema';
+import { users } from '../../admin/users/schema';
 import { eq } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 

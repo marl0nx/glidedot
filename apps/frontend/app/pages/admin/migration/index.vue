@@ -22,8 +22,8 @@ const s3BackupEnabled = computed({
 
 const projects = ref<{ id: number; name: string }[]>([])
 const languages = ref<{ id: number; code: string; name: string }[]>([])
-const selectedProjectId = ref<number | null>(null)
-const selectedLanguageId = ref<number | null>(null)
+const selectedProjectId = ref<number | undefined>(undefined)
+const selectedLanguageId = ref<number | undefined>(undefined)
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const isImporting = ref(false)
@@ -64,7 +64,7 @@ const loadLanguages = async () => {
 }
 
 watch(selectedProjectId, () => {
-  selectedLanguageId.value = null
+  selectedLanguageId.value = undefined
   loadLanguages()
 })
 
@@ -112,7 +112,7 @@ const handleFileSelect = async (event: Event) => {
     const text = await file.text()
     const jsonData = JSON.parse(text)
     
-    const result = await fetchApi(`/localization/projects/${selectedProjectId.value}/languages/${selectedLanguageId.value}/import`, {
+    const result = await fetchApi<{ imported: number }>(`/localization/projects/${selectedProjectId.value}/languages/${selectedLanguageId.value}/import`, {
       method: 'POST',
       body: { data: jsonData, importAsPending: importAsPending.value }
     })
@@ -292,7 +292,7 @@ const triggerS3Backup = async () => {
             <p class="text-sm text-neutral-400 mt-1">Manage, migrate, and backup your glide. system data.</p>
           </div>
         </div>
-        <u-card class="flex flex-col h-full" :ui="{ body: { padding: 'p-2 sm:p-4' } }">
+        <u-card class="flex flex-col h-full" :ui="{ body: 'p-2 sm:p-4' }">
         <u-tabs 
           :items="[
             { label: 'Project Data', slot: 'project', icon: 'i-lucide-file-json' }, 
@@ -522,7 +522,7 @@ const triggerS3Backup = async () => {
                     placeholder="Select frequency"
                     class="w-full"
                     @change="async () => {
-                      const success = await saveSettings({ s3BackupFrequency: settings.s3BackupFrequency });
+                      const success = await saveSettings({ s3BackupFrequency: settings.s3BackupFrequency || 'daily' });
                       if (success) toast.add({ title: 'Success', description: 'Backup frequency updated', color: 'success' });
                     }"
                   />

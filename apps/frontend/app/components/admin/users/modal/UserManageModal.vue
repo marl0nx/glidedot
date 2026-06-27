@@ -32,6 +32,20 @@ const hasUnsavedChanges = computed(() => {
   return JSON.stringify(props.user) !== originalUser.value
 })
 
+const quotaResetPeriodValueProxy = computed({
+  get: () => props.user.quotaResetPeriodValue ?? undefined,
+  set: (val) => {
+    props.user.quotaResetPeriodValue = val ?? null
+  }
+})
+
+const quotaResetPeriodUnitProxy = computed({
+  get: () => props.user.quotaResetPeriodUnit ?? undefined,
+  set: (val) => {
+    props.user.quotaResetPeriodUnit = val ?? null
+  }
+})
+
 const discard = () => {
   if (originalUser.value) {
     const orig = JSON.parse(originalUser.value)
@@ -44,54 +58,44 @@ const discard = () => {
   <u-modal v-model:open="isOpen" :dismissible="!hasUnsavedChanges" :title="mode === 'create' ? 'Create User' : `Edit User (ID: ${user.id})`">
     <template #body>
       <div class="p-4 flex flex-col gap-4">
-        <u-alert
-          v-if="user.isOidc"
-          title="Managed by OIDC"
-          description="Username, Email, Password and Avatar are managed by the OIDC provider."
-          color="primary"
-          variant="soft"
-          class="mb-2"
-        />
-
         <u-form-field label="Username" required>
-          <u-input v-model="user.username" :disabled="user.isOidc" placeholder="johndoe" class="w-full" autofocus />
+          <u-input v-model="user.username" placeholder="e.g. johndoe" class="w-full" autofocus :disabled="isOidcEnabled && user.isOidc" />
         </u-form-field>
 
         <u-form-field label="Email" required>
-          <u-input v-model="user.email" type="email" :disabled="user.isOidc" placeholder="john@example.com" class="w-full" />
+          <u-input v-model="user.email" type="email" placeholder="e.g. john@example.com" class="w-full" :disabled="isOidcEnabled && user.isOidc" />
         </u-form-field>
 
-        <u-form-field :label="mode === 'create' ? 'Password' : 'New Password (leave blank to keep current)'" :required="mode === 'create'">
-          <u-input v-model="user.password" type="password" placeholder="••••••••" class="w-full" :disabled="user.isOidc" />
+        <u-form-field v-if="mode === 'create'" label="Password" required>
+          <u-input v-model="user.password" type="password" class="w-full" />
         </u-form-field>
 
-        <u-form-field label="Avatar URL">
-          <u-input v-model="user.avatarUrl" :disabled="user.isOidc" placeholder="https://example.com/avatar.png" class="w-full" />
-        </u-form-field>
-
-        <u-form-field label="Administrator">
-          <div class="flex items-center gap-2 mt-2">
-            <u-switch v-model="user.isAdmin" />
-            <span class="text-sm text-neutral-400">Grant admin privileges</span>
+        <div class="flex items-center justify-between p-4 rounded-lg ring-1 ring-default bg-neutral-800/50 mt-2">
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Administrator</span>
+            <span class="text-xs text-neutral-400">Grant full access to all projects, teams, settings and users.</span>
           </div>
-        </u-form-field>
+          <u-switch v-model="user.isAdmin" :disabled="isOidcEnabled && user.isOidc" />
+        </div>
 
-        <u-form-field label="Reviewer">
-          <div class="flex items-center gap-2 mt-2">
-            <u-switch v-model="user.isReviewer" />
-            <span class="text-sm text-neutral-400">Can approve pending translations</span>
+        <div class="flex items-center justify-between p-4 rounded-lg ring-1 ring-default bg-neutral-800/50 mt-2">
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Reviewer Status</span>
+            <span class="text-xs text-neutral-400">Can approve, reject, or mark translation reviews.</span>
           </div>
-        </u-form-field>
+          <u-switch v-model="user.isReviewer" />
+        </div>
 
-        <u-form-field label="Requires Review">
-          <div class="flex items-center gap-2 mt-2">
-            <u-switch v-model="user.requiresReview" />
-            <span class="text-sm text-neutral-400">Translations from this user must be reviewed</span>
+        <div class="flex items-center justify-between p-4 rounded-lg ring-1 ring-default bg-neutral-800/50 mt-2">
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Requires Review</span>
+            <span class="text-xs text-neutral-400">This user's translations must always be approved by a reviewer.</span>
           </div>
-        </u-form-field>
+          <u-switch v-model="user.requiresReview" />
+        </div>
 
-        <u-form-field label="Translation Suggestions">
-          <div class="flex items-center gap-2 mt-2">
+        <u-form-field label="Suggestions (AI)">
+          <div class="flex items-center gap-4 mt-2">
             <u-switch v-model="user.allowSuggestions" />
             <span class="text-sm text-neutral-400">Allow user to use AI translation suggestions</span>
           </div>
@@ -106,9 +110,9 @@ const discard = () => {
           <div class="flex items-center gap-2 mt-2">
             <u-input v-model.number="user.baseTranslationQuota" type="number" placeholder="Base Quota" class="w-32" />
             <span class="text-neutral-500 text-sm">every</span>
-            <u-input v-model.number="user.quotaResetPeriodValue" type="number" placeholder="e.g. 1" class="w-24" />
+            <u-input v-model.number="quotaResetPeriodValueProxy" type="number" placeholder="e.g. 1" class="w-24" />
             <u-select
-              v-model="user.quotaResetPeriodUnit"
+              v-model="quotaResetPeriodUnitProxy"
               :items="[{label: 'Days', value: 'days'}, {label: 'Weeks', value: 'weeks'}, {label: 'Months', value: 'months'}]"
               placeholder="Unit"
               class="w-32"

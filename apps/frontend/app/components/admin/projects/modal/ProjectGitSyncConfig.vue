@@ -9,9 +9,39 @@ const props = defineProps<{
 const toast = useToast()
 const { fetchApi } = useApi()
 
+interface GitSync {
+  id: number
+  projectId: number
+  provider: 'github' | 'gitlab' | 'forgejo'
+  repoName: string
+  branch: string
+  filePath: string
+  lastCommitAt?: string
+  lastCommitHash?: string
+  lastSyncStatus?: 'success' | 'failed' | 'pending' | 'idle'
+  lastSyncError?: string
+  createdAt: string
+  updatedAt: string
+}
+
+interface GitConnection {
+  id: number
+  provider: 'github' | 'gitlab' | 'forgejo'
+  createdAt: string
+  updatedAt: string
+}
+
+interface GitRepo {
+  name: string
+}
+
+interface GitBranch {
+  name: string
+}
+
 const isLoading = ref(false)
-const syncs = ref<any[]>([])
-const connections = ref<any[]>([])
+const syncs = ref<GitSync[]>([])
+const connections = ref<GitConnection[]>([])
 
 const providers = [
   { label: 'GitHub', value: 'github' },
@@ -33,8 +63,8 @@ const fetchData = async () => {
       fetchApi(`/git/projects/${props.projectId}/syncs`),
       fetchApi('/git/connections')
     ])
-    syncs.value = sData
-    connections.value = cData
+    syncs.value = sData as GitSync[]
+    connections.value = cData as GitConnection[]
   } catch {
     toast.add({ title: 'Error', description: 'Failed to load sync configurations', color: 'error' })
   } finally {
@@ -48,8 +78,8 @@ const selectedRepo = ref('')
 const selectedBranch = ref('')
 const filePathTemplate = ref('locales/{{lang}}.json')
 
-const repos = ref<any[]>([])
-const branches = ref<any[]>([])
+const repos = ref<GitRepo[]>([])
+const branches = ref<GitBranch[]>([])
 const isLoadingRepos = ref(false)
 const isLoadingBranches = ref(false)
 
@@ -58,23 +88,26 @@ const isProviderConnected = computed(() => connections.value.some(c => c.provide
 const groupedRepos = computed(() => {
   if (!repos.value || repos.value.length === 0) return []
   
-  const groups: Record<string, any[]> = {}
+  const groups: Record<string, { label: string; value: string }[]> = {}
   repos.value.forEach(r => {
     const parts = r.name.split('/')
     const org = parts.length > 1 ? parts.slice(0, -1).join('/') : 'Other'
-    const name = parts[parts.length - 1]
+    const name = parts[parts.length - 1] || 'Unknown'
     if (!groups[org]) groups[org] = []
     groups[org].push({ label: name, value: r.name })
   })
 
   const sortedOrgs = Object.keys(groups).sort((a, b) => a.localeCompare(b))
-  const result: any[] = []
+  const result: { label: string; value: string; disabled?: boolean }[] = []
   
   sortedOrgs.forEach(org => {
     result.push({ label: `── ${org} ──`, value: `__header_${org}`, disabled: true })
-    groups[org].sort((a, b) => a.label.localeCompare(b.label)).forEach(repo => {
-      result.push(repo)
-    })
+    const group = groups[org];
+    if (group) {
+      group.sort((a, b) => a.label.localeCompare(b.label)).forEach(repo => {
+        result.push(repo)
+      })
+    }
   })
   
   return result
@@ -88,7 +121,7 @@ const loadRepos = async () => {
   if (isProviderConnected.value) {
     isLoadingRepos.value = true
     try {
-      repos.value = await fetchApi(`/git/repos?provider=${selectedProvider.value}`)
+      repos.value = await fetchApi(`/git/repos?provider=${selectedProvider.value}`) as GitRepo[]
     } catch {
       toast.add({ title: 'Error', description: `Failed to load ${selectedProvider.value} repos. Token might be invalid.`, color: 'error' })
     } finally {
@@ -105,7 +138,7 @@ watch(selectedRepo, async () => {
   if (selectedRepo.value) {
     isLoadingBranches.value = true
     try {
-      branches.value = await fetchApi(`/git/branches?provider=${selectedProvider.value}&repo=${encodeURIComponent(selectedRepo.value)}`)
+      branches.value = await fetchApi(`/git/branches?provider=${selectedProvider.value}&repo=${encodeURIComponent(selectedRepo.value)}`) as GitBranch[]
     } catch {
       toast.add({ title: 'Error', description: `Failed to load branches.`, color: 'error' })
     } finally {

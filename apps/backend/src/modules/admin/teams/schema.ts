@@ -1,6 +1,6 @@
 import { sqliteTable, text, integer, primaryKey } from "drizzle-orm/sqlite-core";
 import { users } from "../users/schema";
-import { projects } from "../localization/schema";
+import { projects } from "../../localization/schema";
 
 // Teams Table
 export const teams = sqliteTable('teams', {
