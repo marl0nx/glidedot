@@ -40,6 +40,12 @@ const lastSyncedByName = ref<string | null>(null)
 const confirmUsername = ref('')
 const showTimeWarning = ref(false)
 
+const isPRWithinHour = (dateStr: string | null | undefined) => {
+  if (!dateStr) return false
+  const diffMins = (new Date().getTime() - new Date(dateStr).getTime()) / 1000 / 60
+  return diffMins >= 0 && diffMins < 60
+}
+
 const attemptPush = (sync: any) => {
   pendingSyncId.value = sync.id
   confirmUsername.value = ''
@@ -97,19 +103,21 @@ onMounted(() => {
         <p v-else class="text-sm text-neutral-500">Please ask an administrator to configure Git Sync for this project.</p>
       </div>
 
-      <div v-for="sync in syncs" :key="sync.id" class="bg-neutral-900 border border-neutral-800 rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div class="flex items-start gap-4">
-          <u-icon :name="providerMap[sync.provider as keyof typeof providerMap].icon" class="w-8 h-8 mt-1" :class="providerMap[sync.provider as keyof typeof providerMap].color" />
-          <div>
-            <h3 class="font-bold text-white text-lg">{{ sync.repoName }}</h3>
-            <div class="flex gap-4 mt-2 text-sm text-neutral-400">
-              <span class="flex items-center gap-1"><u-icon name="i-lucide-git-branch" class="w-4 h-4" /> {{ sync.branch }}</span>
-              <span class="flex items-center gap-1"><u-icon name="i-lucide-file-code" class="w-4 h-4" /> {{ sync.filePath }}</span>
-              <span v-if="sync.lastSyncedAt" class="flex items-center gap-1 text-warning-400 ml-4"><u-icon name="i-lucide-clock" class="w-4 h-4" /> Last PR: {{ formatDistanceToNow(new Date(sync.lastSyncedAt), { addSuffix: true }) }}</span>
+      <div v-for="sync in syncs" :key="sync.id" class="bg-neutral-900 border border-neutral-800 rounded-xl p-4 sm:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex items-start gap-3 sm:gap-4 min-w-0 w-full md:w-auto">
+          <u-icon :name="providerMap[sync.provider as keyof typeof providerMap].icon" class="w-6 h-6 sm:w-8 sm:h-8 mt-1 shrink-0" :class="providerMap[sync.provider as keyof typeof providerMap].color" />
+          <div class="min-w-0 flex-1">
+            <h3 class="font-bold text-white text-base sm:text-lg truncate">{{ sync.repoName }}</h3>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-sm text-neutral-400">
+              <span class="flex items-center gap-1 shrink-0"><u-icon name="i-lucide-git-branch" class="w-4 h-4 text-neutral-500" /> {{ sync.branch }}</span>
+              <span class="flex items-center gap-1 shrink-0"><u-icon name="i-lucide-file-code" class="w-4 h-4 text-neutral-500" /> {{ sync.filePath }}</span>
+              <span v-if="sync.lastSyncedAt" :class="['flex items-center gap-1 shrink-0', isPRWithinHour(sync.lastSyncedAt) ? 'text-warning-400 font-medium' : 'text-neutral-200']">
+                <u-icon name="i-lucide-clock" class="w-4 h-4" /> Last PR: {{ formatDistanceToNow(new Date(sync.lastSyncedAt), { addSuffix: true }) }}
+              </span>
             </div>
           </div>
         </div>
-        <div class="flex gap-2 w-full md:w-auto mt-4 md:mt-0">
+        <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0 shrink-0">
           <u-button label="Create Pull Request" icon="i-lucide-upload-cloud" color="neutral" class="flex-1 md:flex-none justify-center" :loading="isPushing[sync.id]" @click="attemptPush(sync)" />
         </div>
       </div>

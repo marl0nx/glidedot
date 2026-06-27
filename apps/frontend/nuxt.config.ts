@@ -66,7 +66,8 @@ export default defineNuxtConfig({
       '@nuxt/ui',
       'nuxt-oidc-auth',
       '@nuxt/content',
-      '@comark/nuxt'
+      '@comark/nuxt',
+      '@vite-pwa/nuxt'
     ],
     content: {
       build: {
@@ -109,6 +110,24 @@ export default defineNuxtConfig({
         }
     },
     css: ["~/assets/style/main.css"],
+    app: {
+        head: {
+            link: [
+                { rel: 'manifest', href: '/manifest.webmanifest' }
+            ]
+        }
+    },
+    pwa: {
+        registerType: 'autoUpdate',
+        manifest: false,
+        workbox: {
+            navigateFallback: '/'
+        },
+        devOptions: {
+            enabled: true,
+            type: 'module'
+        }
+    },
     vite: {
         server: {
             allowedHosts: true
