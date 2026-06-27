@@ -2,8 +2,6 @@ export const env = {
     get PORT() { return Number(process.env.PORT) || 3001; },
     get NODE_ENV() { return process.env.NODE_ENV || 'development'; },
     get DB_URL() { return process.env.DB_URL || 'data/db.sqlite'; },
-    get DEEPL_API_KEY() { return process.env.DEEPL_API_KEY; },
-    get DEEPL_API_URL() { return process.env.DEEPL_API_URL || 'https://api-free.deepl.com/v2'; },
     get S3_ENDPOINT() { return process.env.S3_ENDPOINT; },
     get S3_REGION() { return process.env.S3_REGION || 'us-east-1'; },
     get S3_BUCKET() { return process.env.S3_BUCKET; },

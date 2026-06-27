@@ -39,7 +39,7 @@ const items = [{
       :items="items" 
       :default-index="0" 
       class="mt-4 w-full"
-      :ui="{ list: 'bg-neutral-900 border border-neutral-800 w-fit h-10', trigger: 'h-8 text-sm' }"
+      :ui="{ list: 'bg-neutral-900 border border-neutral-800 w-full h-10', trigger: 'h-8 text-sm' }"
     >
       <template #keys="{ item }">
         <div class="py-2 flex flex-col gap-4">

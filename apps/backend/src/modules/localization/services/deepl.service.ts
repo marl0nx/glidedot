@@ -1,7 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { eq } from 'drizzle-orm';
 import { settings } from '../../settings/schema';
-import { env } from '../../../config/env';
 
 import { encryptString, decryptString } from '../../../utils/encryption';
 
@@ -10,7 +9,7 @@ export class DeeplService {
 
     async translate(text: string[], targetLang: string, sourceLang?: string): Promise<string[]> {
         const apiKeySetting = await this.db.select().from(settings).where(eq(settings.key, 'deeplApiKey')).limit(1);
-        let apiKey = env.DEEPL_API_KEY;
+        let apiKey = null;
         if (apiKeySetting.length > 0 && apiKeySetting[0].value) {
             try {
                 apiKey = decryptString(apiKeySetting[0].value);
@@ -20,7 +19,7 @@ export class DeeplService {
         }
 
         const apiUrlSetting = await this.db.select().from(settings).where(eq(settings.key, 'deeplApiUrl')).limit(1);
-        let apiUrl = env.DEEPL_API_URL;
+        let apiUrl = 'https://api-free.deepl.com/v2';
         if (apiUrlSetting.length > 0 && apiUrlSetting[0].value) {
             apiUrl = apiUrlSetting[0].value;
         }

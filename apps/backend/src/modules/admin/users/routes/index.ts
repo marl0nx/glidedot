@@ -16,7 +16,6 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     });
 
     fastify.get('/me', async (request) => {
-        const { env } = await import('../../../../config/env');
         const { settings } = await import('../../../settings/schema');
         const { eq } = await import('drizzle-orm');
         
@@ -25,7 +24,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
 
         return {
             ...request.user,
-            hasDeepL: !!env.DEEPL_API_KEY || hasDeepLSetting
+            hasDeepL: hasDeepLSetting
         };
     });
 

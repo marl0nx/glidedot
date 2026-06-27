@@ -99,7 +99,7 @@ const handleDeleteTemplate = async (id: number) => {
     <u-tabs 
       :items="items" 
       class="mt-4 w-full"
-      :ui="{ list: 'bg-neutral-900 border border-neutral-800 w-fit h-10', trigger: 'h-8 text-sm' }"
+      :ui="{ list: 'bg-neutral-900 border border-neutral-800 w-full h-10', trigger: 'h-8 text-sm' }"
     >
       <template #templates="{ item }">
         <div class="py-2 flex flex-col gap-4">
