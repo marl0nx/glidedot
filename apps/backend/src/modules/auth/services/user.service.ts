@@ -39,6 +39,8 @@ export class UserService {
             email: users.email,
             isAdmin: users.isAdmin,
             isOidc: users.isOidc,
+            isReviewer: users.isReviewer,
+            requiresReview: users.requiresReview,
             allowSuggestions: users.allowSuggestions,
             enableSuggestions: users.enableSuggestions,
             translationQuota: users.translationQuota,

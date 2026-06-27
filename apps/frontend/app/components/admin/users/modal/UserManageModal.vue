@@ -75,7 +75,7 @@ const discard = () => {
             <span class="text-sm font-medium">Administrator</span>
             <span class="text-xs text-neutral-400">Grant full access to all projects, teams, settings and users.</span>
           </div>
-          <u-switch v-model="user.isAdmin" :disabled="isOidcEnabled && user.isOidc" />
+          <u-switch v-model="user.isAdmin" />
         </div>
 
         <div class="flex items-center justify-between p-4 rounded-lg ring-1 ring-default bg-neutral-800/50 mt-2">
