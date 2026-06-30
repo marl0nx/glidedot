@@ -6,6 +6,7 @@ interface Language {
   code: string
   name: string
   flag: string
+  isRef?: boolean
 }
 
 const props = defineProps<{
@@ -15,7 +16,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save', payload: { id: number, code: string, name: string, flag: string }): void
+  (e: 'save', payload: { id: number, code: string, name: string, flag: string, isRef: boolean }): void
 }>()
 
 const isOpen = computed({
@@ -26,12 +27,14 @@ const isOpen = computed({
 const editName = ref("")
 const editCode = ref("")
 const editFlag = ref("")
+const isReference = ref(false)
 
 watch(() => props.language, (lang) => {
   if (lang) {
     editName.value = lang.name
     editCode.value = lang.code
     editFlag.value = lang.flag
+    isReference.value = !!lang.isRef
   }
 }, { immediate: true })
 
@@ -41,7 +44,8 @@ const handleSave = () => {
       id: props.language.id,
       code: editCode.value.trim().toLowerCase(),
       name: editName.value.trim(),
-      flag: editFlag.value.trim()
+      flag: editFlag.value.trim(),
+      isRef: isReference.value
     })
     isOpen.value = false
   }
@@ -80,6 +84,16 @@ const handleSave = () => {
                 @keyup.enter="handleSave"
             />
           </u-form-field>
+        </div>
+
+        <div class="flex items-center justify-between p-4 rounded-lg ring-1 ring-default bg-neutral-800/50 mt-2">
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Set as Reference Language</span>
+            <span class="text-xs text-neutral-400">
+              Use this language as the source of truth for translations.
+            </span>
+          </div>
+          <u-switch v-model="isReference" :disabled="language?.isRef" />
         </div>
       </div>
     </template>

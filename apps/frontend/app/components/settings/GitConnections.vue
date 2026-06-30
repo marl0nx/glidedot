@@ -12,7 +12,8 @@ const fetchConnections = async () => {
   try {
     isLoading.value = true
     connections.value = await fetchApi('/git/connections')
-  } catch {
+  } catch (err: any) {
+    if (err?._toastShown) return
     toast.add({ title: 'Error', description: 'Failed to load connections', color: 'error' })
   } finally {
     isLoading.value = false
@@ -46,7 +47,8 @@ const saveConnection = async () => {
     toast.add({ title: 'Success', description: 'Account connected successfully', color: 'success' })
     connectModalOpen.value = false
     await fetchConnections()
-  } catch {
+  } catch (err: any) {
+    if (err?._toastShown) return
     toast.add({ title: 'Error', description: 'Failed to connect. Check token.', color: 'error' })
   } finally {
     isConnecting.value = false
@@ -58,7 +60,8 @@ const deleteConnection = async (provider: string) => {
     await fetchApi(`/git/connections/${provider}`, { method: 'DELETE' })
     toast.add({ title: 'Disconnected', description: `${provider} disconnected.`, color: 'success' })
     await fetchConnections()
-  } catch {
+  } catch (err: any) {
+    if (err?._toastShown) return
     toast.add({ title: 'Error', description: `Failed to disconnect ${provider}.`, color: 'error' })
   }
 }

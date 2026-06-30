@@ -51,7 +51,7 @@ Check out the guides to learn how to deploy, configure, and use glide.:
 - [**Translations Editor & Workspace**](docs/TRANSLATIONS.md) — Learn how to translate, search, filter, and view version history.
 - [**Key Conventions & Templates**](docs/CONVENTIONS.md) — Enforce naming rules using templates, variables, and linting.
 - [**In-Context Editing**](docs/IN-CONTEXT-EDIT.md) — Set up visual editing inside your target applications.
-- [**Git Sync (Continuous Localization)**](docs/GIT-SYNC.md) — Push translations as automated Pull Requests on GitHub, GitLab, or Forgejo.
+- [**Sync (Git & Traduora Sync)**](docs/SYNC.md) — Push translations as automated Pull Requests on GitHub, GitLab, or Forgejo, or sync directly with Traduora.
 - [**The Review System**](docs/REVIEWS.md) — Understand how the drafting and approval lifecycle works.
 - [**AI Translation & DeepL**](docs/AI-TRANSLATION.md) — Configure machine translation, inline suggestions, and manage translation quotas.
 - [**Insights & Analytics**](docs/INSIGHTS.md) — View team productivity, automation impact, and time saved tracking.

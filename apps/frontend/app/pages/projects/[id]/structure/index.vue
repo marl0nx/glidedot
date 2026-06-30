@@ -1,12 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import KeysSettings from '~/components/localization/structure/KeysSettings.vue'
 import LanguagesSettings from '~/components/localization/structure/LanguagesSettings.vue'
 import LabelsSettings from '~/components/localization/structure/LabelsSettings.vue'
-
-const route = useRoute()
-const projectId = parseInt(route.params.id as string)
 
 const items = [{
   label: 'Translation Keys',

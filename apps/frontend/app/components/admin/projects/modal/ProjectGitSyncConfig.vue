@@ -65,7 +65,8 @@ const fetchData = async () => {
     ])
     syncs.value = sData as GitSync[]
     connections.value = cData as GitConnection[]
-  } catch {
+  } catch (err: any) {
+    if (err?._toastShown) return
     toast.add({ title: 'Error', description: 'Failed to load sync configurations', color: 'error' })
   } finally {
     isLoading.value = false
@@ -122,7 +123,8 @@ const loadRepos = async () => {
     isLoadingRepos.value = true
     try {
       repos.value = await fetchApi(`/git/repos?provider=${selectedProvider.value}`) as GitRepo[]
-    } catch {
+    } catch (err: any) {
+      if (err?._toastShown) return
       toast.add({ title: 'Error', description: `Failed to load ${selectedProvider.value} repos. Token might be invalid.`, color: 'error' })
     } finally {
       isLoadingRepos.value = false
@@ -139,7 +141,8 @@ watch(selectedRepo, async () => {
     isLoadingBranches.value = true
     try {
       branches.value = await fetchApi(`/git/branches?provider=${selectedProvider.value}&repo=${encodeURIComponent(selectedRepo.value)}`) as GitBranch[]
-    } catch {
+    } catch (err: any) {
+      if (err?._toastShown) return
       toast.add({ title: 'Error', description: `Failed to load branches.`, color: 'error' })
     } finally {
       isLoadingBranches.value = false
@@ -167,7 +170,8 @@ const saveSync = async () => {
     toast.add({ title: 'Success', description: 'Sync configuration saved', color: 'success' })
     isConfiguring.value = false
     fetchData()
-  } catch {
+  } catch (err: any) {
+    if (err?._toastShown) return
     toast.add({ title: 'Error', description: 'Failed to save configuration', color: 'error' })
   }
 }
@@ -177,7 +181,8 @@ const deleteSync = async (id: number) => {
     await fetchApi(`/git/projects/${props.projectId}/syncs/${id}`, { method: 'DELETE' })
     toast.add({ title: 'Deleted', description: 'Sync configuration removed', color: 'success' })
     fetchData()
-  } catch {
+  } catch (err: any) {
+    if (err?._toastShown) return
     toast.add({ title: 'Error', description: 'Failed to remove configuration', color: 'error' })
   }
 }

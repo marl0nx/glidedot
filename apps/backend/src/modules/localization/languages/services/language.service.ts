@@ -11,10 +11,6 @@ export class LanguageService {
 
     async create(data: { code: string; name: string; flag?: string }) {
         return this.db.insert(languages).values(data)
-            .onConflictDoUpdate({
-                target: languages.code,
-                set: { name: data.name, flag: data.flag }
-            })
             .returning();
     }
 

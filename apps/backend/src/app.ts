@@ -11,6 +11,7 @@ import localizationModule from './modules/localization';
 import settingsModule from './modules/settings';
 import migrationModule from './modules/settings/migration';
 import gitModule from './modules/git';
+import pluginsModule from './modules/plugins';
 import multipart from '@fastify/multipart';
 import responseWrapper from './plugins/response-wrapper';
 
@@ -49,6 +50,10 @@ export async function buildApp() {
     await app.register(settingsModule, { prefix: '/v1/admin/settings' });
     await app.register(migrationModule, { prefix: '/v1/admin/migration' });
     await app.register(gitModule, { prefix: '/v1/git' });
+    await app.register(pluginsModule, { prefix: '/v1/plugins' });
+
+    // Initialize Plugin System after all decorators/modules are registered
+    await app.pluginSystem.init(app);
 
     return app;
 }

@@ -26,6 +26,30 @@ const openSecondaryItems = ref(['item-0'])
 const isProjectContext = computed(() => route.path.startsWith("/projects/"))
 const { currentProject } = useProject(projects)
 
+// Aktive Plugins laden, um die Sidebar-Navigation dynamisch zu befüllen
+const activePlugins = ref<any[]>([])
+
+const fetchActivePlugins = async () => {
+  if (!currentProject.value?.id) {
+    activePlugins.value = []
+    return
+  }
+  try {
+    const data = await fetchApi<any[]>(`/plugins/projects/${currentProject.value.id}`)
+    activePlugins.value = data.filter((p: any) => p.enabled)
+  } catch (err) {
+    console.error('Fehler beim Laden der aktiven Plugins im Layout:', err)
+  }
+}
+
+watch(() => currentProject.value?.id, (newId) => {
+  if (newId) {
+    fetchActivePlugins()
+  } else {
+    activePlugins.value = []
+  }
+}, { immediate: true })
+
 const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
   if (route.path === "/") return [{label: 'Home'}]
 
@@ -115,6 +139,11 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
           href: '/admin/migration'
         },
         {
+          label: 'Manage Plugins',
+          icon: 'i-lucide-puzzle',
+          href: '/admin/plugins'
+        },
+        {
           label: 'Settings',
           icon: 'i-lucide-settings',
           defaultOpen: route.path.startsWith('/admin/settings'),
@@ -138,39 +167,66 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
   return items
 })
 
-const secondaryItems = computed<NavigationMenuItem[]>(() => [
-  {
-    label: 'Structure',
-    icon: 'i-lucide-layers',
-    href: `/projects/${currentProject.value?.id}/structure`
-  },
-  {
-    label: 'Conventions',
-    icon: 'i-lucide-book-open',
-    href: `/projects/${currentProject.value?.id}/conventions`
-  },
-  {
-    label: 'Translations',
-    icon: 'i-lucide-languages',
-    href: `/projects/${currentProject.value?.id}/translations`
-  },
-  {
-    label: 'In-Context Editor',
-    icon: 'i-lucide-monitor-play',
-    href: `/projects/${currentProject.value?.id}/in-context`,
-    class: 'hidden md:flex'
-  },
-  {
-    label: 'Git Sync',
-    icon: 'i-lucide-git-pull-request',
-    href: `/projects/${currentProject.value?.id}/git-sync`
-  },
-  {
-    label: 'Reviews',
-    icon: 'i-lucide-check-circle',
-    href: `/projects/${currentProject.value?.id}/reviews`
-  },
-])
+const secondaryItems = computed<NavigationMenuItem[]>(() => {
+  const items: NavigationMenuItem[] = [
+    {
+      label: 'Structure',
+      icon: 'i-lucide-layers',
+      href: `/projects/${currentProject.value?.id}/structure`
+    },
+    {
+      label: 'Conventions',
+      icon: 'i-lucide-book-open',
+      href: `/projects/${currentProject.value?.id}/conventions`
+    },
+    {
+      label: 'Translations',
+      icon: 'i-lucide-languages',
+      href: `/projects/${currentProject.value?.id}/translations`
+    },
+    {
+      label: 'In-Context Editor',
+      icon: 'i-lucide-monitor-play',
+      href: `/projects/${currentProject.value?.id}/in-context`,
+      class: 'hidden md:flex'
+    },
+    {
+      label: 'Sync',
+      icon: 'i-lucide-refresh-cw',
+      href: `/projects/${currentProject.value?.id}/sync`
+    },
+    {
+      label: 'Reviews',
+      icon: 'i-lucide-check-circle',
+      href: `/projects/${currentProject.value?.id}/reviews`
+    },
+  ]
+
+  // Active Plugins loaded from installed plugins list
+  const extChildren: any[] = []
+  for (const p of activePlugins.value) {
+    if (p.extensions) {
+      for (const ext of p.extensions) {
+        extChildren.push({
+          label: ext.label,
+          icon: ext.icon || p.icon || 'i-lucide-toy-brick',
+          href: `/projects/${currentProject.value?.id}/plugins/${p.id}/${ext.id}`
+        })
+      }
+    }
+  }
+
+  if (extChildren.length > 0) {
+    items.push({
+      label: 'Plugins',
+      icon: 'i-lucide-puzzle',
+      defaultOpen: route.path.includes('/plugins/'),
+      children: extChildren
+    })
+  }
+
+  return items
+})
 
 const profileItems: DropdownMenuItem[] = [
   {
@@ -227,6 +283,7 @@ const adminItems = [
   { label: 'Projects', icon: 'i-lucide-folder-git-2', href: '/admin/projects' },
   { label: 'Teams', icon: 'i-lucide-users', href: '/admin/teams' },
   { label: 'Users', icon: 'i-lucide-users', href: '/admin/users' },
+  { label: 'Plugins', icon: 'i-lucide-puzzle', href: '/admin/plugins' },
   { label: 'Insights', icon: 'i-lucide-bar-chart-2', href: '/admin/insights' },
   { label: 'Migration', icon: 'i-lucide-database', href: '/admin/migration' },
   { label: 'Settings', icon: 'i-lucide-settings-2', href: '/admin/settings' },
@@ -235,7 +292,7 @@ const adminItems = [
 
 const projectMoreItems = computed(() => [
   { label: 'Conventions', icon: 'i-lucide-book-open', href: `/projects/${currentProject.value?.id}/conventions` },
-  { label: 'Git Sync', icon: 'i-lucide-git-pull-request', href: `/projects/${currentProject.value?.id}/git-sync` },
+  { label: 'Sync', icon: 'i-lucide-refresh-cw', href: `/projects/${currentProject.value?.id}/sync` },
   { label: 'Reviews', icon: 'i-lucide-check-circle', href: `/projects/${currentProject.value?.id}/reviews` },
   { label: 'In-Context Editor', icon: 'i-lucide-monitor-play', href: `/projects/${currentProject.value?.id}/in-context`, badge: 'Desktop Only' },
   { label: 'Back to Dashboard', icon: 'i-lucide-arrow-left', href: '/' },
@@ -349,7 +406,7 @@ const handleMobileNavClick = (item: any) => {
       <u-navigation-menu v-if="isProjectContext" :key="`secondary-${route.path.split('/')[1]}`" :items="secondaryItems" multiple
                          orientation="vertical" :ui="{ link: 'p-2 overflow-hidden' }"/>
                          
-      <div class="mt-auto"></div>
+      <div class="mt-auto" />
       <u-separator/>
       <u-navigation-menu :key="`api-docs-${route.path.split('/')[1]}`" :items="apiDocsItems" orientation="vertical"
                          :ui="{ link: 'p-2 overflow-hidden' }"/>

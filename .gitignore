@@ -48,3 +48,10 @@ docker-compose.override.yml
 
 # Other
 apps/frontend/public/TEST-SITE-EXAMPLE.html
+
+# Plugins (dynamisch zur Laufzeit geladen)
+apps/backend/plugins/*
+!apps/backend/plugins/.gitkeep
+plugins/*
+!plugins/.gitkeep
+

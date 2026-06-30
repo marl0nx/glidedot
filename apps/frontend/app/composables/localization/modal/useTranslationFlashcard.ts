@@ -124,7 +124,7 @@ export function useTranslationFlashcard() {
 
     const save = (text: string, isGenerated: boolean, timeSpentMs: number = 0) => {
         if (!currentKey.value || !targetLanguage.value) return
-        saveTranslation(currentKey.value.id, targetLanguage.value.id, targetLanguage.value.code, text, isGenerated, timeSpentMs)
+        saveTranslation(currentKey.value.id, targetLanguage.value.id, targetLanguage.value.code, text, isGenerated, timeSpentMs, true)
     }
 
     const autoTranslateKey = async (provider: 'deepl' | 'google' = 'google') => {

@@ -362,7 +362,7 @@ onUnmounted(() => {
               <textarea
                   ref="textareaRef"
                   v-model="tempText"
-                  class="w-full min-h-[100px] md:min-h-[140px] px-4 md:px-6 text-sm font-medium text-neutral-100 bg-transparent resize-none focus:outline-none leading-relaxed"
+                  class="w-full min-h-[100px] md:min-h-[140px] p-4 md:p-6 text-sm font-medium text-neutral-100 bg-transparent resize-none focus:outline-none leading-relaxed"
                   placeholder="Enter translation here..."
                   @input="registerActivity"
               />

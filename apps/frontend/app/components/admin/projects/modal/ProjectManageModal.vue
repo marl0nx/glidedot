@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import type { Project } from '~/types'
 import UnsavedChangesAlert from '~/components/UnsavedChangesAlert.vue'
 import ProjectGitSyncConfig from './ProjectGitSyncConfig.vue'
+import ProjectTraduoraSyncConfig from './ProjectTraduoraSyncConfig.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -22,15 +23,22 @@ const isOpen = computed({
 })
 
 const originalProject = ref('')
+const traduoraConfigRef = ref<any>(null)
+const isTraduoraDirty = ref(false)
+
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     originalProject.value = JSON.stringify(props.project)
   }
 })
 
+const onTraduoraDirty = (val: boolean) => {
+  isTraduoraDirty.value = val
+}
+
 const hasUnsavedChanges = computed(() => {
   if (props.mode === 'create') return false
-  return JSON.stringify(props.project) !== originalProject.value
+  return (JSON.stringify(props.project) !== originalProject.value) || isTraduoraDirty.value
 })
 
 const inContextUrlProxy = computed({
@@ -45,6 +53,27 @@ const discard = () => {
     const orig = JSON.parse(originalProject.value)
     Object.assign(props.project, orig)
   }
+  if (traduoraConfigRef.value) {
+    traduoraConfigRef.value.reset()
+  }
+}
+
+const isSaving = ref(false)
+
+const handleSave = async () => {
+  isSaving.value = true
+  try {
+    if (isTraduoraDirty.value && traduoraConfigRef.value) {
+      const success = await traduoraConfigRef.value.saveConfig()
+      if (!success) {
+        // Stop the save event and keep the modal open to correct validation issues
+        return
+      }
+    }
+    emit('save')
+  } finally {
+    isSaving.value = false
+  }
 }
 </script>
 
@@ -53,13 +82,13 @@ const discard = () => {
     <template #body>
       <div class="p-4 flex flex-col gap-4">
         <u-form-field label="Project Name" required>
-          <u-input v-model="project.name" placeholder="e.g. Mobile App" class="w-full" autofocus @keyup.enter="emit('save')" />
+          <u-input v-model="project.name" placeholder="e.g. Mobile App" class="w-full" autofocus @keyup.enter="handleSave" />
         </u-form-field>
 
 
 
         <u-form-field v-if="mode === 'edit'" label="In-Context Preview URL" description="URL where your app is running to enable live visual editing.">
-          <u-input v-model="inContextUrlProxy" placeholder="https://staging.myapp.com" class="w-full" @keyup.enter="emit('save')" />
+          <u-input v-model="inContextUrlProxy" placeholder="https://staging.myapp.com" class="w-full" @keyup.enter="handleSave" />
           <div v-if="project.inContextUrl" class="mt-2 p-3 bg-amber-500/10 border border-warning-500/25 rounded-lg text-xs text-neutral-300 space-y-1">
             <p class="font-semibold text-warning-500 flex items-center gap-1.5">
               <u-icon name="i-lucide-alert-triangle" class="w-4 h-4" />
@@ -87,8 +116,11 @@ const discard = () => {
           <u-switch v-model="project.requireTemplate" />
         </div>
 
-        <div v-if="mode === 'edit' && project.id" class="mt-4 pt-4 border-t border-neutral-800">
+        <div v-if="mode === 'edit' && project.id" class="mt-4 pt-4 border-t border-neutral-800 space-y-6">
           <ProjectGitSyncConfig :project-id="Number(project.id)" />
+          <div class="border-t border-neutral-800 pt-4">
+            <ProjectTraduoraSyncConfig ref="traduoraConfigRef" :project-id="Number(project.id)" @dirty="onTraduoraDirty" />
+          </div>
         </div>
       </div>
     </template>
@@ -96,12 +128,13 @@ const discard = () => {
     <template #footer>
       <div class="flex justify-end gap-2">
         <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
-        <u-button v-if="mode === 'create'" label="Create Project" color="neutral" :disabled="!project.name?.trim()" @click="emit('save')" />
+        <u-button v-if="mode === 'create'" label="Create Project" color="neutral" :disabled="!project.name?.trim()" @click="handleSave" />
       </div>
 
       <unsaved-changes-alert 
         :has-unsaved-changes="hasUnsavedChanges" 
-        @save="emit('save')"
+        :loading="isSaving"
+        @save="handleSave"
         @discard="discard"
       />
     </template>

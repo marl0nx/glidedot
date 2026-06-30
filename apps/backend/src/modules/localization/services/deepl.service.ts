@@ -4,6 +4,29 @@ import { settings } from '../../settings/schema';
 
 import { encryptString, decryptString } from '../../../utils/encryption';
 
+function formatLangCode(code: string, isTarget: boolean): string {
+    if (!code) return code;
+    const parts = code.split(/[-_]/);
+    const lang = parts[0].toLowerCase();
+
+    // Chinese and Portuguese have significantly different variants, keep country suffix
+    if (lang === 'zh' || lang === 'pt') {
+        return code.replace('_', '-');
+    }
+
+    // DeepL requires target language for English to specify region (EN-US or EN-GB)
+    if (isTarget && lang === 'en') {
+        const suffix = parts[1]?.toUpperCase();
+        if (suffix === 'US' || suffix === 'GB') {
+            return `en-${suffix}`;
+        }
+        return 'en-US';
+    }
+
+    // For all other languages (like de-DE, fr-FR), just use the primary language code
+    return parts[0];
+}
+
 export class DeeplService {
     constructor(private db: FastifyInstance['db']) {}
 
@@ -28,10 +51,13 @@ export class DeeplService {
             throw new Error('DeepL API Key is not configured');
         }
 
+        const formattedTarget = formatLangCode(targetLang, true);
+        const formattedSource = sourceLang ? formatLangCode(sourceLang, false) : undefined;
+
         const body = {
             text,
-            target_lang: targetLang.toUpperCase(),
-            source_lang: sourceLang?.toUpperCase(),
+            target_lang: formattedTarget.toUpperCase(),
+            source_lang: formattedSource?.toUpperCase(),
         };
 
         const response = await fetch(`${apiUrl}/translate`, {

@@ -23,8 +23,9 @@ export const useConventions = () => {
       templates.value = tpls as KeyTemplate[]
       glossary.value = glos as KeyGlossaryTerm[]
       variables.value = vars as KeyVariable[]
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
+      if (e._toastShown) return
       toast.add({ title: 'Error', description: 'Failed to load conventions', color: 'error' })
     } finally {
       isLoading.value = false
@@ -43,7 +44,8 @@ export const useConventions = () => {
       }
       toast.add({ title: 'Success', description: 'Glossary term added', color: 'success' })
       return true
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return false
       toast.add({ title: 'Error', description: 'Failed to add glossary term', color: 'error' })
       return false
     }
@@ -61,7 +63,8 @@ export const useConventions = () => {
       }
       toast.add({ title: 'Success', description: 'Glossary term updated', color: 'success' })
       return true
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return false
       toast.add({ title: 'Error', description: 'Failed to update glossary term', color: 'error' })
       return false
     }
@@ -74,7 +77,8 @@ export const useConventions = () => {
       })
       glossary.value = glossary.value.filter(g => g.id !== glossaryId)
       toast.add({ title: 'Success', description: 'Glossary term deleted', color: 'success' })
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return
       toast.add({ title: 'Error', description: 'Failed to delete glossary term', color: 'error' })
     }
   }
@@ -91,7 +95,8 @@ export const useConventions = () => {
       }
       toast.add({ title: 'Success', description: 'Template added', color: 'success' })
       return true
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return false
       toast.add({ title: 'Error', description: 'Failed to add template', color: 'error' })
       return false
     }
@@ -109,7 +114,8 @@ export const useConventions = () => {
       }
       toast.add({ title: 'Success', description: 'Template updated', color: 'success' })
       return true
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return false
       toast.add({ title: 'Error', description: 'Failed to update template', color: 'error' })
       return false
     }
@@ -122,7 +128,8 @@ export const useConventions = () => {
       })
       templates.value = templates.value.filter(t => t.id !== templateId)
       toast.add({ title: 'Success', description: 'Template deleted', color: 'success' })
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return
       toast.add({ title: 'Error', description: 'Failed to delete template', color: 'error' })
     }
   }
@@ -138,7 +145,8 @@ export const useConventions = () => {
       }
       toast.add({ title: 'Success', description: 'Variable created', color: 'success' })
       return true
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return false
       toast.add({ title: 'Error', description: 'Failed to create variable', color: 'error' })
       return false
     }
@@ -154,7 +162,8 @@ export const useConventions = () => {
       if (idx !== -1 && result && result[0]) variables.value[idx] = result[0]
       toast.add({ title: 'Success', description: 'Variable updated', color: 'success' })
       return true
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return false
       toast.add({ title: 'Error', description: 'Failed to update variable', color: 'error' })
       return false
     }
@@ -167,7 +176,8 @@ export const useConventions = () => {
       })
       variables.value = variables.value.filter(v => v.id !== variableId)
       toast.add({ title: 'Success', description: 'Variable deleted', color: 'success' })
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return
       toast.add({ title: 'Error', description: 'Failed to delete variable', color: 'error' })
     }
   }
@@ -175,7 +185,8 @@ export const useConventions = () => {
   const exportConventions = async (projectId: number) => {
     try {
       return await fetchApi(`/localization/projects/${projectId}/conventions/export`)
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return null
       toast.add({ title: 'Error', description: 'Failed to export conventions', color: 'error' })
       return null
     }
@@ -190,7 +201,8 @@ export const useConventions = () => {
       toast.add({ title: 'Success', description: 'Conventions imported successfully', color: 'success' })
       await loadConventions(projectId)
       return true
-    } catch (e) {
+    } catch (e: any) {
+      if (e._toastShown) return false
       toast.add({ title: 'Error', description: 'Failed to import conventions', color: 'error' })
       return false
     }

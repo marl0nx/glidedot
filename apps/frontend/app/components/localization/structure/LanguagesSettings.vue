@@ -72,8 +72,11 @@ const openEditModal = (lang: Language) => {
   isEditModalOpen.value = true
 }
 
-const saveEditedLanguage = async (payload: { id: number, code: string, name: string, flag: string }) => {
+const saveEditedLanguage = async (payload: { id: number, code: string, name: string, flag: string, isRef: boolean }) => {
   await updateLanguage(payload.id, payload.code, payload.name, payload.flag)
+  if (payload.isRef && !languageToEdit.value?.isRef) {
+    await setReferenceLanguage(payload.id)
+  }
 }
 
 const confirmDeleteSingle = (lang: Language) => {

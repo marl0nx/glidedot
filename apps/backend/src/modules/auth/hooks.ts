@@ -47,7 +47,14 @@ export function createAuthHooks(userService: UserService, teamService: TeamServi
             if (request.user?.isAdmin) return;
 
             const { projectId } = request.params as { projectId?: string };
-            const pId = projectId ? parseInt(projectId) : (request.body as any)?.projectId;
+            let pId = projectId ? parseInt(projectId) : undefined;
+
+            if (!pId && (request.body as any)?.projectId) {
+                pId = parseInt((request.body as any).projectId);
+            }
+            if (!pId && (request.query as any)?.projectId) {
+                pId = parseInt((request.query as any).projectId);
+            }
 
             if (!pId) return;
 
