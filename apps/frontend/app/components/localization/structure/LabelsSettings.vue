@@ -252,13 +252,6 @@ const toggleSelection = (label: TranslationLabel) => {
           <template #actions-cell="{ row }">
             <div class="flex justify-end gap-2" @click.stop>
               <u-button 
-                icon="i-lucide-pencil" 
-                color="neutral" 
-                variant="ghost" 
-                size="sm"
-                @click="startEditingLabel(row.original)" 
-              />
-              <u-button 
                 icon="i-lucide-trash-2" 
                 color="error" 
                 variant="ghost" 

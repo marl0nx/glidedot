@@ -4,15 +4,6 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   const { fetchApi } = useApi()
   const config = useRuntimeConfig()
 
-  // Ensure OIDC session is fetched before making redirect decisions
-  if (!oidcLoggedIn.value && typeof fetchOidc === 'function') {
-    try {
-      await fetchOidc()
-    } catch {
-      // ignore
-    }
-  }
-
   // Check setup status FIRST
   try {
     const status = await fetchApi<{ setupRequired: boolean }>('/setup/status')
@@ -26,6 +17,15 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
     }
   } catch (e) {
     console.error('Failed to check setup status. Is the API reachable?', e)
+  }
+
+  // Ensure OIDC session is fetched before making redirect decisions
+  if (!oidcLoggedIn.value && typeof fetchOidc === 'function') {
+    try {
+      await fetchOidc()
+    } catch {
+      // ignore
+    }
   }
 
   // If going to /login but already logged in, redirect home

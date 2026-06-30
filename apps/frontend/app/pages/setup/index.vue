@@ -1,4 +1,8 @@
 <script setup lang="ts">
+definePageMeta({
+  layout: 'login'
+})
+
 const { fetchApi } = useApi()
 const { settings, loadSettings } = useSettings()
 await loadSettings()
@@ -26,6 +30,7 @@ const validatePassword = () => {
 }
 
 const startSetup = async () => {
+  if (loading.value) return
   loading.value = true
   try {
     const response = await fetchApi<{ success: boolean }>('/setup/initial', {

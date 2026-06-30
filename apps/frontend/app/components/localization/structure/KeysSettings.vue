@@ -555,10 +555,11 @@ watch([glossary, templates, variables], () => {
           <template #labels-cell="{ row }">
             <div class="flex gap-1 items-center flex-wrap group">
               <template v-if="row.original.labels?.length">
-                <u-badge v-for="label in row.original.labels" :key="label.id" variant="subtle" color="neutral" size="md"
+                <u-badge v-for="label in row.original.labels" :key="label.id" variant="subtle" color="neutral" size="sm"
+                        class="h-6 px-2 py-0.5 flex items-center gap-1"
                         :style="{ backgroundColor: `${label.color}20`, color: label.color, borderColor: `${label.color}20` }">
                   {{ label.name }}
-                  <u-button icon="i-lucide-x" size="xs" color="neutral" variant="ghost" :padded="false" class="ml-1 -mr-1 opacity-50 hover:opacity-100" @click.stop="removeLabelFromKey(row.original.id, label.id)" />
+                  <u-icon name="i-lucide-x" class="w-3.5 h-3.5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity" @click.stop="removeLabelFromKey(row.original.id, label.id)" />
                 </u-badge>
               </template>
               
@@ -589,13 +590,6 @@ watch([glossary, templates, variables], () => {
           </template>
           <template #actions-cell="{ row }">
             <div class="flex justify-end gap-2" @click.stop>
-              <u-button 
-                icon="i-lucide-pencil" 
-                color="neutral" 
-                variant="ghost" 
-                size="sm"
-                @click="startEditingKey(row.original)" 
-              />
               <u-button 
                 icon="i-lucide-trash-2" 
                 color="error" 
@@ -672,10 +666,11 @@ watch([glossary, templates, variables], () => {
               </div>
               <div class="flex items-center gap-1.5 flex-wrap group">
                 <template v-if="keyObj.labels?.length">
-                  <u-badge v-for="label in keyObj.labels" :key="label.id" variant="subtle" color="neutral" size="xs"
+                  <u-badge v-for="label in keyObj.labels" :key="label.id" variant="subtle" color="neutral" size="sm"
+                          class="h-6 px-2 py-0.5 flex items-center gap-1"
                           :style="{ backgroundColor: `${label.color}20`, color: label.color, borderColor: `${label.color}20` }">
                     {{ label.name }}
-                    <u-button icon="i-lucide-x" size="xs" color="neutral" variant="ghost" :padded="false" class="ml-1 -mr-1 opacity-50 hover:opacity-100" @click.stop="removeLabelFromKey(keyObj.id, label.id)" />
+                    <u-icon name="i-lucide-x" class="w-3.5 h-3.5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity" @click.stop="removeLabelFromKey(keyObj.id, label.id)" />
                   </u-badge>
                 </template>
 

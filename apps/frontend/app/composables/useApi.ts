@@ -46,12 +46,18 @@ export const useApi = () => {
         const apiResponse = response as ApiResponse<T>
         if (!apiResponse.success) {
           // Logically failed despite 2xx status code
+          let errorDescription = apiResponse.message || 'An error occurred.'
+          if (apiResponse.data && typeof apiResponse.data === 'object' && 'message' in apiResponse.data) {
+            errorDescription = (apiResponse.data as any).message
+          }
           toast.add({
             title: apiResponse.shortCode || 'Error',
-            description: apiResponse.message || 'An error occurred.',
+            description: errorDescription,
             color: 'error'
           })
-          throw new Error(apiResponse.message || 'API request failed')
+          const err = new Error(errorDescription) as any
+          err._toastShown = true
+          throw err
         }
         return apiResponse.data
       }
@@ -68,12 +74,18 @@ export const useApi = () => {
         'message' in errorData
       ) {
         const apiResponse = errorData as ApiResponse
+        // Extract the detailed message if wrapped in data.message
+        let errorDescription = apiResponse.message || 'An error occurred.'
+        if (apiResponse.data && typeof apiResponse.data === 'object' && 'message' in apiResponse.data) {
+          errorDescription = (apiResponse.data as any).message
+        }
         // Trigger a global toast error
         toast.add({
           title: apiResponse.shortCode || 'Error',
-          description: apiResponse.message || 'An error occurred.',
+          description: errorDescription,
           color: 'error'
         })
+        err._toastShown = true
       }
 
       // Re-throw error so standard callers can handle/catch it

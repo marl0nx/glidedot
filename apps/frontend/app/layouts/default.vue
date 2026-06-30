@@ -161,9 +161,9 @@ const secondaryItems = computed<NavigationMenuItem[]>(() => [
     class: 'hidden md:flex'
   },
   {
-    label: 'Git Sync',
-    icon: 'i-lucide-git-pull-request',
-    href: `/projects/${currentProject.value?.id}/git-sync`
+    label: 'Sync',
+    icon: 'i-lucide-refresh-cw',
+    href: `/projects/${currentProject.value?.id}/sync`
   },
   {
     label: 'Reviews',
@@ -235,7 +235,7 @@ const adminItems = [
 
 const projectMoreItems = computed(() => [
   { label: 'Conventions', icon: 'i-lucide-book-open', href: `/projects/${currentProject.value?.id}/conventions` },
-  { label: 'Git Sync', icon: 'i-lucide-git-pull-request', href: `/projects/${currentProject.value?.id}/git-sync` },
+  { label: 'Sync', icon: 'i-lucide-refresh-cw', href: `/projects/${currentProject.value?.id}/sync` },
   { label: 'Reviews', icon: 'i-lucide-check-circle', href: `/projects/${currentProject.value?.id}/reviews` },
   { label: 'In-Context Editor', icon: 'i-lucide-monitor-play', href: `/projects/${currentProject.value?.id}/in-context`, badge: 'Desktop Only' },
   { label: 'Back to Dashboard', icon: 'i-lucide-arrow-left', href: '/' },

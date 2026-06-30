@@ -58,8 +58,17 @@ export function useTranslation() {
             }))
             labels.value = labelsList
 
-            keys.value = (keysData as { id: number; key: string; draftKey?: string; reviewStatus?: 'APPROVED' | 'PENDING_REVIEW' | 'REJECTED'; isPendingDelete?: boolean; labels: number[] }[]).map(k => {
-                const mappedLabels = (k.labels || []).map(labelId => labelsList.find(l => l.id === labelId)).filter((l): l is { id: number; name: string; color: string } => !!l)
+            keys.value = (keysData as { id: number; key: string; draftKey?: string; reviewStatus?: 'APPROVED' | 'PENDING_REVIEW' | 'REJECTED'; isPendingDelete?: boolean; labels: any[] }[]).map(k => {
+                const mappedLabels = (k.labels || []).map(label => {
+                    if (typeof label === 'object' && label !== null) {
+                        return labelsList.find(l => l.id === label.id) || {
+                            id: label.id,
+                            name: label.name,
+                            color: label.color || '#888888'
+                        }
+                    }
+                    return labelsList.find(l => l.id === label)
+                }).filter((l): l is { id: number; name: string; color: string } => !!l)
                 return {
                     id: k.id,
                     key: k.key,
@@ -430,17 +439,10 @@ export function useTranslation() {
     const addProjectLanguage = async (code: string, name: string, flag?: string) => {
         if (!projectId.value) return
         try {
-            let lang: { id: number; code: string; name: string; flag?: string } | undefined;
-            try {
-               const l = await fetchApi<{ id: number; code: string; name: string; flag?: string }>(`/localization/languages`, { method: 'POST', body: { code, name, flag } })
-               lang = l
-            } catch {
-               const langs = await fetchApi(`/localization/languages`) as { id: number; code: string; name: string; flag?: string }[];
-               lang = langs.find((l) => l.code === code)
-            }
-            if (lang) {
-                await fetchApi(`/localization/projects/${projectId.value}/languages`, { method: 'POST', body: { languageId: lang.id } })
-            }
+            await fetchApi(`/localization/projects/${projectId.value}/languages`, { 
+                method: 'POST', 
+                body: { code, name, flag } 
+            })
             toast.add({ title: 'Success', description: 'Language added successfully', color: 'success' })
             await init()
         } catch {
@@ -471,8 +473,9 @@ export function useTranslation() {
     }
 
     const updateLanguage = async (languageId: number, code: string, name: string, flag?: string) => {
+        if (!projectId.value) return
         try {
-            await fetchApi(`/localization/languages/${languageId}`, { 
+            await fetchApi(`/localization/projects/${projectId.value}/languages/${languageId}`, { 
                 method: 'PATCH', 
                 body: { code, name, flag } 
             })

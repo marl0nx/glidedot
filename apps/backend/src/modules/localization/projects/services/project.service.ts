@@ -100,15 +100,15 @@ export class ProjectService {
     }
 
     async removeLanguage(projectId: number, languageId: number) {
-        return this.db.delete(projectLanguages)
-            .where(and(eq(projectLanguages.projectId, projectId), eq(projectLanguages.languageId, languageId)));
+        return this.db.delete(languages)
+            .where(eq(languages.id, languageId));
     }
 
     async bulkRemoveLanguages(projectId: number, languageIds: number[]) {
         if (!languageIds.length) return;
         const { inArray } = await import('drizzle-orm');
-        return this.db.delete(projectLanguages)
-            .where(and(eq(projectLanguages.projectId, projectId), inArray(projectLanguages.languageId, languageIds)));
+        return this.db.delete(languages)
+            .where(inArray(languages.id, languageIds));
     }
 
     async getProjectLanguages(projectId: number) {
@@ -151,7 +151,10 @@ export class ProjectService {
     }
 
     async exportTranslationsByCode(projectId: number, languageCode: string) {
-        const [lang] = await this.db.select().from(languages).where(eq(languages.code, languageCode));
+        const [lang] = await this.db.select({ id: languages.id })
+            .from(languages)
+            .innerJoin(projectLanguages, eq(projectLanguages.languageId, languages.id))
+            .where(and(eq(projectLanguages.projectId, projectId), eq(languages.code, languageCode)));
         if (!lang) return {};
         return this.exportTranslations(projectId, lang.id);
     }

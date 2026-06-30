@@ -136,7 +136,7 @@ const getAvatarColor = (name: string) => {
             OIDC Mapped Groups
             <u-badge v-if="!isOidcEnabled" color="warning" variant="subtle" size="xs" class="ml-2">OIDC Not Configured</u-badge>
           </h3>
-          <p class="text-sm text-neutral-400">Users in these PocketID groups will automatically be added to this team. You can still paste comma-separated groups to add multiple.</p>
+          <p class="text-sm text-neutral-400">Users in these OIDC groups will automatically be added to this team. You can still paste comma-separated groups to add multiple.</p>
           
           <div v-if="mappedGroups.length > 0" class="flex flex-wrap gap-2">
             <u-badge v-for="group in mappedGroups" :key="group" color="neutral" variant="subtle" class="flex items-center gap-1 pl-2 pr-1 py-1 text-sm">

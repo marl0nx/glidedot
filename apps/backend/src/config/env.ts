@@ -7,6 +7,10 @@ export const env = {
     get S3_BUCKET() { return process.env.S3_BUCKET; },
     get S3_ACCESS_KEY() { return process.env.S3_ACCESS_KEY; },
     get S3_SECRET_KEY() { return process.env.S3_SECRET_KEY; },
+    get TRADUORA_URL() { return process.env.TRADUORA_URL; },
+    get TRADUORA_PROJECT_ID() { return process.env.TRADUORA_PROJECT_ID; },
+    get TRADUORA_CLIENT_ID() { return process.env.TRADUORA_CLIENT_ID; },
+    get TRADUORA_CLIENT_SECRET() { return process.env.TRADUORA_CLIENT_SECRET; },
 };
 
 /* Env Variables Validation */
