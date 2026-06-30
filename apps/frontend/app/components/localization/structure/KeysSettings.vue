@@ -556,7 +556,7 @@ watch([glossary, templates, variables], () => {
             <div class="flex gap-1 items-center flex-wrap group">
               <template v-if="row.original.labels?.length">
                 <u-badge v-for="label in row.original.labels" :key="label.id" variant="subtle" color="neutral" size="sm"
-                        class="h-6 px-2 py-0.5 flex items-center gap-1"
+                        class="flex items-center gap-1"
                         :style="{ backgroundColor: `${label.color}20`, color: label.color, borderColor: `${label.color}20` }">
                   {{ label.name }}
                   <u-icon name="i-lucide-x" class="w-3.5 h-3.5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity" @click.stop="removeLabelFromKey(row.original.id, label.id)" />
@@ -667,7 +667,7 @@ watch([glossary, templates, variables], () => {
               <div class="flex items-center gap-1.5 flex-wrap group">
                 <template v-if="keyObj.labels?.length">
                   <u-badge v-for="label in keyObj.labels" :key="label.id" variant="subtle" color="neutral" size="sm"
-                          class="h-6 px-2 py-0.5 flex items-center gap-1"
+                          class="flex items-center gap-1"
                           :style="{ backgroundColor: `${label.color}20`, color: label.color, borderColor: `${label.color}20` }">
                     {{ label.name }}
                     <u-icon name="i-lucide-x" class="w-3.5 h-3.5 cursor-pointer opacity-50 hover:opacity-100 transition-opacity" @click.stop="removeLabelFromKey(keyObj.id, label.id)" />

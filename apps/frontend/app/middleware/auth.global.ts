@@ -17,6 +17,9 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
     }
   } catch (e) {
     console.error('Failed to check setup status. Is the API reachable?', e)
+    if (to.path === '/setup') {
+      return
+    }
   }
 
   // Ensure OIDC session is fetched before making redirect decisions

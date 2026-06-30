@@ -100,15 +100,157 @@ export class ProjectService {
     }
 
     async removeLanguage(projectId: number, languageId: number) {
-        return this.db.delete(languages)
-            .where(eq(languages.id, languageId));
+        const [project] = await this.db.select({ sourceLanguageId: projects.sourceLanguageId }).from(projects).where(eq(projects.id, projectId));
+        if (project && project.sourceLanguageId === languageId) {
+            throw new Error('Cannot delete the source language of the project.');
+        }
+
+        // 1. Delete mapping in project_languages
+        await this.db.delete(projectLanguages)
+            .where(and(
+                eq(projectLanguages.projectId, projectId),
+                eq(projectLanguages.languageId, languageId)
+            ));
+
+        // 2. Delete all translations for this language in this project
+        const keyIds = await this.db.select({ id: translationKeys.id })
+            .from(translationKeys)
+            .where(eq(translationKeys.projectId, projectId));
+
+        if (keyIds.length > 0) {
+            await this.db.delete(translations)
+                .where(and(
+                    inArray(translations.keyId, keyIds.map(k => k.id)),
+                    eq(translations.languageId, languageId)
+                ));
+        }
+
+        // 3. Delete language from languages table if it is not used in any other project
+        const otherUsages = await this.db.select()
+            .from(projectLanguages)
+            .where(eq(projectLanguages.languageId, languageId));
+
+        if (otherUsages.length === 0) {
+            await this.db.delete(languages)
+                .where(eq(languages.id, languageId));
+        }
+
+        return { success: true };
     }
 
     async bulkRemoveLanguages(projectId: number, languageIds: number[]) {
         if (!languageIds.length) return;
-        const { inArray } = await import('drizzle-orm');
-        return this.db.delete(languages)
-            .where(inArray(languages.id, languageIds));
+        const [project] = await this.db.select({ sourceLanguageId: projects.sourceLanguageId }).from(projects).where(eq(projects.id, projectId));
+        if (project && project.sourceLanguageId && languageIds.includes(project.sourceLanguageId)) {
+            throw new Error('Cannot delete the source language of the project.');
+        }
+
+        // 1. Delete mapping in project_languages
+        await this.db.delete(projectLanguages)
+            .where(and(
+                eq(projectLanguages.projectId, projectId),
+                inArray(projectLanguages.languageId, languageIds)
+            ));
+
+        // 2. Delete all translations for these languages in this project
+        const keyIds = await this.db.select({ id: translationKeys.id })
+            .from(translationKeys)
+            .where(eq(translationKeys.projectId, projectId));
+
+        if (keyIds.length > 0) {
+            await this.db.delete(translations)
+                .where(and(
+                    inArray(translations.keyId, keyIds.map(k => k.id)),
+                    inArray(translations.languageId, languageIds)
+                ));
+        }
+
+        // 3. Delete languages from languages table if they are not used in any other project
+        for (const langId of languageIds) {
+            const otherUsages = await this.db.select()
+                .from(projectLanguages)
+                .where(eq(projectLanguages.languageId, langId));
+
+            if (otherUsages.length === 0) {
+                await this.db.delete(languages)
+                    .where(eq(languages.id, langId));
+            }
+        }
+
+        return { success: true };
+    }
+
+    async updateProjectLanguage(projectId: number, languageId: number, data: { code?: string; name?: string; flag?: string }) {
+        const { ne } = await import('drizzle-orm');
+
+        // 1. Check if the language is used by other projects
+        const otherUsages = await this.db.select()
+            .from(projectLanguages)
+            .where(and(
+                eq(projectLanguages.languageId, languageId),
+                ne(projectLanguages.projectId, projectId)
+            ));
+
+        if (otherUsages.length === 0) {
+            // No other projects use this language, update globally in languages table
+            return this.db.update(languages)
+                .set(data)
+                .where(eq(languages.id, languageId))
+                .returning();
+        } else {
+            // Other projects use this language, duplicate it for this project to decouple
+            const [currentLang] = await this.db.select()
+                .from(languages)
+                .where(eq(languages.id, languageId));
+            if (!currentLang) {
+                throw new Error('Language not found');
+            }
+
+            // Create new entry in languages
+            const [newLang] = await this.db.insert(languages)
+                .values({
+                    code: data.code !== undefined ? data.code : currentLang.code,
+                    name: data.name !== undefined ? data.name : currentLang.name,
+                    flag: data.flag !== undefined ? data.flag : currentLang.flag,
+                })
+                .returning();
+
+            const newLanguageId = newLang.id;
+
+            // Update mapping in project_languages
+            await this.db.update(projectLanguages)
+                .set({ languageId: newLanguageId })
+                .where(and(
+                    eq(projectLanguages.projectId, projectId),
+                    eq(projectLanguages.languageId, languageId)
+                ));
+
+            // Move translations to the new languageId for this project
+            const keyIds = await this.db.select({ id: translationKeys.id })
+                .from(translationKeys)
+                .where(eq(translationKeys.projectId, projectId));
+
+            if (keyIds.length > 0) {
+                await this.db.update(translations)
+                    .set({ languageId: newLanguageId })
+                    .where(and(
+                        inArray(translations.keyId, keyIds.map(k => k.id)),
+                        eq(translations.languageId, languageId)
+                    ));
+            }
+
+            // Update sourceLanguageId if it was the project's source language
+            const [project] = await this.db.select({ sourceLanguageId: projects.sourceLanguageId })
+                .from(projects)
+                .where(eq(projects.id, projectId));
+            if (project && project.sourceLanguageId === languageId) {
+                await this.db.update(projects)
+                    .set({ sourceLanguageId: newLanguageId })
+                    .where(eq(projects.id, projectId));
+            }
+
+            return [newLang];
+        }
     }
 
     async getProjectLanguages(projectId: number) {

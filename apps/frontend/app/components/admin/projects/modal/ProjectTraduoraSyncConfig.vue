@@ -38,7 +38,8 @@ const loadConfig = async () => {
     originalUrl.value = url.value
     originalClientId.value = clientId.value
     originalSelectedProjectId.value = selectedProjectId.value
-  } catch {
+  } catch (err: any) {
+    if (err?._toastShown) return
     toast.add({ title: 'Error', description: 'Failed to load Traduora configuration.', color: 'error' })
   } finally {
     isLoading.value = false

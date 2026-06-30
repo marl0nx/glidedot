@@ -231,7 +231,8 @@ export function useTranslation() {
             if (!silent) {
                 toast.add({ title: 'Success', description: 'Translation saved successfully.', color: 'success' })
             }
-        } catch (e) {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to save translation.', color: 'error' })
             console.error("Failed to save translation", e)
         }
@@ -247,7 +248,8 @@ export function useTranslation() {
             })
             await init()
             toast.add({ title: 'Success', description: 'Auto-translate successful.', color: 'success' })
-        } catch (e: unknown) {
+        } catch (e: any) {
+            if (e._toastShown) return
             const err = e as { data?: { message?: string } }
             if (err?.data?.message === 'DeepL API Key is invalid or unauthorized.') {
                 toast.add({ title: 'Error', description: `Invalid DeepL API Key - Please check your DeepL configuration.`, color: 'error' })
@@ -299,7 +301,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}`, { method: 'POST', body: { key: keyName, labelIds } })
             toast.add({ title: 'Success', description: 'Key added successfully', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to add key', color: 'error' })
         }
     }
@@ -310,7 +313,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}/${keyId}`, { method: 'PATCH', body: { key: keyName, forceReview } })
             toast.add({ title: 'Success', description: forceReview ? 'Key update sent for review' : 'Key updated successfully', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to update key', color: 'error' })
         }
     }
@@ -321,7 +325,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}/bulk`, { method: 'PATCH', body: { updates, forceReview } })
             toast.add({ title: 'Success', description: forceReview ? `Sent ${updates.length} key updates for review` : `Successfully updated ${updates.length} keys`, color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to bulk update keys', color: 'error' })
         }
     }
@@ -332,7 +337,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}/${keyId}`, { method: 'DELETE' })
             toast.add({ title: 'Success', description: 'Key deleted', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to delete key', color: 'error' })
         }
     }
@@ -343,7 +349,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}/bulk-delete`, { method: 'POST', body: { keyIds } })
             toast.add({ title: 'Success', description: `${keyIds.length} key(s) deleted`, color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to delete keys', color: 'error' })
         }
     }
@@ -354,7 +361,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}/${keyId}/labels`, { method: 'POST', body: { labelId } })
             toast.add({ title: 'Success', description: 'Label added to key', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to add label to key', color: 'error' })
         }
     }
@@ -365,7 +373,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}/bulk-labels-add`, { method: 'POST', body: { keyIds, labelId } })
             toast.add({ title: 'Success', description: `Label added to ${keyIds.length} key(s)`, color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to add label to keys', color: 'error' })
         }
     }
@@ -376,7 +385,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}/${keyId}/labels/${labelId}`, { method: 'DELETE' })
             toast.add({ title: 'Success', description: 'Label removed from key', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to remove label from key', color: 'error' })
         }
     }
@@ -387,7 +397,8 @@ export function useTranslation() {
             await fetchApi(`/localization/keys/${projectId.value}/bulk-labels-remove`, { method: 'POST', body: { keyIds, labelId } })
             toast.add({ title: 'Success', description: `Label removed from ${keyIds.length} key(s)`, color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to remove label from keys', color: 'error' })
         }
     }
@@ -398,7 +409,8 @@ export function useTranslation() {
             await fetchApi(`/localization/labels/${projectId.value}`, { method: 'POST', body: { name, color } })
             toast.add({ title: 'Success', description: 'Label created successfully', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to create label', color: 'error' })
         }
     }
@@ -409,7 +421,8 @@ export function useTranslation() {
             await fetchApi(`/localization/labels/${projectId.value}/${labelId}`, { method: 'PATCH', body: { name, color } })
             toast.add({ title: 'Success', description: 'Label updated', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to update label', color: 'error' })
         }
     }
@@ -420,7 +433,8 @@ export function useTranslation() {
             await fetchApi(`/localization/labels/${projectId.value}/${labelId}`, { method: 'DELETE' })
             toast.add({ title: 'Success', description: 'Label deleted', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to delete label', color: 'error' })
         }
     }
@@ -431,7 +445,8 @@ export function useTranslation() {
             await fetchApi(`/localization/labels/${projectId.value}/bulk-delete`, { method: 'POST', body: { ids: labelIds } })
             toast.add({ title: 'Success', description: `${labelIds.length} label(s) deleted`, color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to delete labels', color: 'error' })
         }
     }
@@ -445,7 +460,8 @@ export function useTranslation() {
             })
             toast.add({ title: 'Success', description: 'Language added successfully', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to add language', color: 'error' })
         }
     }
@@ -456,7 +472,8 @@ export function useTranslation() {
             await fetchApi(`/localization/projects/${projectId.value}/languages/${languageId}`, { method: 'DELETE' })
             toast.add({ title: 'Success', description: 'Language removed successfully', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to remove language', color: 'error' })
         }
     }
@@ -467,7 +484,8 @@ export function useTranslation() {
             await fetchApi(`/localization/projects/${projectId.value}/languages/bulk-delete`, { method: 'POST', body: { languageIds } })
             toast.add({ title: 'Success', description: `${languageIds.length} language(s) removed successfully`, color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to remove languages', color: 'error' })
         }
     }
@@ -481,7 +499,8 @@ export function useTranslation() {
             })
             toast.add({ title: 'Success', description: 'Language updated successfully', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to update language', color: 'error' })
         }
     }
@@ -492,7 +511,8 @@ export function useTranslation() {
             await fetchApi(`/localization/projects/${projectId.value}/source-language`, { method: 'PUT', body: { languageId } })
             toast.add({ title: 'Success', description: 'Reference language updated', color: 'success' })
             await init()
-        } catch {
+        } catch (e: any) {
+            if (e._toastShown) return
             toast.add({ title: 'Error', description: 'Failed to update reference language', color: 'error' })
         }
     }

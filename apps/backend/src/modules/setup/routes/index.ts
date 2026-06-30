@@ -12,7 +12,7 @@ export default async function setupRoutes(fastify: FastifyInstance) {
     fastify.post('/initial', async (request, reply) => {
         const required = await setupService.isSetupRequired();
         if (!required) {
-            return reply.status(400).send({ error: 'Setup already completed' });
+            return { success: true };
         }
         const body = request.body as any;
         return setupService.performInitialSetup(body);

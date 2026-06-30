@@ -78,9 +78,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
     fastify.patch('/:projectId/languages/:languageId', { preHandler: [checkProjectAccess] }, async (request) => {
         const { projectId, languageId } = request.params as { projectId: string, languageId: string };
         const body = request.body as { code?: string; name?: string; flag?: string };
-        const { LanguageService } = await import('../../languages/services/language.service');
-        const langService = new LanguageService(fastify.db);
-        return langService.update(parseInt(languageId), body);
+        return service.updateProjectLanguage(parseInt(projectId), parseInt(languageId), body);
     });
 
     fastify.get('/:projectId/languages', { preHandler: [checkProjectAccess] }, async (request) => {
