@@ -33,13 +33,11 @@ const startSetup = async () => {
   if (loading.value) return
   loading.value = true
   try {
-    const response = await fetchApi<{ success: boolean }>('/setup/initial', {
+    await fetchApi('/setup/initial', {
       method: 'POST',
       body: setupData.value
     })
-    if (response.success) {
-      step.value = 3
-    }
+    step.value = 3
   } catch (e) {
     console.error(e)
     alert('Setup failed. Check console for details.')

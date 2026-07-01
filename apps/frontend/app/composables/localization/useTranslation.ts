@@ -517,6 +517,21 @@ export function useTranslation() {
         }
     }
 
+    const bulkTranslateLanguage = async (languageId: number, providerId: string, markAsPending: boolean) => {
+        if (!projectId.value) return
+        try {
+            const res = await fetchApi(`/localization/projects/${projectId.value}/languages/${languageId}/bulk-translate`, { 
+                method: 'POST', 
+                body: { providerId, markAsPending } 
+            }) as { count: number }
+            toast.add({ title: 'Success', description: `Successfully scheduled translation for ${res.count} keys`, color: 'success' })
+            await init()
+        } catch (e: any) {
+            if (e._toastShown) return
+            toast.add({ title: 'Error', description: 'Failed to bulk translate', color: 'error' })
+        }
+    }
+
     return {
         init,
         isLoading,
@@ -555,6 +570,7 @@ export function useTranslation() {
         removeProjectLanguage,
         bulkRemoveProjectLanguages,
         updateLanguage,
-        setReferenceLanguage
+        setReferenceLanguage,
+        bulkTranslateLanguage
     }
 }

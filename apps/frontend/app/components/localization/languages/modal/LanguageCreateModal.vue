@@ -28,26 +28,27 @@ const newCode = ref("")
 const newFlag = ref("")
 
 const suggestedLanguages = [
-  { name: 'English', code: 'en', flag: '🇬🇧' },
-  { name: 'German', code: 'de', flag: '🇩🇪' },
-  { name: 'Spanish', code: 'es', flag: '🇪🇸' },
-  { name: 'French', code: 'fr', flag: '🇫🇷' },
-  { name: 'Italian', code: 'it', flag: '🇮🇹' },
-  { name: 'Russian', code: 'ru', flag: '🇷🇺' },
-  { name: 'Ukrainian', code: 'uk', flag: '🇺🇦' },
-  { name: 'Danish', code: 'da', flag: '🇩🇰' },
-  { name: 'Polish', code: 'pl', flag: '🇵🇱' },
-  { name: 'Dutch', code: 'nl', flag: '🇳🇱' },
-  { name: 'Portuguese', code: 'pt', flag: '🇵🇹' },
-  { name: 'Chinese', code: 'zh', flag: '🇨🇳' },
-  { name: 'Japanese', code: 'ja', flag: '🇯🇵' },
-  { name: 'Korean', code: 'ko', flag: '🇰🇷' },
-  { name: 'Turkish', code: 'tr', flag: '🇹🇷' },
-  { name: 'Arabic', code: 'ar', flag: '🇸🇦' },
-  { name: 'Hindi', code: 'hi', flag: '🇮🇳' },
-  { name: 'Swedish', code: 'sv', flag: '🇸🇪' },
-  { name: 'Norwegian', code: 'no', flag: '🇳🇴' },
-  { name: 'Finnish', code: 'fi', flag: '🇫🇮' }
+  { name: 'English', code: 'en_US', flag: '🇺🇸' },
+  { name: 'English (UK)', code: 'en_GB', flag: '🇬🇧' },
+  { name: 'German', code: 'de_DE', flag: '🇩🇪' },
+  { name: 'Spanish', code: 'es_ES', flag: '🇪🇸' },
+  { name: 'French', code: 'fr_FR', flag: '🇫🇷' },
+  { name: 'Italian', code: 'it_IT', flag: '🇮🇹' },
+  { name: 'Russian', code: 'ru_RU', flag: '🇷🇺' },
+  { name: 'Ukrainian', code: 'uk_UA', flag: '🇺🇦' },
+  { name: 'Danish', code: 'da_DK', flag: '🇩🇰' },
+  { name: 'Polish', code: 'pl_PL', flag: '🇵🇱' },
+  { name: 'Dutch', code: 'nl_NL', flag: '🇳🇱' },
+  { name: 'Portuguese', code: 'pt_PT', flag: '🇵🇹' },
+  { name: 'Chinese', code: 'zh_CN', flag: '🇨🇳' },
+  { name: 'Japanese', code: 'ja_JP', flag: '🇯🇵' },
+  { name: 'Korean', code: 'ko_KR', flag: '🇰🇷' },
+  { name: 'Turkish', code: 'tr_TR', flag: '🇹🇷' },
+  { name: 'Arabic', code: 'ar_SA', flag: '🇸🇦' },
+  { name: 'Hindi', code: 'hi_IN', flag: '🇮🇳' },
+  { name: 'Swedish', code: 'sv_SE', flag: '🇸🇪' },
+  { name: 'Norwegian', code: 'no_NO', flag: '🇳🇴' },
+  { name: 'Finnish', code: 'fi_FI', flag: '🇫🇮' }
 ]
 
 const filteredSuggestions = computed(() => {

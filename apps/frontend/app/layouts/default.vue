@@ -120,7 +120,7 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
         },
         {
           label: 'Manage Teams',
-          icon: 'i-lucide-users',
+          icon: 'i-lucide-shield-half',
           href: '/admin/teams'
         },
         {

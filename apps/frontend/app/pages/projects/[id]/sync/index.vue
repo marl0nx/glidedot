@@ -194,14 +194,13 @@ onMounted(() => {
         <div class="py-4 space-y-6">
           
           <!-- Warning banner if not configured or missing project ID -->
-          <u-alert 
-            v-if="traduoraStatus && (!traduoraStatus.configured || !traduoraStatus.traduoraProjectId)" 
-            color="warning" 
-            variant="subtle" 
-            title="Traduora not configured" 
-            description="Traduora Sync is not fully set up for this project yet. As an administrator, you can configure the credentials (including the Traduora Project ID) under 'Admin > Manage Projects' in this project's settings."
-            icon="i-lucide-alert-triangle" 
-          />
+          <div v-if="traduoraStatus && (!traduoraStatus.configured || !traduoraStatus.traduoraProjectId)" class="p-8 text-center border border-dashed border-neutral-700 rounded-xl bg-neutral-900/50">
+            <u-icon name="i-lucide-refresh-cw" class="w-12 h-12 mx-auto text-neutral-600 mb-4" />
+            <h3 class="text-lg font-medium text-white mb-2">No Traduora Sync configured</h3>
+            <p class="text-neutral-400 max-w-sm mx-auto mb-6">Traduora Sync must be configured before you can sync translations.</p>
+            <u-button v-if="isAdmin" label="Go to Manage Projects" to="/admin/projects" color="primary" />
+            <p v-else class="text-sm text-neutral-500">Please ask an administrator to configure Traduora Sync for this project.</p>
+          </div>
 
           <!-- Sync details if configured -->
           <div v-else-if="traduoraStatus && traduoraStatus.configured && traduoraStatus.traduoraProjectId" class="space-y-6">

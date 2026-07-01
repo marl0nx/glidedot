@@ -131,6 +131,14 @@ export default async function projectRoutes(fastify: FastifyInstance) {
         return result;
     });
 
+    fastify.post('/:projectId/languages/:languageId/bulk-translate', { preHandler: [checkProjectAccess] }, async (request) => {
+        const { projectId, languageId } = request.params as { projectId: string, languageId: string };
+        const body = request.body as { providerId: string; markAsPending: boolean };
+        const result = await service.bulkTranslate(parseInt(projectId), parseInt(languageId), body.providerId, body.markAsPending);
+        if (request.user) await logActivity(request.user.id, parseInt(projectId), 'BULK_TRANSLATED', JSON.stringify({ languageId, providerId: body.providerId, count: result.count }));
+        return result;
+    });
+
     // --- Key Templates ---
     fastify.get('/:projectId/templates', { preHandler: [checkProjectAccess] }, async (request) => {
         const { projectId } = request.params as { projectId: string };
@@ -543,21 +551,103 @@ export default async function projectRoutes(fastify: FastifyInstance) {
         const syncedLocales: string[] = [];
         const errors: string[] = [];
 
+        // Fetch existing locales from the Traduora project
+        let rawLocales: any[] = [];
+        try {
+            const localesUrl = `${config.traduoraUrl!.replace(/\/$/, '')}/api/v1/projects/${config.traduoraProjectId}/translations`;
+            const localesRes = await fetch(localesUrl, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
+            });
+            if (localesRes.ok) {
+                const body = await localesRes.json() as any;
+                rawLocales = Array.isArray(body)
+                    ? body
+                    : (body && Array.isArray(body.data)
+                        ? body.data
+                        : (body && body.data && Array.isArray(body.data.locales)
+                            ? body.data.locales
+                            : []));
+            } else {
+                console.warn(`[Traduora Sync] Failed to fetch existing locales from Traduora (status ${localesRes.status}). Proceeding with direct matching.`);
+            }
+        } catch (err) {
+            console.warn('[Traduora Sync] Error fetching existing locales from Traduora:', err);
+        }
+
+        const normalizeCode = (code: string) => code.trim().toLowerCase().replace(/[-_]/g, '');
+
         for (const lang of projectLangs) {
             try {
                 const translationsData = await service.exportTranslations(parseInt(projectId), lang.id);
-                const localeCode = lang.code;
+                const originalCode = lang.code;
+                const normalizedOriginal = normalizeCode(originalCode);
+
+                // Fuzzy-match whether this language is already registered in Traduora
+                let activeLocaleCode = originalCode;
+                let matchedLocale = rawLocales.find((l: any) => {
+                    const code = l?.locale?.code || l?.code;
+                    return code && normalizeCode(code) === normalizedOriginal;
+                });
+
+                // Fallback to matching just the primary language code (e.g., 'ru' for 'ru_ru')
+                if (!matchedLocale) {
+                    const primaryCode = normalizedOriginal.substring(0, 2);
+                    matchedLocale = rawLocales.find((l: any) => {
+                        const code = l?.locale?.code || l?.code;
+                        return code && normalizeCode(code).substring(0, 2) === primaryCode;
+                    });
+                }
+
+                if (matchedLocale) {
+                    // Use the exact formatted, case-sensitive locale code that Traduora already has
+                    activeLocaleCode = matchedLocale.locale?.code || matchedLocale.code;
+                } else {
+                    // Format code for Traduora (e.g., 'ru_ru' or 'ru-ru' -> 'ru_RU')
+                    let traduoraCode = originalCode;
+                    if (originalCode.includes('_')) {
+                        const parts = originalCode.split('_');
+                        traduoraCode = `${parts[0].toLowerCase()}_${parts[1].toUpperCase()}`;
+                    } else if (originalCode.includes('-')) {
+                        const parts = originalCode.split('-');
+                        traduoraCode = `${parts[0].toLowerCase()}_${parts[1].toUpperCase()}`;
+                    }
+
+                    // Create the missing locale in Traduora
+                    console.log(`[Traduora Sync] Locale ${originalCode} is missing in Traduora. Registering it dynamically as ${traduoraCode}...`);
+                    const createUrl = `${config.traduoraUrl!.replace(/\/$/, '')}/api/v1/projects/${config.traduoraProjectId}/translations`;
+                    const createRes = await fetch(createUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            code: traduoraCode
+                        })
+                    });
+
+                    if (!createRes.ok) {
+                        const errorText = await createRes.text();
+                        throw new Error(`Failed to create missing locale ${originalCode} in Traduora (status ${createRes.status}): ${errorText}`);
+                    }
+
+                    // Successfully created! Add to our local list of rawLocales to avoid double creation
+                    rawLocales.push({ code: traduoraCode });
+                    activeLocaleCode = traduoraCode;
+                }
 
                 // Create formData with file and fields
                 // Note: Traduora API's format enum expects 'jsonflat' rather than 'flat_json'
                 const formData = new FormData();
                 const jsonContent = JSON.stringify(translationsData);
                 const blob = new Blob([jsonContent], { type: 'application/json' });
-                formData.append('file', blob, `translations_${localeCode}.json`);
-                formData.append('locale', localeCode);
+                formData.append('file', blob, `translations_${activeLocaleCode}.json`);
+                formData.append('locale', activeLocaleCode);
                 formData.append('format', 'jsonflat');
 
-                const importUrl = `${config.traduoraUrl!.replace(/\/$/, '')}/api/v1/projects/${config.traduoraProjectId}/imports?locale=${localeCode}&format=jsonflat`;
+                const importUrl = `${config.traduoraUrl!.replace(/\/$/, '')}/api/v1/projects/${config.traduoraProjectId}/imports?locale=${activeLocaleCode}&format=jsonflat`;
                 const importRes = await fetch(importUrl, {
                     method: 'POST',
                     headers: {
@@ -568,10 +658,10 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
                 if (!importRes.ok) {
                     const errorText = await importRes.text();
-                    throw new Error(`Failed to import locale ${localeCode} (status ${importRes.status}): ${errorText}`);
+                    throw new Error(`Failed to import locale ${activeLocaleCode} (status ${importRes.status}): ${errorText}`);
                 }
 
-                syncedLocales.push(localeCode);
+                syncedLocales.push(originalCode);
             } catch (err: any) {
                 errors.push(err.message || String(err));
             }

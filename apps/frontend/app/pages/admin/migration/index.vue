@@ -498,14 +498,11 @@ const triggerS3Backup = async () => {
               </div>
             
             <div class="flex flex-col gap-4">
-              <u-alert 
-                v-if="!settings.s3Configured" 
-                color="warning" 
-                variant="subtle" 
-                title="S3 Not Configured" 
-                description="Please provide S3_ENDPOINT, S3_REGION, S3_BUCKET, S3_ACCESS_KEY, and S3_SECRET_KEY in your environment variables for the backend."
-                icon="i-lucide-cloud-off" 
-              />
+              <div v-if="!settings.s3Configured" class="p-8 text-center border border-dashed border-neutral-700 rounded-xl bg-neutral-900/50">
+                <u-icon name="i-lucide-cloud-off" class="w-12 h-12 mx-auto text-neutral-600 mb-4" />
+                <h3 class="text-lg font-medium text-white mb-2">S3 Not Configured</h3>
+                <p class="text-neutral-400 max-w-lg mx-auto mb-6">Please provide S3_ENDPOINT, S3_REGION, S3_BUCKET, S3_ACCESS_KEY, and S3_SECRET_KEY in your environment variables for the backend.</p>
+              </div>
               
               <div class="grid grid-cols-2 gap-4 p-4 border border-neutral-800 rounded-xl" :class="{ 'opacity-50 pointer-events-none': !settings.s3Configured }">
                 <u-form-field label="Schedule Automatic Backups">

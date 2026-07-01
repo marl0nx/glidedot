@@ -337,6 +337,83 @@ export class ProjectService {
         return { success: true, imported: Object.keys(data).length };
     }
 
+    async bulkTranslate(projectId: number, targetLanguageId: number, providerId: string, markAsPending: boolean) {
+        const [project] = await this.db.select({ sourceLanguageId: projects.sourceLanguageId }).from(projects).where(eq(projects.id, projectId));
+        if (!project || !project.sourceLanguageId) throw new Error('Project source language not set');
+        if (project.sourceLanguageId === targetLanguageId) throw new Error('Cannot bulk translate the source language');
+
+        const [sourceLang] = await this.db.select().from(languages).where(eq(languages.id, project.sourceLanguageId));
+        const [targetLang] = await this.db.select().from(languages).where(eq(languages.id, targetLanguageId));
+        if (!sourceLang || !targetLang) throw new Error('Language not found');
+
+        const keys = await this.db.select().from(translationKeys).where(eq(translationKeys.projectId, projectId));
+        if (!keys.length) return { success: true, count: 0 };
+        const keyIds = keys.map(k => k.id);
+
+        const allTranslations = await this.db.select()
+            .from(translations)
+            .where(and(
+                inArray(translations.keyId, keyIds),
+                inArray(translations.languageId, [project.sourceLanguageId, targetLanguageId])
+            ));
+
+        const sourceMap = new Map<number, string>();
+        const targetMap = new Map<number, string>();
+
+        for (const t of allTranslations) {
+            if (t.languageId === project.sourceLanguageId && t.value.trim() !== '') {
+                sourceMap.set(t.keyId, t.value);
+            }
+            if (t.languageId === targetLanguageId && t.value.trim() !== '') {
+                targetMap.set(t.keyId, t.value);
+            }
+        }
+
+        const missingKeys: { keyId: number, text: string }[] = [];
+        for (const keyId of sourceMap.keys()) {
+            if (!targetMap.has(keyId)) {
+                missingKeys.push({ keyId, text: sourceMap.get(keyId)! });
+            }
+        }
+
+        if (!missingKeys.length) return { success: true, count: 0 };
+
+        let translatedTexts: string[] = [];
+        if (providerId === 'deepl') {
+            const { DeeplService } = await import('../../services/deepl.service');
+            const deeplService = new DeeplService(this.db as any);
+            translatedTexts = await deeplService.translate(missingKeys.map(k => k.text), targetLang.code, sourceLang.code);
+        } else if (providerId === 'google') {
+            const { GoogleService } = await import('../../services/google.service');
+            const googleService = new GoogleService();
+            translatedTexts = await googleService.translate(missingKeys.map(k => k.text), targetLang.code, sourceLang.code);
+        } else {
+            throw new Error(`Unsupported provider: ${providerId}`);
+        }
+
+        if (translatedTexts.length !== missingKeys.length) {
+            throw new Error('Translation count mismatch');
+        }
+
+        for (let i = 0; i < missingKeys.length; i++) {
+            const keyId = missingKeys[i].keyId;
+            const text = translatedTexts[i];
+
+            const insertData = markAsPending 
+                ? { keyId, languageId: targetLanguageId, value: "", draftValue: text, reviewStatus: 'PENDING_REVIEW' as const }
+                : { keyId, languageId: targetLanguageId, value: text, draftValue: null, reviewStatus: 'APPROVED' as const };
+
+            await this.db.insert(translations)
+                .values(insertData)
+                .onConflictDoUpdate({
+                    target: [translations.keyId, translations.languageId],
+                    set: insertData
+                });
+        }
+
+        return { success: true, count: missingKeys.length };
+    }
+
     async getTemplates(projectId: number) {
         return this.db.select().from(keyTemplates).where(eq(keyTemplates.projectId, projectId));
     }
