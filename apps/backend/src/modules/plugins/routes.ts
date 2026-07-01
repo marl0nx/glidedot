@@ -7,6 +7,26 @@ export default async function pluginRoutes(fastify: FastifyInstance) {
 
     // --- USER / PROJECT ENDPOINTS ---
 
+    // Serve the plugin's frontend compiled UI script
+    fastify.get('/serve-ui/:pluginId', async (request, reply) => {
+        const { pluginId } = request.params as { pluginId: string };
+        const path = require('node:path');
+        const pluginPath = path.join(pluginSystem.getPluginsDir(), pluginId, 'dist', 'ui.js');
+        
+        try {
+            const file = Bun.file(pluginPath);
+            if (await file.exists()) {
+                reply.header('Content-Type', 'application/javascript');
+                reply.header('Access-Control-Allow-Origin', '*');
+                return await file.text();
+            } else {
+                return reply.status(404).send({ error: 'Not found', message: 'Plugin UI not found' });
+            }
+        } catch (err) {
+            return reply.status(500).send({ error: 'Internal server error' });
+        }
+    });
+
     // Get all plugins and their status/settings for a specific project (used by sidebar & extensions page)
     fastify.get('/projects/:projectId', { preHandler: [checkProjectAccess] }, async (request) => {
         const { projectId } = request.params as { projectId: string };

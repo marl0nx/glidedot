@@ -69,6 +69,7 @@ glidedot/
 ├── apps/
 │   ├── backend/        # Fastify API, Drizzle ORM schemas, Cron jobs
 │   └── frontend/       # Nuxt App, Pages, UI Components
+|   └── plugins/        # Optional: Custom plugins for glide.
 ├── docker-compose.yml  # Production Orchestration
 └── bun.lockb           # Lockfile (DO NOT DELETE)
 ```
