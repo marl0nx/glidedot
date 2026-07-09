@@ -76,5 +76,5 @@ glidedot/
 ---
 
 <div align="center">
-  <i>Built with ❤️ by marl0nx</i>
+  <i>Built with ❤️ by (marl0nx - prompt engineer) & antigravity</i>
 </div>
