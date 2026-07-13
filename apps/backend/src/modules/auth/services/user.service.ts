@@ -2,6 +2,26 @@ import { FastifyInstance } from 'fastify';
 import { users } from '../../admin/users/schema';
 import { eq } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
+import type { AlertConfig } from '../../../services/notification.service';
+
+export type UpdateUserData = Partial<{
+    username: string;
+    email: string;
+    password: string;
+    isAdmin: boolean;
+    isOidc: boolean;
+    isReviewer: boolean;
+    requiresReview: boolean;
+    allowSuggestions: boolean;
+    enableSuggestions: boolean;
+    translationQuota: number;
+    baseTranslationQuota: number;
+    quotaResetPeriodValue: number | null;
+    quotaResetPeriodUnit: string | null;
+    avatarUrl: string;
+    oidcGroups: string;
+    alertConfig: AlertConfig;
+}>;
 
 export const validatePasswordStrength = (password: string) => {
     const isLengthValid = password.length >= 12;
@@ -97,8 +117,8 @@ export class UserService {
             .returning();
     }
 
-    async updateUser(userId: number, data: Partial<{ username: string; email: string; password?: string; isAdmin: boolean; isOidc: boolean; isReviewer: boolean; requiresReview: boolean; allowSuggestions: boolean; enableSuggestions: boolean; translationQuota: number; baseTranslationQuota: number; quotaResetPeriodValue: number | null; quotaResetPeriodUnit: string | null; avatarUrl: string; oidcGroups: string; alertConfig: any }>) {
-        const updateData: any = { ...data };
+    async updateUser(userId: number, data: UpdateUserData) {
+        const updateData: UpdateUserData & { passwordHash?: string; quotaNextResetAt?: Date | null } = { ...data };
         if (updateData.password) {
             validatePasswordStrength(updateData.password);
             updateData.passwordHash = await Bun.password.hash(updateData.password);

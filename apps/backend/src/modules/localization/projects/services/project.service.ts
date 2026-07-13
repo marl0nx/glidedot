@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { projects, projectLanguages, languages, translations, translationKeys, activityLogs, keyTemplates, keyGlossary, keyVariables } from '../../schema';
-import { eq, and, inArray, desc } from 'drizzle-orm';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 import { users } from '../../../admin/users/schema';
 import { teamMembers, teamProjects, teams } from '../../../admin/teams/schema';
 
@@ -29,7 +29,7 @@ export class ProjectService {
         .where(eq(teamMembers.userId, user.id))
         .groupBy(projects.id);
 
-        let oidcLinkedProjects: any[] = [];
+        let oidcLinkedProjects: typeof userProjects = [];
         if (oidcGroupsArr.length > 0) {
             const { inArray } = await import('drizzle-orm');
             
@@ -41,7 +41,7 @@ export class ProjectService {
                     try {
                         const mappedGroups: string[] = JSON.parse(t.oidcMappedGroups).map((g: string) => g.toLowerCase());
                         return oidcGroupsArr.some(g => mappedGroups.includes(g.toLowerCase()));
-                    } catch (e) {
+                    } catch {
                         return false;
                     }
                 })
@@ -305,35 +305,43 @@ export class ProjectService {
         const existingKeys = await this.db.select().from(translationKeys).where(eq(translationKeys.projectId, projectId));
         const keyMap = new Map(existingKeys.map(k => [k.key, k.id]));
 
-        for (const [rawKeyName, value] of Object.entries(data)) {
-            if (typeof value !== 'string') continue;
-            
-            // Sanitize key name: replace colons, double colons, slashes, and backslashes with dots, and collapse any consecutive dots
-            const keyName = rawKeyName
-                .replace(/[:\\/]+/g, '.')
-                .replace(/\.+/g, '.')
-                .replace(/^\.|\.$/g, '');
-                
-            if (!keyName) continue;
+        await this.db.run(sql.raw('BEGIN'));
+        try {
+            for (const [rawKeyName, value] of Object.entries(data)) {
+                if (typeof value !== 'string') continue;
 
-            let keyId = keyMap.get(keyName);
-            if (!keyId) {
-                const [newKey] = await this.db.insert(translationKeys).values({ projectId, key: keyName }).returning();
-                keyId = newKey.id;
-                keyMap.set(keyName, keyId);
+                // Sanitize key name: replace colons, double colons, slashes, and backslashes with dots, and collapse any consecutive dots
+                const keyName = rawKeyName
+                    .replace(/[:\\/]+/g, '.')
+                    .replace(/\.+/g, '.')
+                    .replace(/^\.|\.$/g, '');
+
+                if (!keyName) continue;
+
+                let keyId = keyMap.get(keyName);
+                if (!keyId) {
+                    const [newKey] = await this.db.insert(translationKeys).values({ projectId, key: keyName }).returning();
+                    keyId = newKey.id;
+                    keyMap.set(keyName, keyId);
+                }
+
+                const insertData = importAsPending
+                    ? { keyId, languageId, value: "", draftValue: value, reviewStatus: 'PENDING_REVIEW' as const }
+                    : { keyId, languageId, value, draftValue: null, reviewStatus: 'APPROVED' as const };
+
+                await this.db.insert(translations)
+                    .values(insertData)
+                    .onConflictDoUpdate({
+                        target: [translations.keyId, translations.languageId],
+                        set: insertData
+                    });
             }
-            
-            const insertData = importAsPending 
-                ? { keyId, languageId, value: "", draftValue: value, reviewStatus: 'PENDING_REVIEW' as const }
-                : { keyId, languageId, value, draftValue: null, reviewStatus: 'APPROVED' as const };
-
-            await this.db.insert(translations)
-                .values(insertData)
-                .onConflictDoUpdate({
-                    target: [translations.keyId, translations.languageId],
-                    set: insertData
-                });
+            await this.db.run(sql.raw('COMMIT'));
+        } catch (err) {
+            await this.db.run(sql.raw('ROLLBACK'));
+            throw err;
         }
+
         return { success: true, imported: Object.keys(data).length };
     }
 
@@ -381,7 +389,7 @@ export class ProjectService {
         let translatedTexts: string[] = [];
         if (providerId === 'deepl') {
             const { DeeplService } = await import('../../services/deepl.service');
-            const deeplService = new DeeplService(this.db as any);
+            const deeplService = new DeeplService(this.db);
             translatedTexts = await deeplService.translate(missingKeys.map(k => k.text), targetLang.code, sourceLang.code);
         } else if (providerId === 'google') {
             const { GoogleService } = await import('../../services/google.service');
@@ -395,20 +403,29 @@ export class ProjectService {
             throw new Error('Translation count mismatch');
         }
 
-        for (let i = 0; i < missingKeys.length; i++) {
-            const keyId = missingKeys[i].keyId;
-            const text = translatedTexts[i];
+        // Batched into a single real transaction via raw BEGIN/COMMIT (see importTranslations for why
+        // db.transaction() with an async callback doesn't actually batch on the bun-sqlite driver).
+        await this.db.run(sql.raw('BEGIN'));
+        try {
+            for (let i = 0; i < missingKeys.length; i++) {
+                const keyId = missingKeys[i].keyId;
+                const text = translatedTexts[i];
 
-            const insertData = markAsPending 
-                ? { keyId, languageId: targetLanguageId, value: "", draftValue: text, reviewStatus: 'PENDING_REVIEW' as const }
-                : { keyId, languageId: targetLanguageId, value: text, draftValue: null, reviewStatus: 'APPROVED' as const };
+                const insertData = markAsPending
+                    ? { keyId, languageId: targetLanguageId, value: "", draftValue: text, reviewStatus: 'PENDING_REVIEW' as const }
+                    : { keyId, languageId: targetLanguageId, value: text, draftValue: null, reviewStatus: 'APPROVED' as const };
 
-            await this.db.insert(translations)
-                .values(insertData)
-                .onConflictDoUpdate({
-                    target: [translations.keyId, translations.languageId],
-                    set: insertData
-                });
+                await this.db.insert(translations)
+                    .values(insertData)
+                    .onConflictDoUpdate({
+                        target: [translations.keyId, translations.languageId],
+                        set: insertData
+                    });
+            }
+            await this.db.run(sql.raw('COMMIT'));
+        } catch (err) {
+            await this.db.run(sql.raw('ROLLBACK'));
+            throw err;
         }
 
         return { success: true, count: missingKeys.length };
@@ -550,7 +567,7 @@ export class ProjectService {
                         timeSpentArr.push(parsed.timeSpentMs);
                     }
                 }
-            } catch (e) {}
+            } catch {}
         });
         
         let averageTranslationSpeedMs = 0;
@@ -583,18 +600,15 @@ export class ProjectService {
         const totalKeys = keys.length;
 
         const projLangs = await this.db.select().from(projectLanguages).where(inArray(projectLanguages.projectId, projectIds));
-        const totalProjectLanguages = projLangs.length;
-        
+
         const distinctLanguageIds = new Set(projLangs.map(pl => pl.languageId));
         const totalLanguages = distinctLanguageIds.size;
 
         const keyIds = keys.map(k => k.id);
-        let totalTranslations = 0;
-        let transRecs: any[] = [];
-        if (keyIds.length > 0) {
-            transRecs = await this.db.select().from(translations).where(inArray(translations.keyId, keyIds));
-            totalTranslations = transRecs.filter(t => t.value.trim() !== '').length;
-        }
+        const transRecs = keyIds.length > 0
+            ? await this.db.select().from(translations).where(inArray(translations.keyId, keyIds))
+            : [];
+        const totalTranslations = transRecs.filter(t => t.value.trim() !== '').length;
 
         let expectedTranslations = 0;
         

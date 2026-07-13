@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Language } from "~/types";
-import StatusBadge from "~/components/StatusBadge.vue";
 import { useTranslation } from '~/composables/localization/useTranslation'
 
 const props = defineProps<{

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch, provide, onUnmounted } from 'vue'
+import { ref, onMounted, computed, watch, provide } from 'vue'
 import { useApi } from '~/composables/useApi'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -8,8 +8,6 @@ import { GridComponent, TooltipComponent, LegendComponent } from 'echarts/compon
 import VChart, { THEME_KEY } from 'vue-echarts'
 
 provide(THEME_KEY, 'dark')
-
-const colorProbe = ref<HTMLElement | null>(null)
 
 use([
   CanvasRenderer,

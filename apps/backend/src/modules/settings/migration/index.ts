@@ -1,22 +1,25 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import AdmZip from 'adm-zip';
+import { sql } from 'drizzle-orm';
 import { S3BackupService } from './s3-backup.service';
 
-import { 
-    projects, languages, projectLanguages, labels, 
+import {
+    projects, languages, projectLanguages, labels,
     translationKeys, translations, keysToLabels, activityLogs,
     keyTemplates, keyGlossary, keyVariables
 } from '../../localization/schema';
 
+type Db = FastifyInstance['db'];
+
 // Helper function to insert in chunks to avoid SQLite 'too many SQL variables' error
-async function insertInChunks(tx: any, table: any, data: any[], chunkSize: number = 500) {
+async function insertInChunks<T extends Parameters<Db['insert']>[0]>(db: Db, table: T, data: (T extends { $inferInsert: infer I } ? I : never)[], chunkSize: number = 500) {
     for (let i = 0; i < data.length; i += chunkSize) {
         const chunk = data.slice(i, i + chunkSize);
-        await tx.insert(table).values(chunk);
+        await db.insert(table).values(chunk);
     }
 }
 
-const migrationModule: FastifyPluginAsync = async (fastify, opts) => {
+const migrationModule: FastifyPluginAsync = async (fastify, _opts) => {
     fastify.get('/backup', async (request, reply) => {
         try {
             const allProjects = await fastify.db.select().from(projects);
@@ -70,7 +73,7 @@ const migrationModule: FastifyPluginAsync = async (fastify, opts) => {
             const zip = new AdmZip(buffer);
             const zipEntries = zip.getEntries();
             
-            const backupEntry = zipEntries.find((entry: any) => entry.entryName === 'backup.json');
+            const backupEntry = zipEntries.find((entry) => entry.entryName === 'backup.json');
             if (!backupEntry) {
                 return reply.status(400).send({ error: 'Invalid backup file: backup.json not found' });
             }
@@ -89,65 +92,78 @@ const migrationModule: FastifyPluginAsync = async (fastify, opts) => {
                 : true;
 
             // Import data
-            await fastify.db.transaction(async (tx) => {
+            // Batched into a single real transaction via raw BEGIN/COMMIT/ROLLBACK: db.transaction()
+            // wraps bun:sqlite's *synchronous* native transaction() internally, so an async callback
+            // (like this one, full of awaited deletes/inserts) suspends at its first `await` and the
+            // native wrapper commits immediately - every statement after that first await then runs
+            // auto-committed and un-rollback-able. That's especially dangerous here: if a later insert
+            // failed, the earlier deletes would already be permanently committed, leaving the database
+            // half-wiped instead of rolled back.
+            await fastify.db.run(sql.raw('BEGIN'));
+            try {
                 if (restoreProjects) {
                     // Delete project data safely (child tables first)
-                    await tx.delete(keysToLabels);
-                    await tx.delete(translations);
-                    await tx.delete(translationKeys);
-                    await tx.delete(labels);
-                    await tx.delete(projectLanguages);
-                    await tx.delete(activityLogs);
-                    await tx.delete(projects);
-                    await tx.delete(languages);
+                    await fastify.db.delete(keysToLabels);
+                    await fastify.db.delete(translations);
+                    await fastify.db.delete(translationKeys);
+                    await fastify.db.delete(labels);
+                    await fastify.db.delete(projectLanguages);
+                    await fastify.db.delete(activityLogs);
+                    await fastify.db.delete(projects);
+                    await fastify.db.delete(languages);
                 }
 
                 if (restoreConventions) {
-                    await tx.delete(keyTemplates);
-                    await tx.delete(keyGlossary);
-                    await tx.delete(keyVariables);
+                    await fastify.db.delete(keyTemplates);
+                    await fastify.db.delete(keyGlossary);
+                    await fastify.db.delete(keyVariables);
                 }
 
                 // Re-insert
                 if (restoreProjects) {
                     if (backupData.languages && backupData.languages.length > 0) {
-                        await insertInChunks(tx, languages, backupData.languages);
+                        await insertInChunks(fastify.db, languages, backupData.languages);
                     }
                     if (backupData.projects && backupData.projects.length > 0) {
-                        await insertInChunks(tx, projects, backupData.projects);
+                        await insertInChunks(fastify.db, projects, backupData.projects);
                     }
                     if (backupData.projectLanguages && backupData.projectLanguages.length > 0) {
-                        await insertInChunks(tx, projectLanguages, backupData.projectLanguages);
+                        await insertInChunks(fastify.db, projectLanguages, backupData.projectLanguages);
                     }
                     if (backupData.labels && backupData.labels.length > 0) {
-                        await insertInChunks(tx, labels, backupData.labels);
+                        await insertInChunks(fastify.db, labels, backupData.labels);
                     }
                     if (backupData.translationKeys && backupData.translationKeys.length > 0) {
-                        await insertInChunks(tx, translationKeys, backupData.translationKeys);
+                        await insertInChunks(fastify.db, translationKeys, backupData.translationKeys);
                     }
                     if (backupData.translations && backupData.translations.length > 0) {
-                        await insertInChunks(tx, translations, backupData.translations);
+                        await insertInChunks(fastify.db, translations, backupData.translations);
                     }
                     if (backupData.keysToLabels && backupData.keysToLabels.length > 0) {
-                        await insertInChunks(tx, keysToLabels, backupData.keysToLabels);
+                        await insertInChunks(fastify.db, keysToLabels, backupData.keysToLabels);
                     }
                     if (backupData.activityLogs && backupData.activityLogs.length > 0) {
-                        await insertInChunks(tx, activityLogs, backupData.activityLogs);
+                        await insertInChunks(fastify.db, activityLogs, backupData.activityLogs);
                     }
                 }
 
                 if (restoreConventions) {
                     if (backupData.keyTemplates && backupData.keyTemplates.length > 0) {
-                        await insertInChunks(tx, keyTemplates, backupData.keyTemplates);
+                        await insertInChunks(fastify.db, keyTemplates, backupData.keyTemplates);
                     }
                     if (backupData.keyGlossary && backupData.keyGlossary.length > 0) {
-                        await insertInChunks(tx, keyGlossary, backupData.keyGlossary);
+                        await insertInChunks(fastify.db, keyGlossary, backupData.keyGlossary);
                     }
                     if (backupData.keyVariables && backupData.keyVariables.length > 0) {
-                        await insertInChunks(tx, keyVariables, backupData.keyVariables);
+                        await insertInChunks(fastify.db, keyVariables, backupData.keyVariables);
                     }
                 }
-            });
+
+                await fastify.db.run(sql.raw('COMMIT'));
+            } catch (err) {
+                await fastify.db.run(sql.raw('ROLLBACK'));
+                throw err;
+            }
 
             return reply.send({ success: true, message: 'Backup restored successfully' });
         } catch (error) {

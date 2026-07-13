@@ -9,7 +9,6 @@ definePageMeta({
   layout: 'default'
 })
 
-const appConfig = useAppConfig()
 const toast = useToast()
 const { shortcuts, loadShortcuts, saveShortcuts, formatShortcut, defaultShortcuts } = useShortcuts()
 const { user } = useAuth()
@@ -283,7 +282,7 @@ onUnmounted(() => {
           <u-form-field label="Provider" class="w-full sm:w-1/3">
             <u-select v-model="alertConfig.provider" :items="providerOptions" class="w-full" />
           </u-form-field>
-          <u-form-field label="Webhook URL / Target" class="flex-1 w-full" v-if="alertConfig.provider !== 'none'">
+          <u-form-field v-if="alertConfig.provider !== 'none'" label="Webhook URL / Target" class="flex-1 w-full">
             <div class="flex flex-col min-[450px]:flex-row items-stretch min-[450px]:items-center gap-2 w-full">
               <u-input v-model="alertConfig.url" placeholder="https://..." class="w-full min-w-0" />
               <u-dropdown-menu :items="testDropdownItems" :disabled="!alertConfig.url" class="shrink-0 w-full min-[450px]:w-auto">
@@ -299,9 +298,9 @@ onUnmounted(() => {
                 />
               </u-dropdown-menu>
             </div>
-            <p class="text-xs text-neutral-500 mt-1" v-if="alertConfig.provider === 'ntfy'">For ntfy, use a URL like <code>https://ntfy.sh/my_secret_topic</code></p>
-            <p class="text-xs text-neutral-500 mt-1" v-if="alertConfig.provider === 'gotify'">For Gotify, use a URL like <code>https://gotify.example.com/message?token=...</code></p>
-            <p class="text-xs text-neutral-500 mt-1" v-if="alertConfig.provider === 'telegram'">For Telegram, use a URL like <code>https://api.telegram.org/bot&lt;bot_token&gt;/sendMessage?chat_id=&lt;chat_id&gt;</code></p>
+            <p v-if="alertConfig.provider === 'ntfy'" class="text-xs text-neutral-500 mt-1">For ntfy, use a URL like <code>https://ntfy.sh/my_secret_topic</code></p>
+            <p v-if="alertConfig.provider === 'gotify'" class="text-xs text-neutral-500 mt-1">For Gotify, use a URL like <code>https://gotify.example.com/message?token=...</code></p>
+            <p v-if="alertConfig.provider === 'telegram'" class="text-xs text-neutral-500 mt-1">For Telegram, use a URL like <code>https://api.telegram.org/bot&lt;bot_token&gt;/sendMessage?chat_id=&lt;chat_id&gt;</code></p>
           </u-form-field>
         </div>
 
@@ -320,9 +319,9 @@ onUnmounted(() => {
             v-for="event in availableEvents" 
             :key="event.value"
             :model-value="alertConfig.events.includes(event.value)"
-            @update:model-value="(checked: boolean | 'indeterminate') => toggleEvent(event.value, checked === true)"
             :label="event.label"
             :description="event.description"
+            @update:model-value="(checked: boolean | 'indeterminate') => toggleEvent(event.value, checked === true)"
           />
         </div>
 

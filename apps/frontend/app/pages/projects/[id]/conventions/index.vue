@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useConventions } from '~/composables/localization/useConventions'
 import GlossarySettings from '~/components/localization/conventions/GlossarySettings.vue'
@@ -101,7 +101,7 @@ const handleDeleteTemplate = async (id: number) => {
       class="mt-4 w-full"
       :ui="{ list: 'bg-neutral-900 border border-neutral-800 w-full h-10', trigger: 'h-8 text-sm' }"
     >
-      <template #templates="{ item }">
+      <template #templates>
         <div class="py-2 flex flex-col gap-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>
@@ -122,7 +122,7 @@ const handleDeleteTemplate = async (id: number) => {
           />
         </div>
       </template>
-      <template #variables="{ item }">
+      <template #variables>
         <div class="py-2 flex flex-col gap-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>
@@ -142,7 +142,7 @@ const handleDeleteTemplate = async (id: number) => {
           />
         </div>
       </template>
-      <template #glossary="{ item }">
+      <template #glossary>
         <div class="py-2 flex flex-col gap-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>

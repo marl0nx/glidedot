@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
-import { getPaginationRowModel } from '@tanstack/vue-table'
 import AutomationGraph from '~/components/admin/insights/graphs/AutomationGraph.vue'
 
 definePageMeta({
@@ -29,7 +28,6 @@ const searchQuery = ref('')
 const currentPage = ref(1)
 const pageSize = ref(15)
 
-const selectedTab = ref(0)
 const tabs = [
   { label: 'Activity Feed', slot: 'feed', icon: 'i-lucide-activity' },
   { label: 'Member Contributions', slot: 'leaderboard', icon: 'i-lucide-users' },
@@ -329,7 +327,7 @@ const formatSpeed = (ms?: number) => {
           </div>
         </template>
         <template #lastActivity-cell="{ row }">
-          <div class="flex flex-col" v-if="row.original.lastActivity">
+          <div v-if="row.original.lastActivity" class="flex flex-col">
             <span class="text-sm text-neutral-200">{{ formatLocalTime(row.original.lastActivity).date }}</span>
             <span class="text-xs text-neutral-500">{{ formatLocalTime(row.original.lastActivity).time }}</span>
           </div>

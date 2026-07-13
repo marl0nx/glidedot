@@ -202,7 +202,7 @@ const autoFixKey = async (keyObj: TranslationKey) => {
       try {
         await updateKey(keyObj.id, newName, true)
         toast.add({ title: 'Success', description: 'Key auto-fix sent for review', color: 'success' })
-      } catch(e) {
+      } catch {
         toast.add({ title: 'Error', description: 'Failed to auto-fix key', color: 'error' })
       }
     }
@@ -357,7 +357,7 @@ const validateKey = (keyName: string) => {
           matchesTemplate = true
           break
         }
-      } catch(e) {}
+      } catch { /* malformed template segments JSON, skip this template */ }
     }
     if (!matchesTemplate) {
       warnings.push("Does not match any Key Template schema")
@@ -580,7 +580,7 @@ watch([glossary, templates, variables], () => {
                       class="justify-start w-full"
                       @click="addLabelToKey(row.original.id, l.id)"
                     >
-                      <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: l.color }"></div>
+                      <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: l.color }"/>
                       {{ l.name }}
                     </u-button>
                   </div>
@@ -675,7 +675,7 @@ watch([glossary, templates, variables], () => {
                 </template>
 
                 <u-popover>
-                  <u-button icon="i-lucide-plus" size="xs" color="neutral" variant="ghost" @click.stop :class="keyObj.labels?.length ? '' : 'opacity-60 hover:opacity-100'" />
+                  <u-button icon="i-lucide-plus" size="xs" color="neutral" variant="ghost" :class="keyObj.labels?.length ? '' : 'opacity-60 hover:opacity-100'" @click.stop />
                   <template #content>
                     <div class="p-2 flex flex-col gap-1 w-48" @click.stop>
                       <span class="text-xs font-semibold text-neutral-400 mb-1 px-1">Add Label</span>
@@ -691,7 +691,7 @@ watch([glossary, templates, variables], () => {
                         class="justify-start w-full"
                         @click.stop="addLabelToKey(keyObj.id, l.id)"
                       >
-                        <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: l.color }"></div>
+                        <div class="w-2 h-2 rounded-full" :style="{ backgroundColor: l.color }"/>
                         {{ l.name }}
                       </u-button>
                     </div>

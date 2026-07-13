@@ -19,7 +19,7 @@ const previewEvents = computed(() => {
       <!-- Bot Avatar -->
       <div class="flex-shrink-0">
         <div class="w-10 h-10 rounded-full bg-[#2b2d31] flex items-center justify-center overflow-hidden">
-          <img :src="avatarUrl || 'https://raw.githubusercontent.com/marl0nx/glide/main/apps/frontend/public/icon.png'" alt="Webhook Avatar" class="w-full h-full object-cover" :class="{ 'p-2': !avatarUrl }" />
+          <img :src="avatarUrl || 'https://raw.githubusercontent.com/marl0nx/glide/main/apps/frontend/public/icon.png'" alt="Webhook Avatar" class="w-full h-full object-cover" :class="{ 'p-2': !avatarUrl }" >
         </div>
       </div>
       
@@ -31,14 +31,14 @@ const previewEvents = computed(() => {
           <span class="text-xs text-[#949ba4] ml-1">Today at 12:00 PM</span>
         </div>
         
-        <div class="mb-1" v-if="pingUserId">
+        <div v-if="pingUserId" class="mb-1">
           <span class="bg-[#5865F2]/20 text-[#c9cdfb] px-1 rounded font-medium hover:bg-[#5865F2]/40 transition-colors cursor-pointer">@{{ pingUserId }}</span>
         </div>
         
         <!-- Embed -->
         <div class="bg-[#2b2d31] rounded flex overflow-hidden mt-2">
           <!-- Left color line -->
-          <div class="w-1 bg-[#0284c7] flex-shrink-0"></div>
+          <div class="w-1 bg-[#0284c7] flex-shrink-0"/>
           
           <div class="p-3 flex-1">
             <h3 class="text-white font-bold text-base mb-1">
@@ -67,7 +67,7 @@ const previewEvents = computed(() => {
             
             <!-- Footer -->
             <div class="flex items-center gap-2 mt-2">
-              <img :src="avatarUrl || 'https://raw.githubusercontent.com/marl0nx/glide/main/apps/frontend/public/icon.png'" class="w-5 h-5 rounded-full object-cover" :class="{ 'p-0.5 bg-[#2b2d31]': !avatarUrl }" />
+              <img :src="avatarUrl || 'https://raw.githubusercontent.com/marl0nx/glide/main/apps/frontend/public/icon.png'" class="w-5 h-5 rounded-full object-cover" :class="{ 'p-0.5 bg-[#2b2d31]': !avatarUrl }" >
               <span class="text-[11px] text-[#dbdee1]">Powered by glide. • Today at 12:00 PM</span>
             </div>
           </div>

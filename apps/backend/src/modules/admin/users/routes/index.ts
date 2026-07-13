@@ -1,5 +1,6 @@
 import { FastifyInstance } from "fastify";
-import { UserService } from "../../../auth/services/user.service";
+import { UserService, UpdateUserData } from "../../../auth/services/user.service";
+import type { AlertConfig } from "../../../../services/notification.service";
 
 export default async function usersRoutes(fastify: FastifyInstance) {
     const userService = new UserService(fastify.db);
@@ -10,7 +11,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     });
 
     fastify.post('/', { preHandler: [requireAdmin] }, async (request, reply) => {
-        const body = request.body as any;
+        const body = request.body as { username: string; email: string; password: string; isAdmin?: boolean; isOidc?: boolean; isReviewer?: boolean; requiresReview?: boolean; avatarUrl?: string; oidcGroups?: string };
         const result = await userService.createUser(body);
         reply.status(201).send(result[0]);
     });
@@ -33,13 +34,13 @@ export default async function usersRoutes(fastify: FastifyInstance) {
     });
 
     fastify.post('/me/password', async (request) => {
-        const { password } = request.body as any;
+        const { password } = request.body as { password: string };
         return userService.updatePassword(request.user!.id, password);
     });
 
     fastify.patch('/me', async (request, reply) => {
-        const body = request.body as any;
-        
+        const body = request.body as UpdateUserData & { oldPassword?: string };
+
         delete body.username;
 
         if (request.user!.isOidc) {
@@ -62,11 +63,11 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         return userService.updateUser(request.user!.id, body);
     });
 
-    fastify.post('/me/test-alert', async (request, reply) => {
-        const { alertConfig, testEvent } = request.body as any;
+    fastify.post('/me/test-alert', async (request, _reply) => {
+        const { alertConfig, testEvent } = request.body as { alertConfig?: AlertConfig; testEvent?: string };
         const { NotificationService } = await import('../../../../services/notification.service');
-        
-        let payload: any = {
+
+        let payload: { title: string; message: string; [key: string]: string | undefined } = {
             title: 'Test Notification',
             message: 'This is a test notification from glide. If you are seeing this, your webhook is configured correctly!',
             event: testEvent || 'test.alert'
@@ -130,7 +131,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
 
     fastify.patch('/:id', { preHandler: [requireAdmin] }, async (request) => {
         const { id } = request.params as { id: string };
-        const body = request.body as any;
+        const body = request.body as UpdateUserData;
 
         const { users } = await import('../schema');
         const { eq } = await import('drizzle-orm');

@@ -87,8 +87,8 @@ const handleLogout = async () => {
            to="/admin/settings"
            class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-2.5 bg-neutral-900/80 backdrop-blur-md border border-warning-500/30 rounded-full shadow-2xl shadow-warning-500/10 cursor-pointer hover:bg-neutral-800/90 transition-all hover:scale-105 group">
         <div class="relative flex h-2.5 w-2.5">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-warning-500"></span>
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning-400 opacity-75"/>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-warning-500"/>
         </div>
         <span class="text-warning-400 text-sm font-semibold tracking-wide">Maintenance Active</span>
         <u-icon name="i-lucide-arrow-right" class="w-4 h-4 text-warning-500/50 group-hover:text-warning-400 transition-colors" />

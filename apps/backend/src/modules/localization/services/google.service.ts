@@ -30,8 +30,8 @@ export class GoogleService {
                 throw new Error(`Google translation failed: ${error}`);
             }
 
-            const data = await response.json() as any;
-            const translatedText = data[0].map((item: any) => item[0]).join('');
+            const data = await response.json() as [string, string][][];
+            const translatedText = data[0].map((item) => item[0]).join('');
             results.push(translatedText);
         }
 

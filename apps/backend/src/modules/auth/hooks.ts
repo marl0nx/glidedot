@@ -1,24 +1,22 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { UserService } from './services/user.service';
 import { TeamService } from './services/team.service';
+import { HttpError } from '../../utils/http-error';
+import type { AlertConfig } from '../../services/notification.service';
 
 export function createAuthHooks(userService: UserService, teamService: TeamService) {
     return {
-        authenticate: async (request: FastifyRequest, reply: FastifyReply) => {
+        authenticate: async (request: FastifyRequest, _reply: FastifyReply) => {
             const authHeader = request.headers['authorization'] as string;
             const apiKey = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
-            
+
             if (!apiKey) {
-                const err = new Error('Authorization Bearer Token is required');
-                (err as any).statusCode = 401;
-                throw err;
+                throw new HttpError('Authorization Bearer Token is required', 401);
             }
 
             const user = await userService.getByApiKey(apiKey);
             if (!user) {
-                const err = new Error('Invalid API Key');
-                (err as any).statusCode = 401;
-                throw err;
+                throw new HttpError('Invalid API Key', 401);
             }
 
             if (!user.isAdmin) {
@@ -26,20 +24,16 @@ export function createAuthHooks(userService: UserService, teamService: TeamServi
                 const { eq } = await import('drizzle-orm');
                 const mode = await request.server.db.select().from(settings).where(eq(settings.key, 'maintenanceMode')).limit(1);
                 if (mode.length > 0 && mode[0].value === 'true') {
-                    const err = new Error('Maintenance Mode is active');
-                    (err as any).statusCode = 503;
-                    throw err;
+                    throw new HttpError('Maintenance Mode is active', 503);
                 }
             }
 
             request.user = user;
         },
 
-        requireAdmin: async (request: FastifyRequest, reply: FastifyReply) => {
+        requireAdmin: async (request: FastifyRequest, _reply: FastifyReply) => {
             if (!request.user?.isAdmin) {
-                const err = new Error('Admin access required');
-                (err as any).statusCode = 403;
-                throw err;
+                throw new HttpError('Admin access required', 403);
             }
         },
 
@@ -49,11 +43,14 @@ export function createAuthHooks(userService: UserService, teamService: TeamServi
             const { projectId } = request.params as { projectId?: string };
             let pId = projectId ? parseInt(projectId) : undefined;
 
-            if (!pId && (request.body as any)?.projectId) {
-                pId = parseInt((request.body as any).projectId);
+            const body = request.body as { projectId?: string | number } | undefined;
+            const query = request.query as { projectId?: string | number } | undefined;
+
+            if (!pId && body?.projectId) {
+                pId = parseInt(String(body.projectId));
             }
-            if (!pId && (request.query as any)?.projectId) {
-                pId = parseInt((request.query as any).projectId);
+            if (!pId && query?.projectId) {
+                pId = parseInt(String(query.projectId));
             }
 
             if (!pId) return;
@@ -64,7 +61,7 @@ export function createAuthHooks(userService: UserService, teamService: TeamServi
             }
         },
 
-        checkLanguagePermission: async (request: FastifyRequest, reply: FastifyReply) => {
+        checkLanguagePermission: async (_request: FastifyRequest, _reply: FastifyReply) => {
             // Disabled granular language permission until UI supports it
             return;
         }
@@ -88,7 +85,7 @@ declare module 'fastify' {
             enableSuggestions: boolean;
             hasDeepL?: boolean;
             apiKey: string;
-            alertConfig?: any;
+            alertConfig?: AlertConfig | null;
         };
     }
 }

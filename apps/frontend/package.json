@@ -7,36 +7,38 @@
     "dev": "nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@comark/nuxt": "^0.4.0",
-    "@iconify-json/lucide": "^1.2.114",
-    "@iconify-json/simple-icons": "^1.2.87",
-    "@nuxt/content": "^3.14.0",
-    "@nuxt/eslint": "1.15.2",
+    "@comark/nuxt": "^0.5.0",
+    "@iconify-json/lucide": "^1.2.116",
+    "@iconify-json/simple-icons": "^1.2.89",
+    "@nuxt/content": "^3.15.0",
+    "@nuxt/eslint": "1.16.0",
     "@nuxt/image": "2.0.0",
-    "@nuxt/ui": "4.7.1",
+    "@nuxt/ui": "4.9.0",
     "@nuxtjs/tailwindcss": "6.14.0",
     "@tailwindcss/typography": "^0.5.20",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.4.0",
     "echarts": "^6.1.0",
-    "eslint": "^9.0.0 || ^10.0.0",
+    "eslint": "^10.7.0",
     "highlight.js": "^11.11.1",
-    "nuxt": "^4.4.5",
+    "nuxt": "^4.4.8",
     "nuxt-oidc-auth": "^1.0.0-beta.11",
     "ofetch": "^1.5.1",
-    "tailwindcss": "^4.0.0",
-    "typescript": "^5.6.3 || ^6.0.0",
-    "vue": "^3.5.34",
+    "tailwindcss": "^4.3.2",
+    "typescript": "^6.0.3",
+    "vue": "^3.5.39",
     "vue-echarts": "^8.0.1",
-    "vue-router": "^5.0.6"
+    "vue-router": "^5.1.0"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^26.0.1",
+    "@types/node": "^26.1.1",
     "@vite-pwa/nuxt": "^1.1.1",
-    "vue-tsc": "^3.3.5"
+    "vue-tsc": "^3.3.7"
   }
 }

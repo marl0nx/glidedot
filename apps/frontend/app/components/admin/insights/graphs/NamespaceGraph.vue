@@ -6,7 +6,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import { TreeChart } from 'echarts/charts'
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components'
 import VChart, { THEME_KEY } from 'vue-echarts'
-import type { TranslationKey, Project, Language } from '~/types'
+import type { TranslationKey, Language } from '~/types'
 
 const emit = defineEmits<{
   (e: 'go-to-structure', keyName: string): void
@@ -94,7 +94,7 @@ const fetchKeys = async () => {
     keys.value = keysData as TranslationKey[]
     languages.value = langsData as Language[]
     focusedNodeId.value = 'root'
-  } catch (e) {
+  } catch {
     keys.value = []
     languages.value = []
   } finally {
@@ -307,14 +307,14 @@ const chartOptions = computed(() => {
         v-model:open="isContextMenuOpen" 
         :items="contextMenuItems"
       >
-        <div class="w-px h-px"></div>
+        <div class="w-px h-px"/>
       </u-dropdown-menu>
     </div>
 
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-neutral-900 border border-neutral-800 p-4 rounded-xl shrink-0">
       <div class="flex items-center gap-4 w-full md:w-auto">
         <h3 class="font-medium text-white px-2">Key Hierarchy</h3>
-        <u-tooltip text="Go Up" v-if="focusedNodeId && focusedNodeId !== 'root'">
+        <u-tooltip v-if="focusedNodeId && focusedNodeId !== 'root'" text="Go Up">
           <u-button 
             icon="i-lucide-corner-up-left" 
             color="neutral" 

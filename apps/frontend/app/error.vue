@@ -3,7 +3,10 @@ import { ref, computed } from 'vue'
 import type { NuxtError } from '#app'
 
 const props = defineProps({
-  error: Object as () => NuxtError
+  error: {
+    type: Object as () => NuxtError,
+    default: () => ({}) as NuxtError
+  }
 })
 
 const showRaw = ref(false)
@@ -165,8 +168,8 @@ const troubleshooting = computed(() => {
           <!-- Developer Log Toggler -->
           <div class="border-t border-accented pt-4">
             <button 
-              @click="showRaw = !showRaw" 
-              class="flex items-center justify-between w-full text-xs text-neutral-400 hover:text-neutral-200 transition-colors"
+              class="flex items-center justify-between w-full text-xs text-neutral-400 hover:text-neutral-200 transition-colors" 
+              @click="showRaw = !showRaw"
             >
               <span class="flex items-center gap-1.5 font-mono">
                 <u-icon name="i-lucide-code" class="w-4 h-4" />

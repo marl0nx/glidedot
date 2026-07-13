@@ -1,15 +1,13 @@
+import { FastifyInstance } from "fastify";
 import { eq, and } from "drizzle-orm";
 import { userGitConnections, projectGitSyncs } from "../schema";
 import { users } from "../../admin/users/schema";
-import { projects, languages, projectLanguages, translationKeys, translations } from "../../localization/schema";
+import { languages, projectLanguages, translationKeys, translations } from "../../localization/schema";
 import { encryptString, decryptString } from "../../../utils/encryption";
+import { HttpError } from "../../../utils/http-error";
 
 export class GitService {
-    private db: any;
-
-    constructor(db: any) {
-        this.db = db;
-    }
+    constructor(private db: FastifyInstance['db']) {}
 
     async getUserConnections(userId: number) {
         return this.db.select().from(userGitConnections).where(eq(userGitConnections.userId, userId));
@@ -31,9 +29,7 @@ export class GitService {
             url = `${base}/api/v4/user`;
         } else if (provider === 'forgejo') {
             if (!baseUrl) {
-                const err = new Error('Base URL is required for Forgejo/Gitea');
-                (err as any).statusCode = 400;
-                throw err;
+                throw new HttpError('Base URL is required for Forgejo/Gitea', 400);
             }
             const base = baseUrl.replace(/\/$/, '');
             url = `${base}/api/v1/user`;
@@ -42,15 +38,12 @@ export class GitService {
         try {
             const res = await fetch(url, { headers });
             if (!res.ok) {
-                const err = new Error(`Invalid Token: Provider returned ${res.status}`);
-                (err as any).statusCode = 400;
-                throw err;
+                throw new HttpError(`Invalid Token: Provider returned ${res.status}`, 400);
             }
-        } catch (e: any) {
-            if (e.statusCode === 400) throw e;
-            const err = new Error(`Connection failed: ${e.message}`);
-            (err as any).statusCode = 400;
-            throw err;
+        } catch (e) {
+            if (e instanceof HttpError && e.statusCode === 400) throw e;
+            const message = e instanceof Error ? e.message : String(e);
+            throw new HttpError(`Connection failed: ${message}`, 400);
         }
         const existing = await this.db.select().from(userGitConnections)
             .where(and(eq(userGitConnections.userId, userId), eq(userGitConnections.provider, provider)))
@@ -82,7 +75,7 @@ export class GitService {
         .leftJoin(users, eq(projectGitSyncs.lastSyncedBy, users.id))
         .where(eq(projectGitSyncs.projectId, projectId));
 
-        return syncs.map((row: any) => ({
+        return syncs.map((row) => ({
             ...row.sync,
             lastSyncedByName: row.user?.username || null
         }));
@@ -118,16 +111,16 @@ export class GitService {
                 headers: { 'Authorization': `Bearer ${conn.token}`, 'Accept': 'application/vnd.github.v3+json' }
             });
             if (!res.ok) throw new Error(`GitHub API Error: ${res.status}`);
-            const data = await res.json();
-            return data.map((r: any) => ({ id: r.id.toString(), name: r.full_name, defaultBranch: r.default_branch }));
+            const data = await res.json() as { id: number; full_name: string; default_branch: string }[];
+            return data.map((r) => ({ id: r.id.toString(), name: r.full_name, defaultBranch: r.default_branch }));
         } else if (provider === 'gitlab') {
             const baseUrl = conn.baseUrl || 'https://gitlab.com';
             const res = await fetch(`${baseUrl}/api/v4/projects?membership=true&per_page=100&order_by=updated_at`, {
                 headers: { 'Authorization': `Bearer ${conn.token}` }
             });
             if (!res.ok) throw new Error(`GitLab API Error: ${res.status}`);
-            const data = await res.json();
-            return data.map((r: any) => ({ id: r.id.toString(), name: r.path_with_namespace, defaultBranch: r.default_branch }));
+            const data = await res.json() as { id: number; path_with_namespace: string; default_branch: string }[];
+            return data.map((r) => ({ id: r.id.toString(), name: r.path_with_namespace, defaultBranch: r.default_branch }));
         } else if (provider === 'forgejo') {
             const baseUrl = conn.baseUrl;
             if (!baseUrl) throw new Error("Base URL required for Forgejo");
@@ -135,8 +128,8 @@ export class GitService {
                 headers: { 'Authorization': `token ${conn.token}` }
             });
             if (!res.ok) throw new Error(`Forgejo API Error: ${res.status}`);
-            const data = await res.json();
-            return data.map((r: any) => ({ id: r.id.toString(), name: r.full_name, defaultBranch: r.default_branch }));
+            const data = await res.json() as { id: number; full_name: string; default_branch: string }[];
+            return data.map((r) => ({ id: r.id.toString(), name: r.full_name, defaultBranch: r.default_branch }));
         }
         return [];
     }
@@ -150,8 +143,8 @@ export class GitService {
                 headers: { 'Authorization': `Bearer ${conn.token}`, 'Accept': 'application/vnd.github.v3+json' }
             });
             if (!res.ok) throw new Error(`GitHub API Error: ${res.status}`);
-            const data = await res.json();
-            return data.map((b: any) => ({ name: b.name }));
+            const data = await res.json() as { name: string }[];
+            return data.map((b) => ({ name: b.name }));
         } else if (provider === 'gitlab') {
             const baseUrl = conn.baseUrl || 'https://gitlab.com';
             const encodedRepo = encodeURIComponent(repoName);
@@ -159,8 +152,8 @@ export class GitService {
                 headers: { 'Authorization': `Bearer ${conn.token}` }
             });
             if (!res.ok) throw new Error(`GitLab API Error: ${res.status}`);
-            const data = await res.json();
-            return data.map((b: any) => ({ name: b.name }));
+            const data = await res.json() as { name: string }[];
+            return data.map((b) => ({ name: b.name }));
         } else if (provider === 'forgejo') {
             const baseUrl = conn.baseUrl;
             if (!baseUrl) throw new Error("Base URL required for Forgejo");
@@ -168,8 +161,8 @@ export class GitService {
                 headers: { 'Authorization': `token ${conn.token}` }
             });
             if (!res.ok) throw new Error(`Forgejo API Error: ${res.status}`);
-            const data = await res.json();
-            return data.map((b: any) => ({ name: b.name }));
+            const data = await res.json() as { name: string }[];
+            return data.map((b) => ({ name: b.name }));
         }
         return [];
     }
@@ -225,7 +218,7 @@ export class GitService {
         if (res.length > 0) {
             try {
                 res[0].token = decryptString(res[0].token);
-            } catch (e) {
+            } catch {
                 console.error("Failed to decrypt git token for user", userId);
             }
             return res[0];
@@ -245,14 +238,14 @@ export class GitService {
             .innerJoin(translationKeys, eq(translations.keyId, translationKeys.id))
             .where(and(eq(translationKeys.projectId, projectId), eq(translationKeys.isPendingDelete, false)));
 
-        const result: Record<string, any> = {};
+        const result: Record<string, Record<string, string>> = {};
         for (const lang of langsQuery) {
             result[lang.code] = {};
         }
 
         for (const trans of transQuery) {
-            const lang = langsQuery.find((l: any) => l.id === trans.languageId);
-            const keyObj = keysQuery.find((k: any) => k.id === trans.keyId);
+            const lang = langsQuery.find((l) => l.id === trans.languageId);
+            const keyObj = keysQuery.find((k) => k.id === trans.keyId);
             if (lang && keyObj && trans.value) {
                 result[lang.code][keyObj.key] = trans.value;
             }

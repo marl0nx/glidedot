@@ -17,7 +17,7 @@ export default async function teamsRoutes(fastify: FastifyInstance) {
 
     fastify.patch('/:teamId', { preHandler: [requireAdmin] }, async (request) => {
         const { teamId } = request.params as { teamId: string };
-        const body = request.body as any;
+        const body = request.body as { name?: string; oidcMappedGroups?: string };
         return teamService.updateTeam(parseInt(teamId), body);
     });
 

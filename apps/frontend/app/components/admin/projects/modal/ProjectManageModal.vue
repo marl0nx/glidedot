@@ -14,7 +14,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'save'): void
+  (e: 'save', project: Partial<Project>): void
 }>()
 
 const isOpen = computed({
@@ -22,15 +22,17 @@ const isOpen = computed({
   set: (val) => emit('update:modelValue', val)
 })
 
+const localProject = ref<Partial<Project>>({ ...props.project })
 const originalProject = ref('')
 const traduoraConfigRef = ref<any>(null)
 const isTraduoraDirty = ref(false)
 
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
+    localProject.value = { ...props.project }
     originalProject.value = JSON.stringify(props.project)
   }
-})
+}, { immediate: true })
 
 const onTraduoraDirty = (val: boolean) => {
   isTraduoraDirty.value = val
@@ -38,20 +40,19 @@ const onTraduoraDirty = (val: boolean) => {
 
 const hasUnsavedChanges = computed(() => {
   if (props.mode === 'create') return false
-  return (JSON.stringify(props.project) !== originalProject.value) || isTraduoraDirty.value
+  return (JSON.stringify(localProject.value) !== originalProject.value) || isTraduoraDirty.value
 })
 
 const inContextUrlProxy = computed({
-  get: () => props.project.inContextUrl || '',
+  get: () => localProject.value.inContextUrl || '',
   set: (val) => {
-    props.project.inContextUrl = val || undefined
+    localProject.value.inContextUrl = val || undefined
   }
 })
 
 const discard = () => {
   if (originalProject.value) {
-    const orig = JSON.parse(originalProject.value)
-    Object.assign(props.project, orig)
+    localProject.value = JSON.parse(originalProject.value)
   }
   if (traduoraConfigRef.value) {
     traduoraConfigRef.value.reset()
@@ -70,7 +71,7 @@ const handleSave = async () => {
         return
       }
     }
-    emit('save')
+    emit('save', localProject.value)
   } finally {
     isSaving.value = false
   }
@@ -82,14 +83,14 @@ const handleSave = async () => {
     <template #body>
       <div class="p-4 flex flex-col gap-4">
         <u-form-field label="Project Name" required>
-          <u-input v-model="project.name" placeholder="e.g. Mobile App" class="w-full" autofocus @keyup.enter="handleSave" />
+          <u-input v-model="localProject.name" placeholder="e.g. Mobile App" class="w-full" autofocus @keyup.enter="handleSave" />
         </u-form-field>
 
 
 
         <u-form-field v-if="mode === 'edit'" label="In-Context Preview URL" description="URL where your app is running to enable live visual editing.">
           <u-input v-model="inContextUrlProxy" placeholder="https://staging.myapp.com" class="w-full" @keyup.enter="handleSave" />
-          <div v-if="project.inContextUrl" class="mt-2 p-3 bg-amber-500/10 border border-warning-500/25 rounded-lg text-xs text-neutral-300 space-y-1">
+          <div v-if="localProject.inContextUrl" class="mt-2 p-3 bg-amber-500/10 border border-warning-500/25 rounded-lg text-xs text-neutral-300 space-y-1">
             <p class="font-semibold text-warning-500 flex items-center gap-1.5">
               <u-icon name="i-lucide-alert-triangle" class="w-4 h-4" />
               In-Context Setup Notice
@@ -105,7 +106,7 @@ const handleSave = async () => {
             <span class="text-sm font-medium">Project-Wide Review Mode</span>
             <span class="text-xs text-neutral-400">Require approval for all translation changes in this project.</span>
           </div>
-          <u-switch v-model="project.reviewEnabled" />
+          <u-switch v-model="localProject.reviewEnabled" />
         </div>
 
         <div v-if="mode === 'edit'" class="flex items-center justify-between p-4 rounded-lg ring-1 ring-default bg-neutral-800/50 mt-2">
@@ -113,13 +114,13 @@ const handleSave = async () => {
             <span class="text-sm font-medium">Require Templates for Keys</span>
             <span class="text-xs text-neutral-400">Disable freeform keys. New keys must use a predefined schema template.</span>
           </div>
-          <u-switch v-model="project.requireTemplate" />
+          <u-switch v-model="localProject.requireTemplate" />
         </div>
 
-        <div v-if="mode === 'edit' && project.id" class="mt-4 pt-4 border-t border-neutral-800 space-y-6">
-          <ProjectGitSyncConfig :project-id="Number(project.id)" />
+        <div v-if="mode === 'edit' && localProject.id" class="mt-4 pt-4 border-t border-neutral-800 space-y-6">
+          <ProjectGitSyncConfig :project-id="Number(localProject.id)" />
           <div class="border-t border-neutral-800 pt-4">
-            <ProjectTraduoraSyncConfig ref="traduoraConfigRef" :project-id="Number(project.id)" @dirty="onTraduoraDirty" />
+            <ProjectTraduoraSyncConfig ref="traduoraConfigRef" :project-id="Number(localProject.id)" @dirty="onTraduoraDirty" />
           </div>
         </div>
       </div>
@@ -128,7 +129,7 @@ const handleSave = async () => {
     <template #footer>
       <div class="flex justify-end gap-2">
         <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
-        <u-button v-if="mode === 'create'" label="Create Project" color="neutral" :disabled="!project.name?.trim()" @click="handleSave" />
+        <u-button v-if="mode === 'create'" label="Create Project" color="neutral" :disabled="!localProject.name?.trim()" @click="handleSave" />
       </div>
 
       <unsaved-changes-alert 

@@ -10,7 +10,8 @@ export default withNuxt(
       "vue/html-closing-bracket-newline": "off",
       "vue/html-closing-bracket-spacing": "off",
       "vue/singleline-html-element-content-newline": "off",
-      "vue/multiline-html-element-content-newline": "off"
+      "vue/multiline-html-element-content-newline": "off",
+      "@typescript-eslint/no-explicit-any": "warn"
     }
   }
 )

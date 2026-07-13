@@ -3,12 +3,6 @@ import { ref, computed, watch } from 'vue'
 import type { Team, User, Project } from '~/types'
 import UnsavedChangesAlert from '~/components/UnsavedChangesAlert.vue'
 
-interface TeamMember {
-  userId: number
-  username: string
-}
-
-
 const props = defineProps<{
   modelValue: boolean
   team: Team | null
@@ -21,10 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'save', payload: { name: string, mappedGroups: string[] }): void
-  (e: 'add-member', userId: number): void
-  (e: 'remove-member', userId: number): void
-  (e: 'add-project', projectId: number): void
-  (e: 'remove-project', projectId: number): void
+  (e: 'add-member' | 'remove-member' | 'add-project' | 'remove-project', id: number): void
 }>()
 
 const isOpen = computed({
@@ -106,18 +97,6 @@ const removeMappedGroup = (group: string) => {
   mappedGroups.value = mappedGroups.value.filter(g => g !== group)
 }
 
-const getAvatarText = (username: string) => {
-  return username ? username.substring(0, 2).toUpperCase() : 'U'
-}
-const getAvatarColor = (name: string) => {
-  if (!name) return '#a1a1aa'
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const color = Math.floor(Math.abs((Math.sin(hash) * 10000) % 1 * 16777216)).toString(16)
-  return '#' + '000000'.substring(0, 6 - color.length) + color
-}
 </script>
 
 <template>

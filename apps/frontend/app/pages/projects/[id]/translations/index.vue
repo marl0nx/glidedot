@@ -16,10 +16,7 @@ const {
   sourceLanguage,
   visibleScopes,
   selectedScope,
-  getLanguageProgress,
-  targetLanguage,
-  isModalOpen,
-  activeKeyId
+  getLanguageProgress
 } = useTranslation()
 
 const route = useRoute()
@@ -140,8 +137,8 @@ definePageMeta({
 
       <!-- Sidebar -->
       <translation-sidebar
-          class="hidden md:block"
           v-model:selected-scope="selectedScope"
+          class="hidden md:block"
           :visible-scopes="visibleScopes"
       />
 

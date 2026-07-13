@@ -2,7 +2,6 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   const { isLoggedIn, fetchUser } = useAuth()
   const { loggedIn: oidcLoggedIn, fetch: fetchOidc } = useOidcAuth()
   const { fetchApi } = useApi()
-  const config = useRuntimeConfig()
 
   // Check setup status FIRST
   try {
@@ -43,7 +42,7 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
   if (to.path === '/logout') return
 
   // If not logged in, try fetching user first
-  let currentUser = undefined
+  let currentUser
   if (!isLoggedIn.value) {
     currentUser = await fetchUser()
     if (!currentUser) {

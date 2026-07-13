@@ -58,7 +58,7 @@ const currentSegments = computed<KeyTemplateSegment[]>(() => {
   if (!currentTemplate.value) return []
   try {
     return JSON.parse(currentTemplate.value.segments)
-  } catch (e) {
+  } catch {
     return []
   }
 })

@@ -1,4 +1,4 @@
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, onUnmounted } from 'vue'
 
 export function useTranslationTimer() {
   const timeSpentMs = ref(0)

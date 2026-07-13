@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useTranslation } from '~/composables/localization/useTranslation'
-import type { Language } from '~/types'
 import TranslationActivityModal from '~/components/localization/translations/modal/TranslationActivityModal.vue'
 
 const {
@@ -13,9 +12,6 @@ const {
   isModalOpen,
   translations
 } = useTranslation()
-
-const route = useRoute()
-const projectId = Number(route.params.id)
 
 const iframeRef = ref<HTMLIFrameElement | null>(null)
 const iframeLoaded = ref(false)
@@ -36,7 +32,7 @@ const iframeSrc = computed(() => {
     const url = new URL(urlString)
     url.searchParams.set('_t', Date.now().toString())
     return url.toString()
-  } catch (e) {
+  } catch {
     try {
       const url = new URL(urlString, window.location.origin)
       url.searchParams.set('_t', Date.now().toString())
@@ -162,7 +158,7 @@ const sendTranslationsToIframe = () => {
         <div class="flex items-center gap-3 ml-2">
           <h1 class="text-sm font-semibold text-neutral-400">In-Context Editor</h1>
           <span class="text-neutral-600 text-sm">|</span>
-          <div class="text-xs text-neutral-400 max-w-sm truncate" v-if="inContextUrl">
+          <div v-if="inContextUrl" class="text-xs text-neutral-400 max-w-sm truncate">
             {{ inContextUrl }}
           </div>
         </div>
@@ -217,10 +213,10 @@ const sendTranslationsToIframe = () => {
             ref="iframeRef"
             :src="iframeSrc"
             class="w-full h-full border-none"
+            title="In-Context Editor Preview"
             @load="handleIframeLoad"
             @error="handleIframeError"
-            title="In-Context Editor Preview"
-          ></iframe>
+          />
         </template>
       </div>
 

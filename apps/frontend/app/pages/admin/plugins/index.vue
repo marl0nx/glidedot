@@ -42,7 +42,7 @@ const fetchPlugins = async () => {
   isLoadingPlugins.value = true
   try {
     plugins.value = await fetchApi<any[]>('/plugins/admin/list')
-  } catch (err: any) {
+  } catch {
     toast.add({ title: 'Error', description: 'Failed to load plugins list', color: 'error' })
   } finally {
     isLoadingPlugins.value = false
@@ -55,7 +55,7 @@ const openAssignments = async (plugin: any) => {
   isAssignmentsModalOpen.value = true
   try {
     projectStatuses.value = await fetchApi<any[]>(`/plugins/admin/project-status/${plugin.id}`)
-  } catch (err: any) {
+  } catch {
     toast.add({ title: 'Error', description: `Failed to load assignments for ${plugin.name}`, color: 'error' })
     isAssignmentsModalOpen.value = false
   } finally {
@@ -97,7 +97,7 @@ const openSettingsModal = (projStatus: any) => {
   
   const initialData: Record<string, any> = {}
   for (const [key, field] of Object.entries(schema) as [string, any][]) {
-    let val = settings[key]
+    const val = settings[key]
     
     if (field.type === 'boolean') {
       initialData[key] = val === 'true' || val === true || (val === undefined && field.default === true)

@@ -6,8 +6,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'save'): void
-  (e: 'discard'): void
+  (e: 'save' | 'discard'): void
 }>()
 </script>
 

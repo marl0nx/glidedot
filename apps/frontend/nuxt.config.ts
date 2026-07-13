@@ -134,6 +134,18 @@ export default defineNuxtConfig({
     vite: {
         server: {
             allowedHosts: true
+        },
+        optimizeDeps: {
+            include: [
+                '@tanstack/vue-table',
+                'canvas-confetti',
+                'date-fns',
+                'echarts/charts',
+                'echarts/components',
+                'echarts/core',
+                'echarts/renderers',
+                'vue-echarts'
+            ]
         }
     },
     nitro: {

@@ -1,5 +1,6 @@
 import { readdir, mkdir, rm } from "node:fs/promises";
 import path from "node:path";
+import { FastifyInstance } from "fastify";
 import { env } from "../../../config/env";
 import { projectPlugins, pluginSettings } from "../schema";
 import { eq, and } from "drizzle-orm";
@@ -12,23 +13,26 @@ export interface PluginManifest {
     author?: string;
     icon?: string;
     category?: string;
-    settingsSchema?: Record<string, any>;
+    settingsSchema?: Record<string, unknown>;
     extensions?: Array<{
         id: string;
         label: string;
         icon?: string;
-        views: any[];
+        views: unknown[];
     }>;
 }
 
-export class PluginSystem {
-    private plugins = new Map<string, { manifest: PluginManifest; module: any; dirPath: string }>();
-    private hooks = new Map<string, Function[]>();
-    private db: any;
+export interface PluginModule {
+    register?: (system: PluginSystem, fastify?: FastifyInstance) => void | Promise<void>;
+    unregister?: (system: PluginSystem) => void | Promise<void>;
+    [key: string]: unknown;
+}
 
-    constructor(db: any) {
-        this.db = db;
-    }
+export class PluginSystem {
+    private plugins = new Map<string, { manifest: PluginManifest; module: PluginModule; dirPath: string }>();
+    private hooks = new Map<string, ((...args: unknown[]) => unknown)[]>();
+
+    constructor(private db: FastifyInstance['db']) {}
 
     /**
      * Resolve the plugins directory relative to DB_URL
@@ -41,7 +45,7 @@ export class PluginSystem {
     /**
      * Scan the plugins directory and initialize all valid plugins
      */
-    async init(fastify?: any) {
+    async init(fastify?: FastifyInstance) {
         const pluginsPath = this.getPluginsDir();
         
         // Ensure directory exists
@@ -94,7 +98,7 @@ export class PluginSystem {
 
                     // Dynamically import the module
                     console.log(`[PluginSystem] Loading plugin "${manifest.id}" from ${entryPath}`);
-                    const module = await import(entryPath);
+                    const module: PluginModule = await import(entryPath);
                     
                     this.plugins.set(manifest.id, { manifest, module, dirPath: pluginDir });
                     
@@ -114,7 +118,7 @@ export class PluginSystem {
     /**
      * Hook registration for plugins
      */
-    on(event: string, callback: Function) {
+    on(event: string, callback: (...args: unknown[]) => unknown) {
         if (!this.hooks.has(event)) {
             this.hooks.set(event, []);
         }
@@ -124,7 +128,7 @@ export class PluginSystem {
     /**
      * Emit an event to all listening plugins
      */
-    async emit(event: string, ...args: any[]) {
+    async emit(event: string, ...args: unknown[]) {
         const callbacks = this.hooks.get(event) || [];
         for (const cb of callbacks) {
             try {
@@ -254,7 +258,7 @@ export class PluginSystem {
     /**
      * Download and install a plugin from a ZIP URL
      */
-    async installPluginFromUrl(url: string, fastify?: any): Promise<PluginManifest> {
+    async installPluginFromUrl(url: string, fastify?: FastifyInstance): Promise<PluginManifest> {
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Failed to download plugin from ${url}. Status: ${response.status} ${response.statusText}`);
@@ -268,7 +272,7 @@ export class PluginSystem {
         const entries = zip.getEntries();
         
         // Find manifest.json (could be nested inside a GitHub repository subfolder)
-        let manifestEntry = entries.find(e => e.entryName === "manifest.json" || e.entryName.endsWith("/manifest.json"));
+        const manifestEntry = entries.find(e => e.entryName === "manifest.json" || e.entryName.endsWith("/manifest.json"));
         if (!manifestEntry) {
             throw new Error("Invalid plugin zip: manifest.json not found.");
         }
@@ -319,7 +323,7 @@ export class PluginSystem {
         if (await Bun.file(entryPath).exists()) {
             // Dynamically import the module
             console.log(`[PluginSystem] Loading newly installed plugin "${manifest.id}" from ${entryPath}`);
-            const module = await import(entryPath);
+            const module: PluginModule = await import(entryPath);
             
             this.plugins.set(manifest.id, { manifest, module, dirPath: targetDir });
             

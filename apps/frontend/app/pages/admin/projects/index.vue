@@ -61,28 +61,28 @@ const openDeleteModal = (project: Project) => {
   isDeleteModalOpen.value = true
 }
 
-const saveProject = async () => {
-  if (!selectedProject.value.name?.trim()) return
+const saveProject = async (project: Partial<Project>) => {
+  if (!project.name?.trim()) return
 
   try {
     if (modalMode.value === 'create') {
       await fetchApi('/localization/projects', {
         method: 'POST',
         body: {
-          name: selectedProject.value.name,
-          sourceLanguageId: selectedProject.value.sourceLanguageId
+          name: project.name,
+          sourceLanguageId: project.sourceLanguageId
         }
       })
       toast.add({ title: 'Success', description: 'Project created successfully', color: 'success' })
-    } else if (selectedProject.value.id) {
-      await fetchApi(`/localization/projects/${selectedProject.value.id}`, {
+    } else if (project.id) {
+      await fetchApi(`/localization/projects/${project.id}`, {
         method: 'PATCH',
         body: {
-          name: selectedProject.value.name,
-          sourceLanguageId: selectedProject.value.sourceLanguageId,
-          inContextUrl: selectedProject.value.inContextUrl,
-          reviewEnabled: selectedProject.value.reviewEnabled,
-          requireTemplate: selectedProject.value.requireTemplate
+          name: project.name,
+          sourceLanguageId: project.sourceLanguageId,
+          inContextUrl: project.inContextUrl,
+          reviewEnabled: project.reviewEnabled,
+          requireTemplate: project.requireTemplate
         }
       })
       toast.add({ title: 'Success', description: 'Project updated successfully', color: 'success' })

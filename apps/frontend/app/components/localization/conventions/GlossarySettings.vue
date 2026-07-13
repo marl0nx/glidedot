@@ -4,7 +4,7 @@ import { getPaginationRowModel } from '@tanstack/vue-table'
 import type { TableColumn } from '@nuxt/ui'
 import type { KeyGlossaryTerm } from '~/types'
 
-const props = defineProps<{
+defineProps<{
   glossary: KeyGlossaryTerm[]
   isLoading: boolean
 }>()

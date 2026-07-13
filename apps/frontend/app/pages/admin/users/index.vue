@@ -48,10 +48,10 @@ const openDeleteModal = (user: AppUser) => {
   isDeleteModalOpen.value = true
 }
 
-const saveUser = async () => {
-  if (!selectedUser.value.isOidc) {
-    if (selectedUser.value.password) {
-      const error = validatePasswordStrength(selectedUser.value.password)
+const saveUser = async (user: Partial<AppUser>) => {
+  if (!user.isOidc) {
+    if (user.password) {
+      const error = validatePasswordStrength(user.password)
       if (error) {
         useToast().add({ title: error, color: 'error' })
         return
@@ -63,10 +63,10 @@ const saveUser = async () => {
   }
 
   if (modalMode.value === 'create') {
-    await createUser(selectedUser.value)
+    await createUser(user)
   } else {
-    if (selectedUser.value.id) {
-      await updateUser(selectedUser.value.id, selectedUser.value)
+    if (user.id) {
+      await updateUser(user.id, user)
     }
   }
   isModalOpen.value = false

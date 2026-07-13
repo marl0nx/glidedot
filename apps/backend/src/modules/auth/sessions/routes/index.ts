@@ -1,11 +1,11 @@
 import { FastifyInstance } from "fastify";
-import { UserService } from "../../services/user.service";
+import { UserService, UpdateUserData } from "../../services/user.service";
 
 export default async function sessionsRoutes(fastify: FastifyInstance) {
     const userService = new UserService(fastify.db);
 
     fastify.post('/login', async (request, reply) => {
-        const { username, password } = request.body as any;
+        const { username, password } = request.body as { username: string; password: string };
         console.log(`Login attempt for user: ${username}`);
         const user = await userService.getByUsername(username);
 
@@ -24,7 +24,7 @@ export default async function sessionsRoutes(fastify: FastifyInstance) {
     });
 
     fastify.post('/login/oidc', async (request, reply) => {
-        const { email, username, avatarUrl, groups } = request.body as any;
+        const { email, username, avatarUrl, groups } = request.body as { email: string; username: string; avatarUrl?: string; groups?: unknown };
         if (!email || !username) return reply.status(400).send({ error: 'Missing email or username' });
 
         const oidcGroupsArr = Array.isArray(groups) ? groups.map(String) : [];
@@ -51,10 +51,10 @@ export default async function sessionsRoutes(fastify: FastifyInstance) {
                 isOidc: true,
                 avatarUrl,
                 oidcGroups: oidcGroupsStr
-            } as any);
+            });
             user = result[0];
         } else {
-            const updates: any = {};
+            const updates: UpdateUserData = {};
             if (avatarUrl && user.avatarUrl !== avatarUrl) updates.avatarUrl = avatarUrl;
             if (!user.isOidc) updates.isOidc = true;
             if (user.oidcGroups !== oidcGroupsStr) updates.oidcGroups = oidcGroupsStr;

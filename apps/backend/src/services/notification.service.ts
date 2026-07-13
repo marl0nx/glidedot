@@ -1,12 +1,22 @@
 import { Webhook, MessageBuilder } from 'discord-webhook-node';
 
+export type AlertConfig = {
+    provider: 'none' | 'discord' | 'slack' | 'ntfy' | 'custom' | 'telegram' | 'gotify';
+    url: string;
+    events: string[];
+    pingUserId?: string;
+    avatarUrl?: string;
+};
+
+type NotificationPayload = { title: string; message: string; [key: string]: string | undefined };
+
 export class NotificationService {
     private static throttleMap = new Map<string, number>();
 
     static async send(
-        alertConfig: { provider: 'none' | 'discord' | 'slack' | 'ntfy' | 'custom' | 'telegram' | 'gotify'; url: string; events: string[]; pingUserId?: string; avatarUrl?: string } | null | undefined,
+        alertConfig: AlertConfig | null | undefined,
         event: string,
-        payload: { title: string; message: string; [key: string]: any },
+        payload: NotificationPayload,
         options?: { throttleKey?: string; throttleHours?: number }
     ) {
         if (!alertConfig || alertConfig.provider === 'none' || !alertConfig.url) {
@@ -54,7 +64,7 @@ export class NotificationService {
         }
     }
 
-    private static async sendDiscord(url: string, payload: { title: string; message: string; [key: string]: any }, pingUserId?: string, avatarUrl?: string) {
+    private static async sendDiscord(url: string, payload: NotificationPayload, pingUserId?: string, avatarUrl?: string) {
         const hook = new Webhook(url);
         
         if (avatarUrl) {
@@ -107,7 +117,7 @@ export class NotificationService {
         });
     }
 
-    private static async sendCustom(url: string, payload: any, event: string) {
+    private static async sendCustom(url: string, payload: NotificationPayload, event: string) {
         await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

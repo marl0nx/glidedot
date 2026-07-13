@@ -65,7 +65,7 @@ export default async function pluginRoutes(fastify: FastifyInstance) {
         const { pluginId } = request.params as { pluginId: string };
         
         // Fetch all projects using drizzle raw SQL to avoid schema imports path complexity
-        const allProjects = await fastify.db.all(sql`SELECT id, name FROM projects`) as any[];
+        const allProjects = await fastify.db.all(sql`SELECT id, name FROM projects`) as { id: number; name: string }[];
         
         const result = [];
         for (const proj of allProjects) {
@@ -108,9 +108,9 @@ export default async function pluginRoutes(fastify: FastifyInstance) {
         try {
             const manifest = await pluginSystem.installPluginFromUrl(url, fastify);
             return { success: true, manifest };
-        } catch (err: any) {
+        } catch (err) {
             console.error(`[PluginRoutes] Installation failed for URL ${url}:`, err);
-            throw new Error(err.message || "Failed to install plugin.");
+            throw new Error(err instanceof Error ? err.message : "Failed to install plugin.");
         }
     });
 
@@ -121,9 +121,9 @@ export default async function pluginRoutes(fastify: FastifyInstance) {
         try {
             await pluginSystem.uninstallPlugin(pluginId);
             return { success: true };
-        } catch (err: any) {
+        } catch (err) {
             console.error(`[PluginRoutes] Uninstall failed for plugin ID ${pluginId}:`, err);
-            throw new Error(err.message || "Failed to uninstall plugin.");
+            throw new Error(err instanceof Error ? err.message : "Failed to uninstall plugin.");
         }
     });
 }

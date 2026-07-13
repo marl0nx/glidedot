@@ -240,9 +240,9 @@ const toggleSelection = (label: TranslationLabel) => {
                   />
                   <u-input 
                     :model-value="row.original.color" 
+                    placeholder="#000000"
+                    size="sm" 
                     @update:model-value="val => updateLabelColor(row.original, val || '#ffffff')"
-                    placeholder="#000000" 
-                    size="sm"
                   />
                 </div>
               </template>
@@ -324,9 +324,9 @@ const toggleSelection = (label: TranslationLabel) => {
                       />
                       <u-input 
                         :model-value="label.color" 
+                        placeholder="#000000"
+                        size="sm" 
                         @update:model-value="val => updateLabelColor(label, val || '#ffffff')"
-                        placeholder="#000000" 
-                        size="sm"
                       />
                     </div>
                   </template>

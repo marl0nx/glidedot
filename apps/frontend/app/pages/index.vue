@@ -177,8 +177,6 @@ onUnmounted(() => {
                     <div 
                       v-for="day in stats.personalStats.activityHeatmap" 
                       :key="day.date"
-                      @mousemove="showTooltip($event, day)"
-                      @mouseleave="hideTooltip"
                       class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-[2px] transition-colors cursor-pointer hover:ring-1 hover:ring-neutral-400"
                       :class="{
                         'bg-neutral-800': day.count === 0,
@@ -187,7 +185,9 @@ onUnmounted(() => {
                         'bg-primary-500/70': day.count >= 25 && day.count < 50,
                         'bg-primary-500': day.count >= 50
                       }"
-                    ></div>
+                      @mousemove="showTooltip($event, day)"
+                      @mouseleave="hideTooltip"
+                    />
                   </div>
                 </template>
               </div>
@@ -195,11 +195,11 @@ onUnmounted(() => {
             
             <div class="flex items-center justify-end gap-2 text-xs text-neutral-500 mt-2">
               <span>Less</span>
-              <div class="w-3 h-3 rounded-[2px] bg-neutral-800"></div>
-              <div class="w-3 h-3 rounded-[2px] bg-primary-500/30"></div>
-              <div class="w-3 h-3 rounded-[2px] bg-primary-500/50"></div>
-              <div class="w-3 h-3 rounded-[2px] bg-primary-500/70"></div>
-              <div class="w-3 h-3 rounded-[2px] bg-primary-500"></div>
+              <div class="w-3 h-3 rounded-[2px] bg-neutral-800"/>
+              <div class="w-3 h-3 rounded-[2px] bg-primary-500/30"/>
+              <div class="w-3 h-3 rounded-[2px] bg-primary-500/50"/>
+              <div class="w-3 h-3 rounded-[2px] bg-primary-500/70"/>
+              <div class="w-3 h-3 rounded-[2px] bg-primary-500"/>
               <span>More</span>
             </div>
           </u-card>

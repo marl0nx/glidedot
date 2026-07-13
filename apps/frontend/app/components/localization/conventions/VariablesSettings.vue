@@ -4,7 +4,7 @@ import { getPaginationRowModel } from '@tanstack/vue-table'
 import type { TableColumn } from '@nuxt/ui'
 import type { KeyVariable } from '~/types'
 
-const props = defineProps<{
+defineProps<{
   variables: KeyVariable[]
   isLoading: boolean
 }>()

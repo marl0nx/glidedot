@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useApi } from '~/composables/useApi'
 
@@ -82,7 +82,7 @@ const fetchPluginAndExtension = async () => {
         }
       }
     }
-  } catch (err: any) {
+  } catch {
     toast.add({ title: 'Error', description: 'Failed to load plugin information', color: 'error' })
   } finally {
     isLoading.value = false
@@ -97,7 +97,7 @@ const loadTableData = async (comp: any) => {
     const querySign = comp.apiEndpoint.includes('?') ? '&' : '?'
     const data = await fetchApi<any[]>(`${comp.apiEndpoint}${querySign}projectId=${projectId}`)
     tableData.value[key] = data
-  } catch (err: any) {
+  } catch {
     toast.add({ title: 'Error', description: 'Failed to load list data', color: 'error' })
   } finally {
     tableLoading.value[key] = false
@@ -275,7 +275,7 @@ onMounted(() => {
             
             <!-- TABLE COMPONENT -->
             <u-card v-if="comp.type === 'table'" :ui="{ body: 'p-0 sm:p-0' }">
-              <template #header v-if="comp.title">
+              <template v-if="comp.title" #header>
                 <span class="text-sm font-semibold text-neutral-300">{{ comp.title }}</span>
               </template>
 
@@ -324,12 +324,12 @@ onMounted(() => {
 
             <!-- FORM COMPONENT -->
             <u-card v-else-if="comp.type === 'form'">
-              <template #header v-if="comp.title">
+              <template v-if="comp.title" #header>
                 <span class="text-sm font-semibold text-neutral-300">{{ comp.title }}</span>
                 <p v-if="comp.description" class="text-xs text-neutral-400 mt-1 leading-relaxed">{{ comp.description }}</p>
               </template>
 
-              <form @submit.prevent="submitForm(comp)" class="space-y-4">
+              <form class="space-y-4" @submit.prevent="submitForm(comp)">
                 <div v-for="field in comp.fields" :key="field.name">
                   <u-form-field :label="field.label" :description="field.description" :required="field.required">
                     <!-- Text Area / Markdown -->

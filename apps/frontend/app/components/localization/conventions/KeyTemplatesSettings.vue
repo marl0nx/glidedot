@@ -81,7 +81,7 @@ const openEdit = (template: KeyTemplate) => {
       allowInfinite.value = false
       segments.value = parsed || []
     }
-  } catch (e) {
+  } catch {
     segments.value = []
     allowInfinite.value = false
   }
@@ -310,16 +310,16 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
                   <span class="text-xs text-neutral-400">Name / Label</span>
                   <u-input 
                     :model-value="seg.type === 'shared-enum' ? (variables.find(v => v.id === seg.variableId)?.name || 'Select Variable...') : seg.name" 
-                    @update:model-value="val => seg.name = val as string"
-                    placeholder="Segment Name" 
+                    placeholder="Segment Name"
                     :disabled="seg.type === 'shared-enum'" 
+                    @update:model-value="val => seg.name = val as string" 
                   />
                 </div>
 
                 <div class="flex flex-col gap-1 w-full md:w-1/3">
                   <template v-if="seg.type === 'enum'">
                     <span class="text-xs text-neutral-400">Allowed Values (comma separated)</span>
-                    <u-input :model-value="formatOptions(seg.options)" @update:model-value="(val) => updateOptions(seg, val as string)" placeholder="button, label, title" />
+                    <u-input :model-value="formatOptions(seg.options)" placeholder="button, label, title" @update:model-value="(val) => updateOptions(seg, val as string)" />
                   </template>
                   <template v-else-if="seg.type === 'shared-enum'">
                     <span class="text-xs text-neutral-400">Select Global Variable</span>
@@ -340,7 +340,7 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
                 </div>
 
                 <div class="flex flex-col items-center gap-1 w-20 pt-6">
-                  <u-checkbox :model-value="seg.isOptional" @update:model-value="val => toggleOptional(idx, val as boolean)" label="Optional" />
+                  <u-checkbox :model-value="seg.isOptional" label="Optional" @update:model-value="val => toggleOptional(idx, val as boolean)" />
                 </div>
 
                 <div class="flex items-center gap-1 pt-6 ml-auto">

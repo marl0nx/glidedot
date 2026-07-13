@@ -57,7 +57,6 @@ onMounted(async () => {
   }
 })
 
-const selectedTab = ref(0)
 const tabs = [
   { label: 'Translations', slot: 'translations', icon: 'i-lucide-languages' },
   { label: 'Keys', slot: 'keys', icon: 'i-lucide-logs' }
@@ -182,7 +181,7 @@ const handleReview = async (review: Review, action: 'approve' | 'reject') => {
 
 const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'reject') => {
   try {
-    const res = await fetchApi(`/localization/keys/${currentProject.value?.id}/${keyData.id}/${action}`, {
+    await fetchApi(`/localization/keys/${currentProject.value?.id}/${keyData.id}/${action}`, {
       method: 'POST'
     })
     
@@ -214,7 +213,7 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
         :items="tabs"
         class="w-full"
       >
-        <template #translations="{ item }">
+        <template #translations>
           <div class="flex flex-col gap-4 mt-4">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
               <div>
@@ -237,8 +236,8 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
         <div v-else-if="filteredReviews.length === 0" class="p-12 text-center text-neutral-500 flex flex-col items-center gap-2">
           <u-icon name="i-lucide-check-circle-2" class="w-12 h-12 text-success-500/50 mb-2" />
           <h3 class="text-lg font-medium text-neutral-300">All caught up!</h3>
-          <p class="max-w-md" v-if="searchQuery">No reviews match your search query.</p>
-          <p class="max-w-md" v-else>There are no translations pending review right now.</p>
+          <p v-if="searchQuery" class="max-w-md">No reviews match your search query.</p>
+          <p v-else class="max-w-md">There are no translations pending review right now.</p>
         </div>
         
         <div v-else>
@@ -319,7 +318,7 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
           
           <!-- Mobile List -->
           <div class="flex flex-col gap-4 p-4 md:hidden">
-            <u-card v-for="(review, index) in paginatedReviewsMobile" :key="review.keyId + '-' + review.languageCode" :ui="{ body: 'p-4' }">
+            <u-card v-for="review in paginatedReviewsMobile" :key="review.keyId + '-' + review.languageCode" :ui="{ body: 'p-4' }">
               <div class="flex flex-col gap-4">
                 <div class="flex justify-between items-start">
                   <div class="flex flex-col">
@@ -409,7 +408,7 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
       </div>
       </template>
 
-      <template #keys="{ item }">
+      <template #keys>
         <div class="flex flex-col gap-4 mt-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>
@@ -432,8 +431,8 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
             <div v-else-if="filteredKeys.length === 0" class="p-12 text-center text-neutral-500 flex flex-col items-center gap-2">
               <u-icon name="i-lucide-check-circle-2" class="w-12 h-12 text-success-500/50 mb-2" />
               <h3 class="text-lg font-medium text-neutral-300">All caught up!</h3>
-              <p class="max-w-md" v-if="searchQuery">No key reviews match your search query.</p>
-              <p class="max-w-md" v-else>There are no keys pending review right now.</p>
+              <p v-if="searchQuery" class="max-w-md">No key reviews match your search query.</p>
+              <p v-else class="max-w-md">There are no keys pending review right now.</p>
             </div>
             
             <div v-else>
@@ -504,7 +503,7 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
                           <span class="text-[10px] uppercase font-bold text-error-500 font-sans">Current</span>
                           <span class="text-error-400 line-through opacity-70 break-all">{{ key.key }}</span>
                         </div>
-                        <div class="h-px w-full bg-neutral-800"></div>
+                        <div class="h-px w-full bg-neutral-800"/>
                         <div class="flex flex-col gap-1">
                           <span class="text-[10px] uppercase font-bold text-success-500 font-sans">Suggested</span>
                           <span class="text-success-400 break-all">{{ key.draftKey }}</span>

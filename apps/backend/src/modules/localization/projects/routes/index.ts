@@ -112,7 +112,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
         return service.exportTranslations(parseInt(projectId), parseInt(languageId));
     });
 
-    fastify.get('/:projectId/translations/:langCode', { preHandler: [checkProjectAccess] }, async (request, reply) => {
+    fastify.get('/:projectId/translations/:langCode', { preHandler: [checkProjectAccess] }, async (request, _reply) => {
         const { projectId, langCode } = request.params as { projectId: string, langCode: string };
         return service.exportTranslationsByCode(parseInt(projectId), langCode);
     });
@@ -234,7 +234,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
     fastify.post('/:projectId/conventions/import', { preHandler: [checkProjectAccess] }, async (request) => {
         const { projectId } = request.params as { projectId: string };
-        const body = request.body as { templates?: any[], glossary?: any[], variables?: any[] };
+        const body = request.body as { templates?: { name: string, segments: string }[], glossary?: { badWord: string, goodWord: string }[], variables?: { name: string, options: string }[] };
         const result = await service.importConventions(parseInt(projectId), body);
         if (request.user) await logActivity(request.user.id, parseInt(projectId), 'CONVENTIONS_IMPORTED', JSON.stringify({}));
         return result;
@@ -371,8 +371,9 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
             const authData = await authRes.json() as { access_token: string };
             accessToken = authData.access_token;
-        } catch (err: any) {
-            reply.status(400).send({ message: `Traduora validation failed: Unable to authenticate. Please check Server URL, Client ID, and Client Secret. Details: ${err.message}` });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            reply.status(400).send({ message: `Traduora validation failed: Unable to authenticate. Please check Server URL, Client ID, and Client Secret. Details: ${message}` });
             return;
         }
 
@@ -393,8 +394,9 @@ export default async function projectRoutes(fastify: FastifyInstance) {
                 const errorText = await projectRes.text();
                 throw new Error(`Project validation check failed (status ${projectRes.status}): ${errorText}`);
             }
-        } catch (err: any) {
-            reply.status(400).send({ message: `Traduora validation failed: The project ID "${finalProjectId}" was not found or is inaccessible on this Traduora instance. Details: ${err.message}` });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            reply.status(400).send({ message: `Traduora validation failed: The project ID "${finalProjectId}" was not found or is inaccessible on this Traduora instance. Details: ${message}` });
             return;
         }
 
@@ -455,8 +457,9 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
             const authData = await authRes.json() as { access_token: string };
             accessToken = authData.access_token;
-        } catch (err: any) {
-            reply.status(500).send({ message: `Failed to authenticate with Traduora: ${err.message}` });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            reply.status(500).send({ message: `Failed to authenticate with Traduora: ${message}` });
             return;
         }
 
@@ -473,17 +476,18 @@ export default async function projectRoutes(fastify: FastifyInstance) {
                 throw new Error(`Fetch projects failed with status ${projectsRes.status}`);
             }
 
-            const data = await projectsRes.json();
-            const rawProjects = Array.isArray(data) ? data : (data && Array.isArray(data.projects) ? data.projects : []);
-            
-            const projectsList = rawProjects.map((p: any) => ({
+            const data = await projectsRes.json() as { projects?: unknown[] } | unknown[];
+            const rawProjects = (Array.isArray(data) ? data : (data && Array.isArray(data.projects) ? data.projects : [])) as { id?: string; projectId?: string; name?: string; projectName?: string }[];
+
+            const projectsList = rawProjects.map((p) => ({
                 id: p.id || p.projectId,
                 name: p.name || p.projectName || p.id
             }));
 
             return projectsList;
-        } catch (err: any) {
-            reply.status(500).send({ message: `Failed to fetch Traduora projects: ${err.message}` });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            reply.status(500).send({ message: `Failed to fetch Traduora projects: ${message}` });
         }
     });
 
@@ -506,7 +510,6 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
     fastify.post('/:projectId/sync/traduora', { preHandler: [checkProjectAccess] }, async (request, reply) => {
         const { projectId } = request.params as { projectId: string };
-        const { settings } = await import('../../../settings/schema');
         const { sql } = await import('drizzle-orm');
 
         const config = await getTraduoraConfig(projectId);
@@ -541,8 +544,9 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
             const authData = await authRes.json() as { access_token: string };
             accessToken = authData.access_token;
-        } catch (err: any) {
-            reply.status(500).send({ message: `Failed to authenticate with Traduora: ${err.message}` });
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            reply.status(500).send({ message: `Failed to authenticate with Traduora: ${message}` });
             return;
         }
 
@@ -552,7 +556,8 @@ export default async function projectRoutes(fastify: FastifyInstance) {
         const errors: string[] = [];
 
         // Fetch existing locales from the Traduora project
-        let rawLocales: any[] = [];
+        type TraduoraLocale = { locale?: { code?: string }; code?: string };
+        let rawLocales: TraduoraLocale[] = [];
         try {
             const localesUrl = `${config.traduoraUrl!.replace(/\/$/, '')}/api/v1/projects/${config.traduoraProjectId}/translations`;
             const localesRes = await fetch(localesUrl, {
@@ -561,14 +566,17 @@ export default async function projectRoutes(fastify: FastifyInstance) {
                 }
             });
             if (localesRes.ok) {
-                const body = await localesRes.json() as any;
-                rawLocales = Array.isArray(body)
-                    ? body
-                    : (body && Array.isArray(body.data)
-                        ? body.data
-                        : (body && body.data && Array.isArray(body.data.locales)
-                            ? body.data.locales
-                            : []));
+                const body = await localesRes.json() as TraduoraLocale[] | { data?: TraduoraLocale[] | { locales?: TraduoraLocale[] } };
+                if (Array.isArray(body)) {
+                    rawLocales = body;
+                } else {
+                    const data = body?.data;
+                    if (Array.isArray(data)) {
+                        rawLocales = data;
+                    } else if (data && Array.isArray(data.locales)) {
+                        rawLocales = data.locales;
+                    }
+                }
             } else {
                 console.warn(`[Traduora Sync] Failed to fetch existing locales from Traduora (status ${localesRes.status}). Proceeding with direct matching.`);
             }
@@ -586,7 +594,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
                 // Fuzzy-match whether this language is already registered in Traduora
                 let activeLocaleCode = originalCode;
-                let matchedLocale = rawLocales.find((l: any) => {
+                let matchedLocale = rawLocales.find((l) => {
                     const code = l?.locale?.code || l?.code;
                     return code && normalizeCode(code) === normalizedOriginal;
                 });
@@ -594,7 +602,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
                 // Fallback to matching just the primary language code (e.g., 'ru' for 'ru_ru')
                 if (!matchedLocale) {
                     const primaryCode = normalizedOriginal.substring(0, 2);
-                    matchedLocale = rawLocales.find((l: any) => {
+                    matchedLocale = rawLocales.find((l) => {
                         const code = l?.locale?.code || l?.code;
                         return code && normalizeCode(code).substring(0, 2) === primaryCode;
                     });
@@ -602,7 +610,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
                 if (matchedLocale) {
                     // Use the exact formatted, case-sensitive locale code that Traduora already has
-                    activeLocaleCode = matchedLocale.locale?.code || matchedLocale.code;
+                    activeLocaleCode = matchedLocale.locale?.code || matchedLocale.code || originalCode;
                 } else {
                     // Format code for Traduora (e.g., 'ru_ru' or 'ru-ru' -> 'ru_RU')
                     let traduoraCode = originalCode;
@@ -662,8 +670,8 @@ export default async function projectRoutes(fastify: FastifyInstance) {
                 }
 
                 syncedLocales.push(originalCode);
-            } catch (err: any) {
-                errors.push(err.message || String(err));
+            } catch (err) {
+                errors.push(err instanceof Error ? err.message : String(err));
             }
         }
 
