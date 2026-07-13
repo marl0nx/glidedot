@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { translationKeys, translations, keysToLabels, projects, languages, labels } from '../../schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 import { DeeplService } from '../../services/deepl.service';
 import { GoogleService } from '../../services/google.service';
 
@@ -175,21 +175,30 @@ export class KeyService {
         const results = [];
         let reviewsTriggered = 0;
 
-        for (const update of updates) {
-            if (needsReview) {
-                const result = await this.db.update(translationKeys)
-                    .set({ draftKey: update.key, reviewStatus: 'PENDING_REVIEW', authorId: userId })
-                    .where(and(eq(translationKeys.id, update.id), eq(translationKeys.projectId, projectId)))
-                    .returning();
-                results.push(...result);
-                reviewsTriggered++;
-            } else {
-                const result = await this.db.update(translationKeys)
-                    .set({ key: update.key })
-                    .where(and(eq(translationKeys.id, update.id), eq(translationKeys.projectId, projectId)))
-                    .returning();
-                results.push(...result);
+        // Batched into a single real transaction via raw BEGIN/COMMIT (see ProjectService.importTranslations
+        // for why db.transaction() with an async callback doesn't actually batch on the bun-sqlite driver).
+        await this.db.run(sql.raw('BEGIN'));
+        try {
+            for (const update of updates) {
+                if (needsReview) {
+                    const result = await this.db.update(translationKeys)
+                        .set({ draftKey: update.key, reviewStatus: 'PENDING_REVIEW', authorId: userId })
+                        .where(and(eq(translationKeys.id, update.id), eq(translationKeys.projectId, projectId)))
+                        .returning();
+                    results.push(...result);
+                    reviewsTriggered++;
+                } else {
+                    const result = await this.db.update(translationKeys)
+                        .set({ key: update.key })
+                        .where(and(eq(translationKeys.id, update.id), eq(translationKeys.projectId, projectId)))
+                        .returning();
+                    results.push(...result);
+                }
             }
+            await this.db.run(sql.raw('COMMIT'));
+        } catch (err) {
+            await this.db.run(sql.raw('ROLLBACK'));
+            throw err;
         }
 
         if (needsReview && reviewsTriggered > 0) {

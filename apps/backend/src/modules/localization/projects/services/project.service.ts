@@ -403,20 +403,29 @@ export class ProjectService {
             throw new Error('Translation count mismatch');
         }
 
-        for (let i = 0; i < missingKeys.length; i++) {
-            const keyId = missingKeys[i].keyId;
-            const text = translatedTexts[i];
+        // Batched into a single real transaction via raw BEGIN/COMMIT (see importTranslations for why
+        // db.transaction() with an async callback doesn't actually batch on the bun-sqlite driver).
+        await this.db.run(sql.raw('BEGIN'));
+        try {
+            for (let i = 0; i < missingKeys.length; i++) {
+                const keyId = missingKeys[i].keyId;
+                const text = translatedTexts[i];
 
-            const insertData = markAsPending 
-                ? { keyId, languageId: targetLanguageId, value: "", draftValue: text, reviewStatus: 'PENDING_REVIEW' as const }
-                : { keyId, languageId: targetLanguageId, value: text, draftValue: null, reviewStatus: 'APPROVED' as const };
+                const insertData = markAsPending
+                    ? { keyId, languageId: targetLanguageId, value: "", draftValue: text, reviewStatus: 'PENDING_REVIEW' as const }
+                    : { keyId, languageId: targetLanguageId, value: text, draftValue: null, reviewStatus: 'APPROVED' as const };
 
-            await this.db.insert(translations)
-                .values(insertData)
-                .onConflictDoUpdate({
-                    target: [translations.keyId, translations.languageId],
-                    set: insertData
-                });
+                await this.db.insert(translations)
+                    .values(insertData)
+                    .onConflictDoUpdate({
+                        target: [translations.keyId, translations.languageId],
+                        set: insertData
+                    });
+            }
+            await this.db.run(sql.raw('COMMIT'));
+        } catch (err) {
+            await this.db.run(sql.raw('ROLLBACK'));
+            throw err;
         }
 
         return { success: true, count: missingKeys.length };
