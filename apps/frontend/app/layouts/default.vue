@@ -14,6 +14,7 @@ await loadSettings()
 const { data: projectsData } = await useAsyncData('projects', () => fetchApi('/localization/projects'))
 const projects = computed<Project[]>(() => (projectsData.value as Project[]) || [])
 
+const SIDEBAR_STORAGE_KEY = 'glide_sidebar_open'
 const isSidebarOpen = ref(true)
 const isMobileMenuOpen = ref(false)
 const isSettingsMenuOpen = ref(false)
@@ -65,6 +66,10 @@ const toggleSidebar = (): void => {
   isSidebarOpen.value = !isSidebarOpen.value;
 }
 
+const navLinkUi = computed(() => ({
+  link: isSidebarOpen.value ? 'p-2 overflow-hidden' : 'size-10 p-0 justify-center mx-auto overflow-hidden'
+}))
+
 const apiDocsItems: ComputedRef<NavigationMenuItem[]> = computed(() => [
   {
     label: 'API-Docs',
@@ -83,6 +88,7 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
     {
       label: 'Projects',
       icon: 'i-lucide-layout-dashboard',
+      active: !isSidebarOpen.value && route.path.startsWith('/projects'),
       defaultOpen: route.path.startsWith('/projects'),
       children: projects.value.length > 0 ? [
         ...projects.value.map(project => ({
@@ -106,6 +112,7 @@ const primaryItems: ComputedRef<NavigationMenuItem[]> = computed(() => {
       label: 'Admin',
       icon: 'i-lucide-shield-check',
       class: 'hidden md:flex',
+      active: !isSidebarOpen.value && route.path.startsWith('/admin'),
       defaultOpen: route.path.startsWith('/admin'),
       children: [
         {
@@ -241,9 +248,16 @@ const profileItems: DropdownMenuItem[] = [
   }
 ]
 
-// Watch for sidebar changes
-watch(isSidebarOpen, () => {
-  // If we needed to handle anything on close, we could do it here
+// Persist sidebar open/collapsed state across sessions
+onMounted(() => {
+  const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY)
+  if (stored !== null) {
+    isSidebarOpen.value = stored === 'true'
+  }
+})
+
+watch(isSidebarOpen, (isOpen) => {
+  localStorage.setItem(SIDEBAR_STORAGE_KEY, String(isOpen))
 })
 
 // Watch for route changes to close mobile menu
@@ -366,9 +380,16 @@ const handleMobileNavClick = (item: any) => {
 </script>
 
 <template>
-  <div class="fixed inset-0 flex bg-black overflow-hidden">
-    <u-sidebar v-model:open="isSidebarOpen" class="flex max-md:!hidden" variant="inset" collapsible="icon" side="left" title="Navigation"
-               :ui="{ header: 'min-h-none p-2' }">
+<div class="fixed inset-0 flex bg-black overflow-hidden">
+  <u-sidebar
+    v-model:open="isSidebarOpen"
+    class="flex max-md:!hidden"
+    variant="inset"
+    collapsible="icon"
+    side="left"
+    title="Navigation"
+    :ui="{ header: 'min-h-none p-2', body: isSidebarOpen ? '' : 'px-2' }"
+  >
 
       <template #header>
         <div class="flex flex-col items-center w-full">
@@ -396,15 +417,15 @@ const handleMobileNavClick = (item: any) => {
       </template>
 
       <u-navigation-menu :key="route.path.split('/')[1]" :items="primaryItems" orientation="vertical" multiple
-                         :ui="{ link: 'p-2 overflow-hidden' }"/>
+                         :collapsed="!isSidebarOpen" popover :ui="navLinkUi"/>
       <u-separator/>
       <u-navigation-menu v-if="isProjectContext" :key="`secondary-${route.path.split('/')[1]}`" :items="secondaryItems" multiple
-                         orientation="vertical" :ui="{ link: 'p-2 overflow-hidden' }"/>
+                         orientation="vertical" :collapsed="!isSidebarOpen" popover :ui="navLinkUi"/>
                          
       <div class="mt-auto" />
       <u-separator/>
       <u-navigation-menu :key="`api-docs-${route.path.split('/')[1]}`" :items="apiDocsItems" orientation="vertical"
-                         :ui="{ link: 'p-2 overflow-hidden' }"/>
+                         :collapsed="!isSidebarOpen" popover :ui="navLinkUi"/>
 
       <template #footer>
         <u-dropdown-menu :items="profileItems" :content="{ side: 'top' }" class="cursor-pointer">
@@ -487,8 +508,8 @@ const handleMobileNavClick = (item: any) => {
         <span class="text-[10px] mt-1 font-medium">{{ item.label }}</span>
         <span 
           v-if="item.active" 
-          class="absolute bottom-1 w-1.5 h-1.5 bg-primary-500 rounded-full shadow-[0_0_10px_rgba(var(--color-primary-500),0.8)]"
-        />
+          class="absolute bottom-0 w-1.5 h-1.5 bg-primary-500 rounded-full shadow-[0_0_10px_rgba(var(--color-primary-500),0.8)]"
+        ></span>
       </button>
     </div>
 
