@@ -36,7 +36,7 @@ const items = [{
       class="mt-4 w-full"
       :ui="{ list: 'bg-neutral-900 border border-neutral-800 w-full h-10', trigger: 'h-8 text-sm' }"
     >
-      <template #keys="{ item }">
+      <template #keys>
         <div class="py-2 flex flex-col gap-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>
@@ -50,7 +50,7 @@ const items = [{
           <keys-settings />
         </div>
       </template>
-      <template #labels="{ item }">
+      <template #labels>
         <div class="py-2 flex flex-col gap-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>
@@ -64,7 +64,7 @@ const items = [{
           <labels-settings />
         </div>
       </template>
-      <template #languages="{ item }">
+      <template #languages>
         <div class="py-2 flex flex-col gap-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>

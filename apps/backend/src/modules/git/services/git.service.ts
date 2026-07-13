@@ -1,7 +1,7 @@
 import { eq, and } from "drizzle-orm";
 import { userGitConnections, projectGitSyncs } from "../schema";
 import { users } from "../../admin/users/schema";
-import { projects, languages, projectLanguages, translationKeys, translations } from "../../localization/schema";
+import { languages, projectLanguages, translationKeys, translations } from "../../localization/schema";
 import { encryptString, decryptString } from "../../../utils/encryption";
 
 export class GitService {
@@ -225,7 +225,7 @@ export class GitService {
         if (res.length > 0) {
             try {
                 res[0].token = decryptString(res[0].token);
-            } catch (e) {
+            } catch {
                 console.error("Failed to decrypt git token for user", userId);
             }
             return res[0];

@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { projects, projectLanguages, languages, translations, translationKeys, activityLogs, keyTemplates, keyGlossary, keyVariables } from '../../schema';
-import { eq, and, inArray, desc } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import { users } from '../../../admin/users/schema';
 import { teamMembers, teamProjects, teams } from '../../../admin/teams/schema';
 
@@ -41,7 +41,7 @@ export class ProjectService {
                     try {
                         const mappedGroups: string[] = JSON.parse(t.oidcMappedGroups).map((g: string) => g.toLowerCase());
                         return oidcGroupsArr.some(g => mappedGroups.includes(g.toLowerCase()));
-                    } catch (e) {
+                    } catch {
                         return false;
                     }
                 })
@@ -550,7 +550,7 @@ export class ProjectService {
                         timeSpentArr.push(parsed.timeSpentMs);
                     }
                 }
-            } catch (e) {}
+            } catch {}
         });
         
         let averageTranslationSpeedMs = 0;
@@ -583,8 +583,7 @@ export class ProjectService {
         const totalKeys = keys.length;
 
         const projLangs = await this.db.select().from(projectLanguages).where(inArray(projectLanguages.projectId, projectIds));
-        const totalProjectLanguages = projLangs.length;
-        
+
         const distinctLanguageIds = new Set(projLangs.map(pl => pl.languageId));
         const totalLanguages = distinctLanguageIds.size;
 

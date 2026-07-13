@@ -13,14 +13,14 @@ export const settingsRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
   // Anyone can read public settings (like theming) or we can make it public.
   // Actually, we'll just allow authenticated users to read settings for now,
   // or we can make GET public if it's strictly for UI appearance.
-  app.get('/', { preHandler: [requireAdmin] }, async (request, reply) => {
+  app.get('/', { preHandler: [requireAdmin] }, async (_request, _reply) => {
     const allSettings = await app.db.select().from(settings);
     const settingsObj: Record<string, any> = {};
     for (const row of allSettings) {
       if (row.key === 'deepLApiKey' && row.value) {
         try {
           settingsObj[row.key] = decryptString(row.value);
-        } catch(e) {
+        } catch {
           settingsObj[row.key] = row.value;
         }
       } else {
@@ -32,7 +32,7 @@ export const settingsRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
     return settingsObj;
   });
 
-  app.get('/public', async (request, reply) => {
+  app.get('/public', async (_request, _reply) => {
     const { inArray } = await import('drizzle-orm');
     const publicKeys = ['maintenanceMode', 'logoType', 'logoUrl', 'logoUrlMinimal', 'logoText', 'logoSize', 'logoShowDot', 'primaryColor', 'themeMode', 'customBackgroundColor'];
     const rows = await app.db.select().from(settings).where(inArray(settings.key, publicKeys));
@@ -46,7 +46,7 @@ export const settingsRoutes: FastifyPluginAsync = async (app: FastifyInstance) =
 
   app.post('/', {
     preHandler: [requireAdmin]
-  }, async (request, reply) => {
+  }, async (request, _reply) => {
     const { sql } = await import('drizzle-orm');
     const body = request.body as Record<string, string>;
     console.log("RECEIVED SETTINGS BODY:", typeof body, body);

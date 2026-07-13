@@ -16,7 +16,7 @@ async function insertInChunks(tx: any, table: any, data: any[], chunkSize: numbe
     }
 }
 
-const migrationModule: FastifyPluginAsync = async (fastify, opts) => {
+const migrationModule: FastifyPluginAsync = async (fastify, _opts) => {
     fastify.get('/backup', async (request, reply) => {
         try {
             const allProjects = await fastify.db.select().from(projects);

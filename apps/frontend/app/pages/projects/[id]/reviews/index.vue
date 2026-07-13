@@ -57,7 +57,6 @@ onMounted(async () => {
   }
 })
 
-const selectedTab = ref(0)
 const tabs = [
   { label: 'Translations', slot: 'translations', icon: 'i-lucide-languages' },
   { label: 'Keys', slot: 'keys', icon: 'i-lucide-logs' }
@@ -182,7 +181,7 @@ const handleReview = async (review: Review, action: 'approve' | 'reject') => {
 
 const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'reject') => {
   try {
-    const res = await fetchApi(`/localization/keys/${currentProject.value?.id}/${keyData.id}/${action}`, {
+    await fetchApi(`/localization/keys/${currentProject.value?.id}/${keyData.id}/${action}`, {
       method: 'POST'
     })
     
@@ -214,7 +213,7 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
         :items="tabs"
         class="w-full"
       >
-        <template #translations="{ item }">
+        <template #translations>
           <div class="flex flex-col gap-4 mt-4">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
               <div>
@@ -319,7 +318,7 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
           
           <!-- Mobile List -->
           <div class="flex flex-col gap-4 p-4 md:hidden">
-            <u-card v-for="(review, index) in paginatedReviewsMobile" :key="review.keyId + '-' + review.languageCode" :ui="{ body: 'p-4' }">
+            <u-card v-for="review in paginatedReviewsMobile" :key="review.keyId + '-' + review.languageCode" :ui="{ body: 'p-4' }">
               <div class="flex flex-col gap-4">
                 <div class="flex justify-between items-start">
                   <div class="flex flex-col">
@@ -409,7 +408,7 @@ const handleKeyReview = async (keyData: { id: number }, action: 'approve' | 'rej
       </div>
       </template>
 
-      <template #keys="{ item }">
+      <template #keys>
         <div class="flex flex-col gap-4 mt-4">
           <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-neutral-900 border border-neutral-800 p-4 rounded-xl gap-4 shrink-0">
             <div>

@@ -112,7 +112,7 @@ export default async function projectRoutes(fastify: FastifyInstance) {
         return service.exportTranslations(parseInt(projectId), parseInt(languageId));
     });
 
-    fastify.get('/:projectId/translations/:langCode', { preHandler: [checkProjectAccess] }, async (request, reply) => {
+    fastify.get('/:projectId/translations/:langCode', { preHandler: [checkProjectAccess] }, async (request, _reply) => {
         const { projectId, langCode } = request.params as { projectId: string, langCode: string };
         return service.exportTranslationsByCode(parseInt(projectId), langCode);
     });
@@ -506,7 +506,6 @@ export default async function projectRoutes(fastify: FastifyInstance) {
 
     fastify.post('/:projectId/sync/traduora', { preHandler: [checkProjectAccess] }, async (request, reply) => {
         const { projectId } = request.params as { projectId: string };
-        const { settings } = await import('../../../settings/schema');
         const { sql } = await import('drizzle-orm');
 
         const config = await getTraduoraConfig(projectId);

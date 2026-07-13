@@ -62,7 +62,7 @@ export default async function usersRoutes(fastify: FastifyInstance) {
         return userService.updateUser(request.user!.id, body);
     });
 
-    fastify.post('/me/test-alert', async (request, reply) => {
+    fastify.post('/me/test-alert', async (request, _reply) => {
         const { alertConfig, testEvent } = request.body as any;
         const { NotificationService } = await import('../../../../services/notification.service');
         

@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { eq } from 'drizzle-orm';
 import { settings } from '../../settings/schema';
 
-import { encryptString, decryptString } from '../../../utils/encryption';
+import { decryptString } from '../../../utils/encryption';
 
 function formatLangCode(code: string, isTarget: boolean): string {
     if (!code) return code;

@@ -3,7 +3,10 @@ import { ref, computed } from 'vue'
 import type { NuxtError } from '#app'
 
 const props = defineProps({
-  error: Object as () => NuxtError
+  error: {
+    type: Object as () => NuxtError,
+    default: () => ({}) as NuxtError
+  }
 })
 
 const showRaw = ref(false)

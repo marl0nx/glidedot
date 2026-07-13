@@ -6,7 +6,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
     fastify.get('/activity-logs/leaderboard', { preHandler: [requireAdmin] }, async (request) => {
         const { activityLogs } = await import('../../localization/schema');
         const { users } = await import('../users/schema');
-        const { desc, eq, sql, inArray, and, gte } = await import('drizzle-orm');
+        const { gte } = await import('drizzle-orm');
 
         const query = request.query as { timeframe?: string };
         const timeframe = query.timeframe || '30d';
@@ -95,7 +95,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
                     if (!details.isAutomated && details.timeSpentMs && details.timeSpentMs > 0) {
                         stats.timeSpentArr.push(details.timeSpentMs);
                     }
-                } catch (e) {}
+                } catch {}
             } else if (log.action === 'KEY_CREATED') {
                 stats.keysCreated++;
             } else if (log.action === 'LABEL_CREATED') {
@@ -129,7 +129,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
 
     fastify.get('/activity-logs/automation', { preHandler: [requireAdmin] }, async (request) => {
         const { activityLogs } = await import('../../localization/schema');
-        const { desc, eq, and, gte, or } = await import('drizzle-orm');
+        const { eq, and, gte, or } = await import('drizzle-orm');
 
         const query = request.query as { timeframe?: string };
         const timeframe = query.timeframe || '30d';
@@ -206,7 +206,7 @@ export default async function adminRoutes(fastify: FastifyInstance) {
                         }
                     }
                 }
-            } catch (e) {}
+            } catch {}
         }
 
         let averageSpeedMs = 0;

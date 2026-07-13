@@ -46,7 +46,7 @@ export class TeamService {
                             }
                         }
                     }
-                } catch (e) {
+                } catch {
                     // Ignore parse errors
                 }
             }

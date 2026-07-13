@@ -16,10 +16,7 @@ const {
   sourceLanguage,
   visibleScopes,
   selectedScope,
-  getLanguageProgress,
-  targetLanguage,
-  isModalOpen,
-  activeKeyId
+  getLanguageProgress
 } = useTranslation()
 
 const route = useRoute()

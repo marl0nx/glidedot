@@ -34,7 +34,7 @@ export default fp(async (fastify) => {
             if ('success' in p && typeof p.success === 'boolean') {
                 let finalData = p.data;
                 if (finalData === undefined) {
-                    const { success, message, ...rest } = p;
+                    const { success: _success, message: _message, ...rest } = p;
                     if (Object.keys(rest).length > 0) {
                         finalData = rest;
                     } else {

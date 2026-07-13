@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useApi } from '~/composables/useApi'
 import { useAuth } from '~/composables/useAuth'
@@ -104,7 +104,7 @@ const fetchTraduoraStatus = async () => {
   try {
     const status = await fetchApi<any>(`/localization/projects/${projectId}/sync/traduora-status`)
     traduoraStatus.value = status
-  } catch (err) {
+  } catch {
     toast.add({ title: 'Error', description: 'Failed to load Traduora status.', color: 'error' })
   } finally {
     isLoadingTraduora.value = false

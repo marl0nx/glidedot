@@ -4,7 +4,7 @@ import { TeamService } from './services/team.service';
 
 export function createAuthHooks(userService: UserService, teamService: TeamService) {
     return {
-        authenticate: async (request: FastifyRequest, reply: FastifyReply) => {
+        authenticate: async (request: FastifyRequest, _reply: FastifyReply) => {
             const authHeader = request.headers['authorization'] as string;
             const apiKey = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
             
@@ -35,7 +35,7 @@ export function createAuthHooks(userService: UserService, teamService: TeamServi
             request.user = user;
         },
 
-        requireAdmin: async (request: FastifyRequest, reply: FastifyReply) => {
+        requireAdmin: async (request: FastifyRequest, _reply: FastifyReply) => {
             if (!request.user?.isAdmin) {
                 const err = new Error('Admin access required');
                 (err as any).statusCode = 403;
@@ -64,7 +64,7 @@ export function createAuthHooks(userService: UserService, teamService: TeamServi
             }
         },
 
-        checkLanguagePermission: async (request: FastifyRequest, reply: FastifyReply) => {
+        checkLanguagePermission: async (_request: FastifyRequest, _reply: FastifyReply) => {
             // Disabled granular language permission until UI supports it
             return;
         }
