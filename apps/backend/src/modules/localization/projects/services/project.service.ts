@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { projects, projectLanguages, languages, translations, translationKeys, activityLogs, keyTemplates, keyGlossary, keyVariables } from '../../schema';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 import { users } from '../../../admin/users/schema';
 import { teamMembers, teamProjects, teams } from '../../../admin/teams/schema';
 
@@ -305,35 +305,43 @@ export class ProjectService {
         const existingKeys = await this.db.select().from(translationKeys).where(eq(translationKeys.projectId, projectId));
         const keyMap = new Map(existingKeys.map(k => [k.key, k.id]));
 
-        for (const [rawKeyName, value] of Object.entries(data)) {
-            if (typeof value !== 'string') continue;
-            
-            // Sanitize key name: replace colons, double colons, slashes, and backslashes with dots, and collapse any consecutive dots
-            const keyName = rawKeyName
-                .replace(/[:\\/]+/g, '.')
-                .replace(/\.+/g, '.')
-                .replace(/^\.|\.$/g, '');
-                
-            if (!keyName) continue;
+        await this.db.run(sql.raw('BEGIN'));
+        try {
+            for (const [rawKeyName, value] of Object.entries(data)) {
+                if (typeof value !== 'string') continue;
 
-            let keyId = keyMap.get(keyName);
-            if (!keyId) {
-                const [newKey] = await this.db.insert(translationKeys).values({ projectId, key: keyName }).returning();
-                keyId = newKey.id;
-                keyMap.set(keyName, keyId);
+                // Sanitize key name: replace colons, double colons, slashes, and backslashes with dots, and collapse any consecutive dots
+                const keyName = rawKeyName
+                    .replace(/[:\\/]+/g, '.')
+                    .replace(/\.+/g, '.')
+                    .replace(/^\.|\.$/g, '');
+
+                if (!keyName) continue;
+
+                let keyId = keyMap.get(keyName);
+                if (!keyId) {
+                    const [newKey] = await this.db.insert(translationKeys).values({ projectId, key: keyName }).returning();
+                    keyId = newKey.id;
+                    keyMap.set(keyName, keyId);
+                }
+
+                const insertData = importAsPending
+                    ? { keyId, languageId, value: "", draftValue: value, reviewStatus: 'PENDING_REVIEW' as const }
+                    : { keyId, languageId, value, draftValue: null, reviewStatus: 'APPROVED' as const };
+
+                await this.db.insert(translations)
+                    .values(insertData)
+                    .onConflictDoUpdate({
+                        target: [translations.keyId, translations.languageId],
+                        set: insertData
+                    });
             }
-            
-            const insertData = importAsPending 
-                ? { keyId, languageId, value: "", draftValue: value, reviewStatus: 'PENDING_REVIEW' as const }
-                : { keyId, languageId, value, draftValue: null, reviewStatus: 'APPROVED' as const };
-
-            await this.db.insert(translations)
-                .values(insertData)
-                .onConflictDoUpdate({
-                    target: [translations.keyId, translations.languageId],
-                    set: insertData
-                });
+            await this.db.run(sql.raw('COMMIT'));
+        } catch (err) {
+            await this.db.run(sql.raw('ROLLBACK'));
+            throw err;
         }
+
         return { success: true, imported: Object.keys(data).length };
     }
 
