@@ -128,7 +128,7 @@ const handleSave = async () => {
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
+        <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }" />
         <u-button v-if="mode === 'create'" label="Create Project" color="neutral" :disabled="!localProject.name?.trim()" @click="handleSave" />
       </div>
 

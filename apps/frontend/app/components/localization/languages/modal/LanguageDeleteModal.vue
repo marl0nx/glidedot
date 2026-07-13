@@ -24,7 +24,7 @@ const isOpen = computed({
     :description="`Are you sure you want to remove ${selectedCount} selected language(s)? Translatons for these languages might be lost.`"
   >
     <template #footer>
-      <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false"/>
+      <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }"/>
       <u-button label="Remove" color="error" @click="emit('confirm')"/>
     </template>
   </u-modal>

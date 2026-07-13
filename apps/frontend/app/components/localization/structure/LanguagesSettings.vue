@@ -170,7 +170,7 @@ const toggleSelection = (lang: Language) => {
             color="neutral"
             label="Add Language"
             icon="i-lucide-plus"
-            @click="isAddModalOpen = true"
+            @click="() => { isAddModalOpen = true }"
         />
       </div>
     </div>

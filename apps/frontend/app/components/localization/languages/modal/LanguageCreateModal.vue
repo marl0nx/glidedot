@@ -136,7 +136,7 @@ const handleCreate = () => {
     </template>
 
     <template #footer>
-      <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false"/>
+      <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }"/>
       <u-button label="Add Language" color="neutral" :disabled="!newName.trim() || !newCode.trim()"
                 @click="handleCreate"/>
     </template>

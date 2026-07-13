@@ -87,14 +87,14 @@ definePageMeta({
           size="sm" 
           :variant="viewMode === 'grid' ? 'soft' : 'ghost'" 
           :color="viewMode === 'grid' ? 'primary' : 'neutral'"
-          @click="viewMode = 'grid'" 
+          @click="() => { viewMode = 'grid' }" 
         />
         <u-button 
           icon="i-lucide-list" 
           size="sm" 
           :variant="viewMode === 'list' ? 'soft' : 'ghost'" 
           :color="viewMode === 'list' ? 'primary' : 'neutral'"
-          @click="viewMode = 'list'" 
+          @click="() => { viewMode = 'list' }" 
         />
       </div>
     </div>
@@ -111,7 +111,7 @@ definePageMeta({
             :color="selectedScope === null ? 'primary' : 'neutral'"
             size="sm"
             class="snap-start shrink-0 rounded-full"
-            @click="selectedScope = null"
+            @click="() => { selectedScope = null }"
           >
             <u-icon name="i-lucide-globe" class="w-4 h-4 mr-1" />
             All Translations
@@ -124,7 +124,7 @@ definePageMeta({
             :color="selectedScope === node.id ? 'primary' : 'neutral'"
             size="sm"
             class="snap-start shrink-0 rounded-full"
-            @click="selectedScope = node.id"
+            @click="() => { selectedScope = node.id }"
           >
             <u-icon :name="node.hasChildren ? 'i-lucide-folder' : 'i-lucide-hash'" class="w-4 h-4 mr-1" />
             {{ node.name }}

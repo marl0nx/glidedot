@@ -30,8 +30,8 @@ services:
       - HOST=0.0.0.0
       - PORT=3000
       - NODE_ENV=production
-      # Base URL to the backend API (must be accessible from the user's browser)
-      - NUXT_PUBLIC_API_BASE=https://api.your-domain.com/v1
+      # Backend origin used server-side by the /v1 proxy route (not exposed to the browser)
+      - NUXT_API_URL=http://backend:3001
       # OIDC Configuration
       - NUXT_PUBLIC_OIDC_ENABLED=false
       - NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID=

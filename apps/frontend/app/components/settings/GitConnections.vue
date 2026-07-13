@@ -129,7 +129,7 @@ onMounted(() => {
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <u-button label="Cancel" color="neutral" variant="ghost" @click="connectModalOpen = false" />
+          <u-button label="Cancel" color="neutral" variant="ghost" @click="() => { connectModalOpen = false }" />
           <u-button label="Connect" color="neutral" :loading="isConnecting" @click="saveConnection" />
         </div>
       </template>

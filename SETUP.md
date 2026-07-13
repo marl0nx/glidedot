@@ -13,8 +13,7 @@ glide. is split into two primary, highly modular workspaces under a monorepo str
 ```mermaid
 graph TD
     Client[Web Browser] -->|Queries| Frontend[Frontend App: Nuxt / Vue]
-    Client -->|Queries API| Backend[Backend App: Fastify / Bun]
-    Frontend -->|Internal Fetch| Backend
+    Frontend -->|Proxies /v1/**| Backend[Backend App: Fastify / Bun]
     Backend -->|Queries / Writes| SQLite[(SQLite Database: bun:sqlite)]
     Backend -->|Performs Backups| S3[Cloud Storage S3 compatible]
     Backend -->|Translates Keys| DeepL[DeepL Translation API]
@@ -24,6 +23,9 @@ graph TD
 *   **Frontend Workspace (`apps/frontend`):** Built with Nuxt (Vue 3), Tailwind CSS, Nuxt UI, and `@vite-pwa/nuxt`. Powered by Nitro and optimized to run on **Bun**.
 *   **Backend Workspace (`apps/backend`):** A high-performance Fastify REST API powered by **Bun**.
 *   **Database & ORM:** Uses `bun:sqlite` with **Drizzle ORM** for lightweight, blazing-fast, serverless storage. No heavy PostgreSQL or MySQL servers are required.
+
+> [!NOTE]
+> Only the frontend needs a public domain — it proxies `/v1/**` to the backend server-side, so the backend can stay internal.
 
 ---
 
@@ -60,7 +62,7 @@ These variables configure the Nuxt web application, OAuth2/OIDC SSO logins, and 
 | :--- | :--- | :--- | :---: |
 | `HOST` | `0.0.0.0` | The network interface the frontend server binds to inside the container. | ❌ |
 | `PORT` | `3000` | The port the Nuxt application listens on. | ❌ |
-| `NUXT_PUBLIC_API_BASE` | `http://localhost:3001/v1` | The public HTTP endpoint of the backend API. **Must be accessible from the user's browser** (e.g. `https://api.glide.domain.com/v1`). | **YES** |
+| `NUXT_API_URL` | `http://localhost:3001` | Backend origin used server-side by the `/v1` proxy route. Not exposed to the browser (e.g. `http://backend:3001` in Docker). | **YES** |
 | `NUXT_PUBLIC_OIDC_ENABLED` | `false` | Set to `true` to enable SSO/OIDC logins on the sign-in page. | ❌ |
 | `NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID` | *(None)* | OIDC Client ID. | ❌ (Required for OIDC) |
 | `NUXT_OIDC_PROVIDERS_OIDC_CLIENT_SECRET` | *(None)* | OIDC Client Secret. | ❌ (Required for OIDC) |
@@ -136,8 +138,7 @@ services:
       - HOST=0.0.0.0
       - PORT=3000
       - NODE_ENV=production
-      # Base URL to the backend API (must be accessible from the user's browser)
-      - NUXT_PUBLIC_API_BASE=https://api.your-domain.com/v1
+      - NUXT_API_URL=http://backend:3001
       # Cryptographically secure 48+ character secrets
       - NUXT_OIDC_SESSION_SECRET=secure_session_secret_at_least_48_characters_long_for_security_reasons_123
       - NUXT_OIDC_AUTH_SESSION_SECRET=secure_auth_session_secret_at_least_48_characters_long_for_security_reasons_123
@@ -191,7 +192,7 @@ services:
     volumes:
       - .:/app
     environment:
-      - NUXT_PUBLIC_API_BASE=http://your-server-ip-or-domain:3001/v1
+      - NUXT_API_URL=http://backend:3001
       - NUXT_OIDC_SESSION_SECRET=secure_session_secret_at_least_48_characters_long_for_security_reasons_123
       - NUXT_OIDC_AUTH_SESSION_SECRET=secure_auth_session_secret_at_least_48_characters_long_for_security_reasons_123
     command: sh -c "bun install && bun run build && bun run dev"

@@ -24,7 +24,7 @@ export async function buildApp() {
     });
 
     await app.register(cors, {
-        origin: true,
+        origin: false,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         exposedHeaders: ['Content-Disposition', 'Content-Length', 'Content-Type'],

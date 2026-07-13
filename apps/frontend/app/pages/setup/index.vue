@@ -93,7 +93,7 @@ const goToLogin = () => {
           </div>
         </div>
         <div class="flex gap-3">
-          <u-button color="neutral" variant="ghost" label="Back" size="xl" class="flex-1 justify-center" @click="step = 1"/>
+          <u-button color="neutral" variant="ghost" label="Back" size="xl" class="flex-1 justify-center" @click="() => { step = 1 }"/>
           <u-button color="neutral" label="Finish Setup" size="xl" class="flex-1 justify-center" :loading="loading" @click="startSetup"/>
         </div>
       </div>

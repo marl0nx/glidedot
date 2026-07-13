@@ -129,7 +129,7 @@ const discard = () => {
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
+        <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }" />
         <u-button v-if="mode === 'create'" label="Create" color="neutral" @click="emit('save', localUser)" />
       </div>
 

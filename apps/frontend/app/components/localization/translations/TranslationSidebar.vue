@@ -28,7 +28,7 @@ const selectedScope = defineModel<string | null>('selectedScope', { default: nul
           size="sm"
           class="w-full justify-start gap-2 px-3 py-2 transition-all"
           :class="selectedScope === null ? 'font-semibold' : 'text-neutral-400 hover:text-white'"
-          @click="selectedScope = null"
+          @click="() => { selectedScope = null }"
       >
         <u-icon
             name="i-lucide-globe"
@@ -52,7 +52,7 @@ const selectedScope = defineModel<string | null>('selectedScope', { default: nul
           class="w-full justify-start gap-2 px-2.5 py-1.5 text-left transition-all"
           :class="selectedScope === node.id ? 'font-semibold' : 'text-neutral-400 hover:text-white'"
           :style="{ paddingLeft: `calc(${node.level * 0.75}rem + 12px)` }"
-          @click="selectedScope = node.id"
+          @click="() => { selectedScope = node.id }"
       >
         <u-icon
             :name="node.hasChildren ? 'i-lucide-folder' : 'i-lucide-hash'"

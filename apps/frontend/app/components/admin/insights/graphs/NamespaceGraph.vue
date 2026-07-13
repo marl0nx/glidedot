@@ -336,7 +336,7 @@ const chartOptions = computed(() => {
             :icon="isFullscreen ? 'i-lucide-minimize' : 'i-lucide-maximize'" 
             color="neutral" 
             variant="ghost" 
-            @click="isFullscreen = !isFullscreen" 
+            @click="() => { isFullscreen = !isFullscreen }" 
           />
         </u-tooltip>
       </div>

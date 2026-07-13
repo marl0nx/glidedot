@@ -176,7 +176,7 @@ const performDelete = () => {
       </template>
       <template #footer>
         <div class="flex justify-end gap-2 p-2">
-          <u-button color="neutral" variant="ghost" label="Cancel" size="lg" @click="isModalOpen = false" />
+          <u-button color="neutral" variant="ghost" label="Cancel" size="lg" @click="() => { isModalOpen = false }" />
           <u-button :label="editingId ? 'Save Changes' : 'Create'" color="neutral" size="lg" :disabled="!newName.trim() || !newOptions.trim()" @click="handleSave" />
         </div>
       </template>
@@ -190,7 +190,7 @@ const performDelete = () => {
       </template>
       <template #footer>
         <div class="flex justify-end gap-2 p-2">
-          <u-button color="neutral" variant="ghost" label="Cancel" @click="isDeleteModalOpen = false" />
+          <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isDeleteModalOpen = false }" />
           <u-button color="error" label="Delete" @click="performDelete" />
         </div>
       </template>

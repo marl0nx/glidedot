@@ -68,7 +68,7 @@ const handleCreate = () => {
     </template>
 
     <template #footer>
-      <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false"/>
+      <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }"/>
       <u-button label="Add Label" color="neutral" :disabled="!newLabelName.trim()" @click="handleCreate"/>
     </template>
   </u-modal>

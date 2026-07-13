@@ -226,7 +226,7 @@ onMounted(() => {
     <div v-else class="space-y-4 bg-neutral-900 p-4 border border-neutral-800 rounded-lg">
       <div class="flex justify-between items-center mb-2">
         <h4 class="text-sm font-medium">New Git Sync</h4>
-        <u-button icon="i-lucide-x" color="neutral" variant="ghost" size="xs" @click="isConfiguring = false" />
+        <u-button icon="i-lucide-x" color="neutral" variant="ghost" size="xs" @click="() => { isConfiguring = false }" />
       </div>
 
       <u-form-field label="Git Provider">

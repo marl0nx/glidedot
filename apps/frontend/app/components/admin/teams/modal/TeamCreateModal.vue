@@ -37,7 +37,7 @@ const handleCreate = () => {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2">
-        <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
+        <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }" />
         <u-button label="Create" color="neutral" :loading="loading" :disabled="!name.trim()" @click="handleCreate" />
       </div>
     </template>

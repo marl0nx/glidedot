@@ -378,7 +378,7 @@ const save = async () => {
                 size="sm" 
                 :disabled="formData.logoSize === 24"
                 title="Reset to default" 
-                @click="formData.logoSize = 24"
+                @click="() => { formData.logoSize = 24 }"
               />
             </div>
           </u-form-field>

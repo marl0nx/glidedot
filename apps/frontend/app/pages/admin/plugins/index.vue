@@ -360,7 +360,7 @@ onMounted(() => {
             color="neutral" 
             variant="ghost" 
             label="Close"
-            @click="isAssignmentsModalOpen = false"
+            @click="() => { isAssignmentsModalOpen = false }"
           />
         </div>
       </template>
@@ -422,7 +422,7 @@ onMounted(() => {
             color="neutral" 
             variant="ghost" 
             label="Cancel"
-            @click="isSettingsModalOpen = false"
+            @click="() => { isSettingsModalOpen = false }"
           />
           <u-button 
             color="neutral" 
@@ -462,7 +462,7 @@ onMounted(() => {
             color="neutral" 
             variant="ghost" 
             label="Cancel" 
-            @click="isInstallModalOpen = false" 
+            @click="() => { isInstallModalOpen = false }" 
           />
           <u-button 
             color="neutral" 
@@ -485,7 +485,7 @@ onMounted(() => {
 
       <template #footer>
         <div class="flex justify-end gap-2">
-          <u-button color="neutral" variant="ghost" label="Cancel" @click="isUninstallModalOpen = false" />
+          <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isUninstallModalOpen = false }" />
           <u-button label="Uninstall Plugin" color="error" :loading="isUninstalling" @click="uninstallPlugin" />
         </div>
       </template>

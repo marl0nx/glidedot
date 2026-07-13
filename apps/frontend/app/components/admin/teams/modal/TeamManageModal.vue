@@ -197,7 +197,7 @@ const removeMappedGroup = (group: string) => {
     </template>
     <template #footer>
       <div class="flex justify-end gap-2">
-        <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
+        <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }" />
       </div>
 
       <unsaved-changes-alert 

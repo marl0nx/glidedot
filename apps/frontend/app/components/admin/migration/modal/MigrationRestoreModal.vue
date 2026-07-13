@@ -66,7 +66,7 @@ const canConfirm = computed(() => restoreProjects.value || restoreConventions.va
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
+        <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }" />
         <u-button label="Yes, Select Backup File" color="error" :disabled="!canConfirm" :loading="isRestoring" @click="emit('confirm', { projects: restoreProjects, conventions: restoreConventions })" />
       </div>
     </template>

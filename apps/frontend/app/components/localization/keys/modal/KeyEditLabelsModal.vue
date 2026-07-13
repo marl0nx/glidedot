@@ -80,7 +80,7 @@ const isOpen = computed({
     </template>
 
     <template #footer>
-      <u-button color="neutral" variant="ghost" label="Close" @click="isOpen = false"/>
+      <u-button color="neutral" variant="ghost" label="Close" @click="() => { isOpen = false }"/>
     </template>
   </u-modal>
 </template>

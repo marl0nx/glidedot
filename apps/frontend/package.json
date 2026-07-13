@@ -9,18 +9,21 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "typecheck": "nuxt typecheck"
   },
   "dependencies": {
     "@comark/nuxt": "^0.5.0",
-    "@iconify-json/lucide": "^1.2.116",
-    "@iconify-json/simple-icons": "^1.2.89",
+    "@iconify-json/lucide": "^1.2.117",
+    "@iconify-json/simple-icons": "^1.2.90",
     "@nuxt/content": "^3.15.0",
     "@nuxt/eslint": "1.16.0",
     "@nuxt/image": "2.0.0",
     "@nuxt/ui": "4.9.0",
     "@nuxtjs/tailwindcss": "6.14.0",
     "@tailwindcss/typography": "^0.5.20",
+    "@tanstack/vue-table": "^8.21.3",
+    "@vueuse/core": "^14.3.0",
     "canvas-confetti": "^1.9.4",
     "date-fns": "^4.4.0",
     "echarts": "^6.1.0",
@@ -31,6 +34,7 @@
     "ofetch": "^1.5.1",
     "tailwindcss": "^4.3.2",
     "typescript": "^6.0.3",
+    "ufo": "^1.6.4",
     "vue": "^3.5.39",
     "vue-echarts": "^8.0.1",
     "vue-router": "^5.1.0"

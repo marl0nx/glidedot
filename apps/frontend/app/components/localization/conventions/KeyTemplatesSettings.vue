@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import type { TableColumn } from '@nuxt/ui'
 import type { KeyTemplate, KeyTemplateSegment, KeyVariable } from '~/types'
+import { toEditableSegment, stripEditableId, type EditableSegment } from './editableSegment'
+import KeyTemplateSegmentRow from './KeyTemplateSegmentRow.vue'
 
 const props = defineProps<{
   templates: KeyTemplate[]
@@ -19,7 +21,7 @@ const emit = defineEmits<{
 const isModalOpen = ref(false)
 const editingId = ref<number | null>(null)
 const templateName = ref('')
-const segments = ref<KeyTemplateSegment[]>([])
+const segments = ref<EditableSegment[]>([])
 const allowInfinite = ref(false)
 
 const search = ref('')
@@ -52,7 +54,7 @@ const segmentTypes = [
 ]
 
 const casingOptions = [
-  { label: 'None (Any)', value: '' },
+  { label: 'None (Any)', value: 'none' },
   { label: 'camelCase', value: 'camelCase' },
   { label: 'kebab-case', value: 'kebab-case' },
   { label: 'snake_case', value: 'snake_case' },
@@ -64,7 +66,7 @@ const openCreate = () => {
   templateName.value = ''
   allowInfinite.value = false
   segments.value = [
-    { type: 'free-text', name: '', delimiter: '.' }
+    toEditableSegment({ type: 'free-text', name: '', delimiter: '.' })
   ]
   isModalOpen.value = true
 }
@@ -73,13 +75,13 @@ const openEdit = (template: KeyTemplate) => {
   editingId.value = template.id
   templateName.value = template.name
   try {
-    const parsed = JSON.parse(template.segments)
-    if (Array.isArray(parsed) && parsed.length > 0 && parsed[parsed.length - 1].type === 'nested-path') {
+    const parsed = JSON.parse(template.segments) as KeyTemplateSegment[]
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed[parsed.length - 1]?.type === 'nested-path') {
       allowInfinite.value = true
-      segments.value = parsed.slice(0, -1)
+      segments.value = parsed.slice(0, -1).map(toEditableSegment)
     } else {
       allowInfinite.value = false
-      segments.value = parsed || []
+      segments.value = (parsed || []).map(toEditableSegment)
     }
   } catch {
     segments.value = []
@@ -89,7 +91,7 @@ const openEdit = (template: KeyTemplate) => {
 }
 
 const addSegment = () => {
-  segments.value.push({ type: 'free-text', name: 'New Segment', delimiter: '.' })
+  segments.value.push(toEditableSegment({ type: 'free-text', name: 'New Segment', delimiter: '.' }))
 }
 
 const removeSegment = (index: number) => {
@@ -120,12 +122,13 @@ const enforceOptionalRules = () => {
   }
 }
 
-const toggleOptional = (index: number, val: boolean) => {
+const updateSegment = (index: number, patched: EditableSegment) => {
   const current = segments.value[index]
-  if (current) {
-    current.isOptional = val
-  }
-  if (val) {
+  if (!current) return
+  segments.value[index] = patched
+
+  if (patched.isOptional === current.isOptional) return
+  if (patched.isOptional) {
     // If making this optional, all subsequent must be optional
     for (let i = index + 1; i < segments.value.length; i++) {
       const s = segments.value[i]
@@ -146,12 +149,12 @@ const toggleOptional = (index: number, val: boolean) => {
 
 const saveTemplate = () => {
   if (!templateName.value.trim() || segments.value.length === 0) return
-  
-  const finalSegments = [...segments.value]
+
+  const finalSegments: KeyTemplateSegment[] = segments.value.map(stripEditableId)
   if (allowInfinite.value) {
     finalSegments.push({ type: 'nested-path', name: 'path', delimiter: '.', casing: 'camelCase', isOptional: false })
   }
-  
+
   if (editingId.value) {
     emit('update', editingId.value, templateName.value.trim(), finalSegments)
   } else {
@@ -200,15 +203,6 @@ const generatePreview = (segments: KeyTemplateSegment[]) => {
     }
     return str + '.'
   }).join('')
-}
-
-const formatOptions = (opts?: string[]) => {
-  if (!opts) return ''
-  return opts.join(', ')
-}
-
-const updateOptions = (segment: KeyTemplateSegment, val: string) => {
-  segment.options = val.split(',').map(s => s.trim()).filter(Boolean)
 }
 </script>
 
@@ -300,55 +294,20 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
             </div>
 
             <div class="flex flex-col gap-3">
-              <div v-for="(seg, idx) in segments" :key="idx" class="flex flex-col md:flex-row gap-3 p-3 bg-neutral-900/50 border border-neutral-800 rounded-lg items-start">
-                <div class="flex flex-col gap-1 w-full md:w-1/4">
-                  <span class="text-xs text-neutral-400">Type</span>
-                  <u-select v-model="seg.type" :items="segmentTypes" />
-                </div>
-
-                <div class="flex flex-col gap-1 w-full md:w-1/4">
-                  <span class="text-xs text-neutral-400">Name / Label</span>
-                  <u-input 
-                    :model-value="seg.type === 'shared-enum' ? (variables.find(v => v.id === seg.variableId)?.name || 'Select Variable...') : seg.name" 
-                    placeholder="Segment Name"
-                    :disabled="seg.type === 'shared-enum'" 
-                    @update:model-value="val => seg.name = val as string" 
-                  />
-                </div>
-
-                <div class="flex flex-col gap-1 w-full md:w-1/3">
-                  <template v-if="seg.type === 'enum'">
-                    <span class="text-xs text-neutral-400">Allowed Values (comma separated)</span>
-                    <u-input :model-value="formatOptions(seg.options)" placeholder="button, label, title" @update:model-value="(val) => updateOptions(seg, val as string)" />
-                  </template>
-                  <template v-else-if="seg.type === 'shared-enum'">
-                    <span class="text-xs text-neutral-400">Select Global Variable</span>
-                    <u-select 
-                      v-model="seg.variableId" 
-                      :items="variables.map(v => ({ label: v.name, value: v.id }))" 
-                      placeholder="Choose variable..."
-                    />
-                  </template>
-                  <template v-else-if="seg.type === 'constant'">
-                    <span class="text-xs text-neutral-400">Constant Value</span>
-                    <u-input v-model="seg.constantValue" placeholder="app" />
-                  </template>
-                  <template v-else-if="seg.type === 'free-text'">
-                    <span class="text-xs text-neutral-400">Casing Rule</span>
-                    <u-select v-model="seg.casing" :items="casingOptions" placeholder="No Rule" />
-                  </template>
-                </div>
-
-                <div class="flex flex-col items-center gap-1 w-20 pt-6">
-                  <u-checkbox :model-value="seg.isOptional" label="Optional" @update:model-value="val => toggleOptional(idx, val as boolean)" />
-                </div>
-
-                <div class="flex items-center gap-1 pt-6 ml-auto">
-                  <u-button icon="i-lucide-arrow-up" color="neutral" variant="ghost" size="xs" :disabled="idx === 0" @click="moveSegment(idx, -1)" />
-                  <u-button icon="i-lucide-arrow-down" color="neutral" variant="ghost" size="xs" :disabled="idx === segments.length - 1" @click="moveSegment(idx, 1)" />
-                  <u-button icon="i-lucide-x" color="error" variant="ghost" size="xs" @click="removeSegment(idx)" />
-                </div>
-              </div>
+              <key-template-segment-row
+                v-for="(seg, idx) in segments"
+                :key="seg._id"
+                :segment="seg"
+                :is-first="idx === 0"
+                :is-last="idx === segments.length - 1"
+                :variables="variables"
+                :segment-types="segmentTypes"
+                :casing-options="casingOptions"
+                @update:segment="(patched) => updateSegment(idx, patched)"
+                @remove="removeSegment(idx)"
+                @move-up="moveSegment(idx, -1)"
+                @move-down="moveSegment(idx, 1)"
+              />
             </div>
             
             <div class="mt-4 flex items-center justify-between p-4 bg-neutral-900/50 border border-neutral-800 rounded-lg">
@@ -369,7 +328,7 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
 
       <template #footer>
         <div class="flex justify-end gap-2">
-          <u-button color="neutral" variant="ghost" label="Cancel" @click="isModalOpen = false" />
+          <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isModalOpen = false }" />
           <u-button label="Save Template" color="neutral" :disabled="!templateName.trim() || segments.length === 0" @click="saveTemplate" />
         </div>
       </template>
@@ -383,7 +342,7 @@ const updateOptions = (segment: KeyTemplateSegment, val: string) => {
       </template>
       <template #footer>
         <div class="flex justify-end gap-2 p-2">
-          <u-button color="neutral" variant="ghost" label="Cancel" @click="isDeleteModalOpen = false" />
+          <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isDeleteModalOpen = false }" />
           <u-button color="error" label="Delete" @click="performDelete" />
         </div>
       </template>

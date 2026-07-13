@@ -281,7 +281,7 @@ onMounted(() => {
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <u-button label="Cancel" color="neutral" variant="ghost" @click="confirmModalOpen = false" />
+          <u-button label="Cancel" color="neutral" variant="ghost" @click="() => { confirmModalOpen = false }" />
           <u-button 
             label="Create Pull Request" 
             :color="showTimeWarning ? 'error' : 'neutral'" 

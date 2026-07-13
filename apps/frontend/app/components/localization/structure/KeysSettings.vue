@@ -414,7 +414,7 @@ watch([glossary, templates, variables], () => {
             color="neutral"
             label="Back to List"
             icon="i-lucide-list"
-            @click="showDiagram = false"
+            @click="() => { showDiagram = false }"
         />
         <u-button
             v-else
@@ -422,7 +422,7 @@ watch([glossary, templates, variables], () => {
             color="neutral"
             label="Diagram View"
             icon="i-lucide-folder-tree"
-            @click="showDiagram = true"
+            @click="() => { showDiagram = true }"
         />
         <u-dropdown-menu v-if="!showDiagram && selectedRowsCount > 0" :items="bulkActions">
           <u-button
@@ -448,7 +448,7 @@ watch([glossary, templates, variables], () => {
             color="neutral"
             label="Add Key"
             icon="i-lucide-plus"
-            @click="isAddKeyModalOpen = true"
+            @click="() => { isAddKeyModalOpen = true }"
         />
       </div>
     </div>

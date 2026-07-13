@@ -243,7 +243,7 @@ const resetApiKey = () => {
           <u-form-field label="Your API Key">
             <div class="flex items-center gap-2">
               <u-input :model-value="user?.apiKey" readonly class="w-full font-mono text-sm" :type="apiKeyVisible ? 'text' : 'password'" />
-              <u-button :icon="apiKeyVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'" color="neutral" variant="ghost" @click="apiKeyVisible = !apiKeyVisible" />
+              <u-button :icon="apiKeyVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'" color="neutral" variant="ghost" @click="() => { apiKeyVisible = !apiKeyVisible }" />
               <u-button icon="i-lucide-copy" color="neutral" variant="ghost" @click="copyApiKey" />
               <u-button icon="i-lucide-refresh-cw" color="error" variant="ghost" @click="resetApiKey" />
             </div>

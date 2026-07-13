@@ -24,7 +24,7 @@ const isOpen = computed({
     :description="`Are you sure you want to delete ${selectedCount} selected label(s)? This action cannot be undone.`"
   >
     <template #footer>
-      <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false"/>
+      <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }"/>
       <u-button label="Delete" color="error" @click="emit('confirm')"/>
     </template>
   </u-modal>

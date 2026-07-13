@@ -161,7 +161,7 @@ const toggleSelection = (label: TranslationLabel) => {
             color="neutral"
             label="Add Label"
             icon="i-lucide-plus"
-            @click="isAddLabelModalOpen = true"
+            @click="() => { isAddLabelModalOpen = true }"
         />
       </div>
     </div>

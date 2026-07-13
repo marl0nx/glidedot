@@ -54,8 +54,9 @@ export default defineNuxtConfig({
       },
     ],
     runtimeConfig: {
+        apiUrl: process.env.NUXT_API_URL || 'http://localhost:3001',
         public: {
-            apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3001/v1',
+            apiBase: '/v1',
             oidcEnabled: process.env.NUXT_PUBLIC_OIDC_ENABLED === 'true' || !!process.env.NUXT_OIDC_PROVIDERS_OIDC_CLIENT_ID || !!process.env.NUXT_OIDC_CLIENT_ID
         }
     },
@@ -138,6 +139,7 @@ export default defineNuxtConfig({
         optimizeDeps: {
             include: [
                 '@tanstack/vue-table',
+                '@vueuse/core',
                 'canvas-confetti',
                 'date-fns',
                 'echarts/charts',

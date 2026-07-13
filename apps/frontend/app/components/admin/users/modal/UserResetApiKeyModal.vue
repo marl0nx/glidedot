@@ -27,7 +27,7 @@ const isOpen = computed({
 
     <template #footer>
       <div class="flex justify-end gap-2">
-        <u-button color="neutral" variant="ghost" label="Cancel" @click="isOpen = false" />
+        <u-button color="neutral" variant="ghost" label="Cancel" @click="() => { isOpen = false }" />
         <u-button label="Reset API Key" color="error" @click="emit('confirm')" />
       </div>
     </template>

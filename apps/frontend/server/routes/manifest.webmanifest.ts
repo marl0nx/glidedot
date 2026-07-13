@@ -1,14 +1,13 @@
 import { defineEventHandler, setHeader } from 'h3'
+import { joinURL } from 'ufo'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const apiBase = config.public.apiBase || process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:3001/v1'
-  
+
   let logoUrlMinimal = '/icon.svg' // Default fallback
-  
+
   try {
-    // Fetch public settings from backend API
-    const settings = await $fetch<Record<string, string>>(`${apiBase}/admin/settings/public`)
+    const settings = await $fetch<Record<string, string>>(joinURL(config.apiUrl, '/v1/admin/settings/public'))
     if (settings) {
       const minimal = settings.logoUrlMinimal?.trim()
       const main = settings.logoUrl?.trim()
