@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, NavigationMenuItem, BreadcrumbItem } from '@nuxt/ui'
 import type { Project } from '~/types'
+import { useTranslation } from '~/composables/localization/useTranslation'
 
 const route = useRoute();
 const { fetchApi, isApiLoading } = useApi()
 const { user, isAdmin } = useAuth()
 const { settings, loadSettings } = useSettings()
+const { languages: translationLanguages } = useTranslation()
 
 await loadSettings()
 
@@ -52,12 +54,18 @@ const breadcrumbItems = computed<BreadcrumbItem[]>(() => {
   const segments = route.path.split('/').filter(Boolean)
   return segments.map((segment, index) => {
     let label = segment.charAt(0).toUpperCase() + segment.slice(1)
-    
+
     // Replace project ID with project name
     if (index === 1 && segments[0] === 'projects' && currentProject.value?.name) {
       label = currentProject.value.name
     }
-    
+
+    // Replace language code with language name
+    if (index === 3 && segments[0] === 'projects' && segments[2] === 'translations') {
+      const lang = translationLanguages.value.find(l => l.code === segment)
+      if (lang) label = lang.name
+    }
+
     return { label }
   })
 })

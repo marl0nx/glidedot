@@ -3,7 +3,6 @@ import { useTranslation } from '~/composables/localization/useTranslation'
 import { useRoute, useRouter } from 'vue-router'
 
 import TranslationActivityModal from '~/components/localization/translations/modal/TranslationActivityModal.vue'
-import TranslationListModal from '~/components/localization/translations/modal/TranslationListModal.vue'
 import TranslationLanguageCard from '~/components/localization/translations/TranslationLanguageCard.vue'
 import TranslationLanguageRow from '~/components/localization/translations/TranslationLanguageRow.vue'
 import TranslationSidebar from '~/components/localization/translations/TranslationSidebar.vue'
@@ -23,13 +22,9 @@ const route = useRoute()
 const router = useRouter()
 
 const viewMode = useCookie<'grid' | 'list'>('translationsViewMode', { default: () => 'grid' })
-const isListModalOpen = ref(false)
-const listModalLanguage = ref<Language | null>(null)
-const listModalSearch = ref('')
 
 const openListModal = (lang: Language) => {
-  listModalLanguage.value = lang
-  isListModalOpen.value = true
+  router.push(`/projects/${route.params.id}/translations/${lang.code}`)
 }
 
 const sortedLanguages = computed(() => {
@@ -47,21 +42,17 @@ onMounted(async () => {
   if (route.query.editKey && route.query.langId) {
     const editKeyStr = route.query.editKey as string
     const langIdNum = parseInt(route.query.langId as string)
-    
+
     const targetLang = languages.value?.find((l: any) => l.id === langIdNum)
     const targetKey = keys.value?.find((k: any) => k.key === editKeyStr)
-    
+
     if (targetLang && targetKey) {
       const parts = editKeyStr.split('.')
       if (parts.length > 0) {
         selectedScope.value = parts[0] || null
       }
-      
-      listModalLanguage.value = targetLang
-      listModalSearch.value = editKeyStr
-      isListModalOpen.value = true
-      
-      router.replace({ query: {} })
+
+      router.replace(`/projects/${route.params.id}/translations/${targetLang.code}?editKey=${encodeURIComponent(editKeyStr)}`)
     }
   }
 })
@@ -174,7 +165,5 @@ definePageMeta({
     <teleport to="body">
       <translation-activity-modal/>
     </teleport>
-
-    <translation-list-modal v-model="isListModalOpen" :lang="listModalLanguage" :default-search="listModalSearch" />
   </div>
 </template>
