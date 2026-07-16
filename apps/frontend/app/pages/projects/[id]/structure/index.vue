@@ -42,8 +42,8 @@ const activeTab = computed({
     </div>
     
     <u-tabs
-      :items="items"
       v-model="activeTab"
+      :items="items"
       class="mt-4 w-full"
       :ui="{ list: 'bg-neutral-900 border border-neutral-800 w-full h-10', trigger: 'h-8 text-sm' }"
     >

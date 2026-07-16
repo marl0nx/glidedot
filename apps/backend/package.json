@@ -27,7 +27,7 @@
   },
   "scripts": {
     "start": "bunx drizzle-kit push --force && bun run src/index.ts",
-    "dev": "bun --watch src/index.ts",
+    "dev": "bunx drizzle-kit push --force && bun --watch src/index.ts",
     "test": "bun test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

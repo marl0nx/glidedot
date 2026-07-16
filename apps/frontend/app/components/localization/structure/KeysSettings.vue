@@ -48,8 +48,8 @@ const rowSelection = ref<Record<string, boolean>>({})
 const isEditLabelsModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
 const isAddKeyModalOpen = ref(false)
-const editingKeyId = ref<number | null>(null)
-const editingKeyName = ref("")
+const isEditKeyModalOpen = ref(false)
+const editingKeyObj = ref<TranslationKey | null>(null)
 const showDiagram = ref(false)
 
 watch(isEditLabelsModalOpen, (isOpen) => {
@@ -143,18 +143,28 @@ const addNewKey = async (keyName: string, labelIds: number[]) => {
 }
 
 const startEditingKey = (keyObj: TranslationKey) => {
-  editingKeyId.value = keyObj.id
-  editingKeyName.value = keyObj.key
+  editingKeyObj.value = keyObj
+  isEditKeyModalOpen.value = true
 }
 
-const saveKeyName = async (keyId: number) => {
-  if (editingKeyId.value === keyId && editingKeyName.value.trim() !== '') {
-    const keyToUpdate = realKeys.value.find(k => k.id === keyId)
-    if (keyToUpdate && keyToUpdate.key !== editingKeyName.value) {
-      await updateKey(keyId, editingKeyName.value)
-    }
+const saveEditedKey = async (keyId: number, keyName: string, labelIds: number[]) => {
+  const keyToUpdate = realKeys.value.find(k => k.id === keyId)
+  if (!keyToUpdate) return
+
+  if (keyToUpdate.key !== keyName) {
+    await updateKey(keyId, keyName)
   }
-  editingKeyId.value = null
+
+  const currentLabelIds = (keyToUpdate.labels || []).map(l => l.id)
+  const toAdd = labelIds.filter(id => !currentLabelIds.includes(id))
+  const toRemove = currentLabelIds.filter(id => !labelIds.includes(id))
+
+  for (const labelId of toAdd) {
+    await addLabelToKey(keyId, labelId)
+  }
+  for (const labelId of toRemove) {
+    await removeLabelFromKey(keyId, labelId)
+  }
 }
 
 const confirmDeleteSingleKey = (keyObj: TranslationKey) => {
@@ -404,6 +414,17 @@ watch([glossary, templates, variables], () => {
       @create="addNewKey"
     />
 
+    <key-edit-modal
+      v-model="isEditKeyModalOpen"
+      :key-obj="editingKeyObj"
+      :templates="templates"
+      :glossary="glossary"
+      :variables="variables"
+      :labels="projectLabels"
+      :require-template="currentProject?.requireTemplate"
+      @save="saveEditedKey"
+    />
+
     <div class="flex flex-col md:flex-row justify-between py-4 gap-4">
       <u-input v-if="!showDiagram" v-model="search" icon="i-lucide-search" size="lg" placeholder="Search keys..." class="w-full md:w-80"/>
       <div v-else class="flex items-center text-neutral-300 font-medium">Visualizing Project Keys</div>
@@ -492,25 +513,14 @@ watch([glossary, templates, variables], () => {
 
           <template #key-cell="{ row }">
             <div class="flex items-center gap-2 group">
-              <span v-if="editingKeyId !== row.original.id" class="font-medium">{{ row.getValue('key') }}</span>
-              <u-input 
-                v-else 
-                v-model="editingKeyName" 
-                size="xs" 
-                autofocus 
-                @keyup.enter="saveKeyName(row.original.id)" 
-                @keyup.esc="editingKeyId = null" 
-                @blur="saveKeyName(row.original.id)" 
-                @click.stop
-              />
-              <u-button 
-                v-if="editingKeyId !== row.original.id" 
-                icon="i-lucide-pencil" 
-                size="xs" 
-                variant="ghost" 
-                color="neutral" 
-                class="opacity-0 group-hover:opacity-100 transition-opacity ml-2" 
-                @click="startEditingKey(row.original)" 
+              <span class="font-medium">{{ row.getValue('key') }}</span>
+              <u-button
+                icon="i-lucide-pencil"
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                class="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                @click.stop="startEditingKey(row.original)"
               />
             </div>
           </template>
@@ -614,33 +624,21 @@ watch([glossary, templates, variables], () => {
             />
             <div class="flex flex-col flex-1 gap-2 min-w-0">
               <div class="flex items-center justify-between gap-2">
-                <span v-if="editingKeyId !== keyObj.id" class="font-bold text-neutral-200 font-mono break-all text-sm">{{ keyObj.key }}</span>
-                <u-input 
-                  v-else 
-                  v-model="editingKeyName" 
-                  size="xs" 
-                  autofocus 
-                  @keyup.enter="saveKeyName(keyObj.id)" 
-                  @keyup.esc="editingKeyId = null" 
-                  @blur="saveKeyName(keyObj.id)" 
-                  @click.stop
-                />
+                <span class="font-bold text-neutral-200 font-mono break-all text-sm">{{ keyObj.key }}</span>
                 <div class="flex items-center gap-1" @click.stop>
-                  <u-button 
-                    v-if="editingKeyId !== keyObj.id" 
-                    icon="i-lucide-pencil" 
-                    size="xs" 
-                    variant="ghost" 
-                    color="neutral" 
-                    @click="startEditingKey(keyObj)" 
+                  <u-button
+                    icon="i-lucide-pencil"
+                    size="xs"
+                    variant="ghost"
+                    color="neutral"
+                    @click="startEditingKey(keyObj)"
                   />
-                  <u-button 
-                    v-if="editingKeyId !== keyObj.id" 
-                    icon="i-lucide-trash-2" 
-                    size="xs" 
-                    variant="ghost" 
-                    color="error" 
-                    @click="confirmDeleteSingleKey(keyObj)" 
+                  <u-button
+                    icon="i-lucide-trash-2"
+                    size="xs"
+                    variant="ghost"
+                    color="error"
+                    @click="confirmDeleteSingleKey(keyObj)"
                   />
                   <div class="flex items-center">
                     <template v-if="validateKey(keyObj.key).length === 0">
